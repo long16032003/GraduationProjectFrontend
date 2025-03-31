@@ -1,0 +1,41 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+    RewriteCond %{REQUEST_URI} !^/index.html$
+    RewriteCond %{REQUEST_URI} !.(gif|jpeg|png|css|js|svg|jpg|ico|webmanifest|json)$
+    RewriteRule .* /index.html [L]
+</IfModule>
+<IfModule mod_mime.c>
+    # Manifest file
+    AddType application/manifest+json webmanifest
+</IfModule>
+# Cache files of the following types for 1 month
+<FilesMatch "\.(ico|pdf|webp|jpg|jpeg|png|gif|js|css|svg|ttf|otf|woff2|woff)$">
+    Header always set Cache-Control "max-age=2592000, public"
+    Header merge Vary Accept-Encoding
+</FilesMatch>
+# Allow Access Control Headers
+<IfModule mod_headers.c>
+    SetEnvIfNoCase Origin "^https?://((www\.)?[a-z0-9]+\.)?(up\.test|localhost)(:\d+)?$" AccessControlAllowOrigin=$0
+    Header always set Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+    Header always set Access-Control-Allow-Methods "GET,OPTIONS"
+    # https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
+    Header always set Access-Control-Allow-Headers "x-requested-with,authorization,x-xsrf-token"
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
+    Header always set Access-Control-Expose-Headers "content-disposition"
+    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+    Header always set Access-Control-Max-Age "86400"
+    # Prevent sensitive information leakage through referer header
+    Header always set Referrer-Policy "strict-origin"
+    # Browser Sniffing Protection
+    Header always set X-Content-Type-Options "nosniff"
+    # XSS Protection https://csp-evaluator.withgoogle.com/
+    Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self' https://up.test;style-src-elem 'self' 'unsafe-inline';require-trusted-types-for 'script';"
+    # Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self';style-src 'self' 'unsafe-inline';require-trusted-types-for 'script';"
+
+        # Header for service worker file
+    <Files "sw.js">
+        Header always set Service-Worker-Allowed "/"
+        Header Set Cache-Control "max-age=0, public, must-revalidate"
+        Header Set Expires "Thu, 1 Jan 1970 00:00:00 GMT"
+    </Files>
+</IfModule>

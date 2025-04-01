@@ -25,6 +25,5 @@ if (import.meta.env.DEV) allowlist = [/^\/$/];
 // to allow work offline
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html'), { allowlist }));
 
-// @ts-ignore
 self.skipWaiting();
 clientsClaim();

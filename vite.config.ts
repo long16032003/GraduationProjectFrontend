@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import dns from 'node:dns';
 import process from 'node:process';
-import { ConfigEnv, defineConfig, loadEnv, UserConfigExport } from 'vite';
+import {ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport} from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -25,13 +25,12 @@ export default function(config: ConfigEnv): UserConfigExport {
       }),
       react(),
       VitePWA(pwa),
-      // @ts-ignore
       visualizer({
         gzipSize: true,
         // sourcemap: true,
         // filename: 'dist/stats.html',
         template: 'treemap',
-      }),
+      }) as Plugin,
       sri({
         algorithms: ['sha256'],
       }),

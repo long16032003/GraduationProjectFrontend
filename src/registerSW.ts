@@ -5,6 +5,7 @@ const intervalMS = 2 * 60 * 1000;
 
 registerSW({
   onRegisteredSW(swUrl, r) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     r && setInterval(async () => {
       if (r.installing || !navigator)
         return

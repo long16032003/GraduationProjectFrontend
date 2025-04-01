@@ -1,5 +1,2 @@
-ignoredBuiltDependencies:
-  - '@swc/core'
-  - esbuild
 onlyBuiltDependencies:
-  - sharp
+  - '@swc/core'

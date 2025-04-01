@@ -20,7 +20,14 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "allowJs": false,
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+        "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

@@ -11,7 +11,11 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.svg"
   },
   "dependencies": {
+    "@formily/core": "^2.3.3",
+    "@formily/react": "^2.3.3",
+    "@formily/reactive": "^2.3.3",
     "@legendapp/state": "^2.1.15",
+    "@refinedev/core": "^4.57.7",
     "@sqlite.org/sqlite-wasm": "3.49.1-build2",
     "axios": "^1.8.4",
     "broadcast-channel": "^7.1.0",
@@ -25,6 +29,7 @@
     "i18next-browser-languagedetector": "^8.0.4",
     "i18next-http-backend": "^3.0.2",
     "idb": "^8.0.2",
+    "jotai": "^2.12.2",
     "libsodium-wrappers": "^0.7.15",
     "ofetch": "^1.4.1",
     "react": "^18.3.1",

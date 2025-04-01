@@ -68,6 +68,9 @@ importers:
       react-router:
         specifier: ^7.4.1
         version: 7.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      ts-collect:
+        specifier: ^0.4.0
+        version: 0.4.0
       valibot:
         specifier: ^1.0.0
         version: 1.0.0(typescript@5.7.3)
@@ -2694,6 +2697,9 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-collect@0.4.0:
+    resolution: {integrity: sha512-OXh8fiTrzKogmVfdwi4nGpROw/ovFOTXrYX2pgHoNH6qbjtNvq1CBd7DwpqUW7lAweYlshqBRrFbEj68gBUgkw==}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -5725,6 +5731,8 @@ snapshots:
   ts-api-utils@2.1.0(typescript@5.7.3):
     dependencies:
       typescript: 5.7.3
+
+  ts-collect@0.4.0: {}
 
   tslib@2.8.1:
     optional: true

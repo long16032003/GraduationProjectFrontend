@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { promises as fs, readFileSync, statSync } from 'fs';
 import { load as loadHtml } from 'cheerio';
-import collect from 'collect.js';
-import type { Plugin, Manifest } from 'vite';
+import { Plugin, Manifest, ManifestChunk } from 'vite';
+import { collect } from 'ts-collect';
 
 export type Algorithm = 'sha256' | 'sha384' | 'sha512'
 
@@ -87,9 +87,15 @@ export default function sri(options: Options = {}): Plugin {
 
             const manifest: Manifest | undefined = JSON.parse(readFileSync(`${buildDir}/${manifestPath}`, { encoding: 'utf-8' }));
 
-            const entries = collect(Object.values(manifest || {}).filter((chunk) => chunk.isEntry))
-                .keyBy('file')
-                .all();
+            if (!manifest) {
+                console.warn(
+                  `Failed to read or parse file: ${buildDir}/${manifestPath}`,
+                );
+                return;
+            }
+
+            const entries = collect(Object.values(manifest).filter(chunk => chunk.isEntry))
+              .keyBy('file')
 
             const elements = $(selectors.join()).get();
 
@@ -99,7 +105,10 @@ export default function sri(options: Options = {}): Plugin {
                 if (!url || filesToIgnore.includes(url)) continue;
 
                 if (url in entries) {
-                    const entry = (entries as Record<string, any>)[url];
+                    const entry: ManifestChunk | undefined = entries.get(url);
+
+                    if (!entry) continue;
+
                     const integrityHash = entry.integrity;
 
                     $(element).attr('integrity', integrityHash);

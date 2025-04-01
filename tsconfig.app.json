@@ -25,6 +25,7 @@
     "allowJs": false,
     "declaration": true,
     "declarationMap": true,
+    "baseUrl": ".",
     "paths": {
         "@/*": ["./src/*"]
     }

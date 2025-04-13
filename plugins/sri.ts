@@ -104,16 +104,14 @@ export default function sri(options: Options = {}): Plugin {
 
                 if (!url || filesToIgnore.includes(url)) continue;
 
-                if (url in entries) {
-                    const entry: ManifestChunk | undefined = entries.get(url);
+                const entry: ManifestChunk | undefined = entries.get(url);
 
-                    if (!entry) continue;
+                if (!entry) continue;
 
-                    const integrityHash = entry.integrity;
+                const integrityHash = entry.integrity;
 
-                    $(element).attr('integrity', integrityHash);
-                    $(element).attr('crossorigin', crossOrigin);
-                }
+                $(element).attr('integrity', integrityHash);
+                $(element).attr('crossorigin', crossOrigin);
             }
 
             await fs.writeFile(outputFile, minifyHtml($.html()));

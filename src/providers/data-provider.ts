@@ -1,11 +1,9 @@
 import type { DataProvider } from '@refinedev/core';
 
-const API_URL = 'https://r0.test';
-
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const dataProvider: DataProvider = {
-  // @ts-ignore
-  getOne: async ({ resource, id, meta }) => {
+  getOne: async ({ resource, id }) => {
     const response = await fetch(`${API_URL}/${resource}/${id}`);
 
     if (response.status < 200 || response.status > 299) throw response;
@@ -29,7 +27,7 @@ export const dataProvider: DataProvider = {
 
     return { data };
   },
-  getList: async ({ resource, pagination, filters, sorters, meta }) => {
+  getList: async ({ resource}) => {
     const response = await fetch(`${API_URL}/${resource}`);
 
     if (response.status < 200 || response.status > 299) throw response;

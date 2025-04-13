@@ -1,0 +1,160 @@
+{
+  "pages": {
+    "login": {
+      "title": "Đăng nhập vào tài khoản của bạn",
+      "signin": "Đăng nhập",
+      "signup": "Đăng ký",
+      "divider": "hoặc",
+      "fields": {
+        "email": "Email",
+        "password": "Mật khẩu"
+      },
+      "errors": {
+        "validEmail": "Địa chỉ email không hợp lệ",
+        "requiredEmail": "Email là bắt buộc",
+        "requiredPassword": "Mật khẩu là bắt buộc"
+      },
+      "buttons": {
+        "submit": "Đăng nhập",
+        "forgotPassword": "Quên mật khẩu?",
+        "noAccount": "Chưa có tài khoản?",
+        "rememberMe": "Ghi nhớ tôi"
+      }
+    },
+    "forgotPassword": {
+      "title": "Quên mật khẩu?",
+      "fields": {
+        "email": "Email"
+      },
+      "errors": {
+        "validEmail": "Địa chỉ email không hợp lệ",
+        "requiredEmail": "Email là bắt buộc"
+      },
+      "buttons": {
+        "submit": "Gửi hướng dẫn đặt lại mật khẩu"
+      }
+    },
+    "register": {
+      "title": "Đăng ký tài khoản",
+      "fields": {
+        "email": "Email",
+        "password": "Mật khẩu"
+      },
+      "errors": {
+        "validEmail": "Địa chỉ email không hợp lệ",
+        "requiredEmail": "Email là bắt buộc",
+        "requiredPassword": "Mật khẩu là bắt buộc"
+      },
+      "buttons": {
+        "submit": "Đăng ký",
+        "haveAccount": "Đã có tài khoản?"
+      }
+    },
+    "updatePassword": {
+      "title": "Cập nhật mật khẩu",
+      "fields": {
+        "password": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu mới"
+      },
+      "errors": {
+        "confirmPasswordNotMatch": "Mật khẩu không khớp",
+        "requiredPassword": "Yêu cầu nhập mật khẩu",
+        "requiredConfirmPassword": "Yêu cầu xác nhận mật khẩu"
+      },
+      "buttons": {
+        "submit": "Cập nhật"
+      }
+    },
+    "error": {
+      "info": "Bạn có thể đã quên thêm thành phần {{action}} vào tài nguyên {{resource}}.",
+      "404": "Xin lỗi, trang bạn truy cập không tồn tại.",
+      "resource404": "Bạn chắc chắn đã tạo tài nguyên {{resource}} chưa?",
+      "backHome": "Về trang chủ"
+    }
+  },
+  "actions": {
+    "list": "Danh sách",
+    "create": "Tạo mới",
+    "edit": "Chỉnh sửa",
+    "show": "Xem"
+  },
+  "buttons": {
+    "create": "Tạo mới",
+    "save": "Lưu",
+    "logout": "Đăng xuất",
+    "delete": "Xoá",
+    "edit": "Chỉnh sửa",
+    "cancel": "Huỷ",
+    "confirm": "Bạn có chắc chắn?",
+    "filter": "Lọc",
+    "clear": "Xoá lọc",
+    "refresh": "Làm mới",
+    "show": "Xem",
+    "undo": "Hoàn tác",
+    "import": "Nhập",
+    "clone": "Nhân bản",
+    "notAccessTitle": "Bạn không có quyền truy cập"
+  },
+  "warnWhenUnsavedChanges": "Bạn có chắc chắn muốn rời đi? Các thay đổi chưa được lưu sẽ mất.",
+  "notifications": {
+    "success": "Thành công",
+    "error": "Lỗi (mã trạng thái: {{statusCode}})",
+    "undoable": "Bạn có {{seconds}} giây để hoàn tác",
+    "createSuccess": "Tạo mới {{resource}} thành công",
+    "createError": "Có lỗi khi tạo {{resource}} (mã trạng thái: {{statusCode}})",
+    "deleteSuccess": "Xoá {{resource}} thành công",
+    "deleteError": "Lỗi khi xoá {{resource}} (mã trạng thái: {{statusCode}})",
+    "editSuccess": "Chỉnh sửa {{resource}} thành công",
+    "editError": "Lỗi khi chỉnh sửa {{resource}} (mã trạng thái: {{statusCode}})",
+    "importProgress": "Đang nhập: {{processed}}/{{total}}"
+  },
+  "loading": "Đang tải",
+  "tags": {
+    "clone": "Nhân bản"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển"
+  },
+  "posts": {
+    "posts": "Bài viết",
+    "fields": {
+      "id": "ID",
+      "title": "Tiêu đề",
+      "category": "Danh mục",
+      "status": {
+        "title": "Trạng thái",
+        "published": "Đã xuất bản",
+        "draft": "Bản nháp",
+        "rejected": "Từ chối"
+      },
+      "content": "Nội dung",
+      "createdAt": "Ngày tạo"
+    },
+    "titles": {
+      "create": "Tạo bài viết",
+      "edit": "Chỉnh sửa bài viết",
+      "list": "Bài viết",
+      "show": "Xem bài viết"
+    }
+  },
+  "table": {
+    "actions": "Thao tác"
+  },
+  "documentTitle": {
+    "default": "r0",
+    "suffix": " | r0",
+    "post": {
+      "list": "Bài viết | r0",
+      "show": "#{{id}} Xem bài viết | r0",
+      "edit": "#{{id}} Chỉnh sửa bài viết | r0",
+      "create": "Tạo bài viết mới | r0",
+      "clone": "#{{id}} Nhân bản bài viết | r0"
+    }
+  },
+  "autoSave": {
+    "success": "đã lưu",
+    "error": "lỗi khi tự động lưu",
+    "loading": "đang lưu...",
+    "idle": "đang chờ thay đổi"
+  }
+}

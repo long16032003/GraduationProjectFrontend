@@ -6,6 +6,7 @@ import routerBindings, { UnsavedChangesNotifier } from '@refinedev/react-router'
 import { Outlet } from 'react-router';
 import { iconPrefixCls, prefixCls, theme } from '@/config/theme.ts';
 import { ConfigProvider } from 'antd';
+import { StyleProvider } from '@ant-design/cssinjs';
 // import { accessControlProvider } from '@/providers/access-control-provider.ts';
 
 const options: IRefineOptions = {
@@ -24,9 +25,11 @@ export const Root = () => {
       // accessControlProvider={accessControlProvider}
       dataProvider={dataProvider}
     >
-      <ConfigProvider prefixCls={prefixCls} iconPrefixCls={iconPrefixCls} theme={theme}>
-        <Outlet />
-      </ConfigProvider>
+      <StyleProvider layer>
+        <ConfigProvider prefixCls={prefixCls} iconPrefixCls={iconPrefixCls} theme={theme}>
+          <Outlet />
+        </ConfigProvider>
+      </StyleProvider>
       <UnsavedChangesNotifier />
     </Refine>
   );

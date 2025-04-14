@@ -23,9 +23,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from 'lucide-react';
+import { BadgeCheck, Bell, CreditCard, LogOut, Sparkles } from 'lucide-react';
 import { Button } from 'antd';
 import RegisterForm from '@/pages/admin/form.tsx';
+import { DropdownMenuLabel } from '@radix-ui/react-dropdown-menu';
 
 
 const user = {
@@ -39,7 +40,7 @@ export function Dashboard() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background p-2">
+        <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10">
           <div className="flex flex-1 items-center gap-2 px-3">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -69,11 +70,11 @@ export function Dashboard() {
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
+                  {/*<div className="grid flex-1 text-left text-sm leading-tight">*/}
+                  {/*  <span className="truncate font-semibold">{user.name}</span>*/}
+                  {/*  <span className="truncate text-xs">{user.email}</span>*/}
+                  {/*</div>*/}
+                  {/*<ChevronsUpDown className="ml-auto size-4" />*/}
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -82,19 +83,19 @@ export function Dashboard() {
                 align="end"
                 // sideOffset={4}
               >
-                {/*<DropdownMenuLabel className="p-0 font-normal">*/}
-                {/*  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">*/}
-                {/*    <Avatar className="h-8 w-8 rounded-lg">*/}
-                {/*      <AvatarImage src={user.avatar} alt={user.name} />*/}
-                {/*      <AvatarFallback className="rounded-lg">CN</AvatarFallback>*/}
-                {/*    </Avatar>*/}
-                {/*    <div className="grid flex-1 text-left text-sm leading-tight">*/}
-                {/*      <span className="truncate font-semibold">{user.name}</span>*/}
-                {/*      <span className="truncate text-xs">{user.email}</span>*/}
-                {/*    </div>*/}
-                {/*  </div>*/}
-                {/*</DropdownMenuLabel>*/}
-                {/*<DropdownMenuSeparator />*/}
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                    </Avatar>
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">{user.name}</span>
+                      <span className="truncate text-xs">{user.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
                     <Sparkles />

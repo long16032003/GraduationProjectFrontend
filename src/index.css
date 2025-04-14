@@ -75,9 +75,42 @@
 }
 @layer base {
     * {
-        @apply border-border;
+        border-color: hsl(var(--border))
+    }
+    html {
+        scroll-behavior: smooth
     }
     body {
-        @apply bg-background text-foreground;
+        overscroll-behavior: none;
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        font-synthesis-weight: none;
+        text-rendering: optimizeLegibility
+    }
+    /* @link: https://developer.chrome.com/docs/css-ui/scrollbar-styling */
+    @supports (font: -apple-system-body) and (-webkit-appearance:none) {
+        @media (min-width:1800px) {
+            [data-wrapper] {
+                border-top-width:1px
+            }
+        }
+    }
+
+    ::-webkit-scrollbar {
+        width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: hsl(var(--border));
+        border-radius: 5px
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--border)) transparent
     }
 }

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
-  SidebarInset, SidebarMenuButton,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
 import { BadgeCheck, Bell, CreditCard, LogOut, Sparkles } from 'lucide-react';
-import { Button } from 'antd';
 import RegisterForm from '@/pages/admin/form.tsx';
 import { DropdownMenuLabel } from '@radix-ui/react-dropdown-menu';
 
@@ -40,7 +39,7 @@ export function Dashboard() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10">
+        <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10 py-2">
           <div className="flex flex-1 items-center gap-2 px-3">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -56,26 +55,26 @@ export function Dashboard() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto px-3">
+          <div className="ml-auto ">
             <SearchForm className="w-full sm:ml-auto sm:w-auto" />
           </div>
-          <div className="ml-auto px-3">
+          <div className="ml-auto flex items-center px-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                  </Avatar>
+              <DropdownMenuTrigger>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                {/*<SidebarMenuButton*/}
+                {/*  size="lg"*/}
+                {/*  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"*/}
+                {/*>*/}
+
                   {/*<div className="grid flex-1 text-left text-sm leading-tight">*/}
                   {/*  <span className="truncate font-semibold">{user.name}</span>*/}
                   {/*  <span className="truncate text-xs">{user.email}</span>*/}
                   {/*</div>*/}
-                  {/*<ChevronsUpDown className="ml-auto size-4" />*/}
-                </SidebarMenuButton>
+                {/*</SidebarMenuButton>*/}
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
@@ -127,10 +126,13 @@ export function Dashboard() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Button color="default" variant="solid">
-            Solid
-          </Button>
-          <RegisterForm />
+          {/*<Button color="default" variant="solid">*/}
+          {/*  Solid*/}
+          {/*</Button>*/}
+          <div className={`py-7`}>
+            <RegisterForm />
+          </div>
+
           {Array.from({ length: 24 }).map((_, index) => (
             <div
               key={index}

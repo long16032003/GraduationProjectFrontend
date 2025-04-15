@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LaptopOutlined, NotificationOutlined, UserOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Breadcrumb, Layout, Menu, theme } from 'antd';
@@ -30,7 +30,6 @@ const items2: MenuProps['items'] = [UserOutlined, LaptopOutlined, NotificationOu
 );
 
 export function Home() {
-  const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -58,7 +57,7 @@ export function Home() {
         />
       </Header>
       <Layout>
-        <Sider width={200} collapsible collapsed={true} onCollapse={(value) => setCollapsed(value)}
+        <Sider width={200} collapsible collapsed={true}
                trigger={null}
           style={{
             overflow: 'hidden',

@@ -13,6 +13,13 @@ import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card.tsx';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList, BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb.tsx';
 
 export function UserNav() {
   return (
@@ -158,14 +165,27 @@ export function NotificationNav() {
 export function DefaultHeaderContent() {
   return (
     <Fragment>
-      <div className="flex items-center gap-2 w-1/3 justify-start" data-element="header-start">
+      <div className="flex items-center gap-2 lg:w-1/3 justify-start" data-element="header-start">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mr-2 h-4" />
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem className="hidden md:block">
+              <BreadcrumbLink href="#">
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="hidden md:block" />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Products</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
       <div className="flex items-center flex-1" data-element="header-center">
         <SearchForm className="w-full" />
       </div>
-      <div className="flex items-center gap-3 w-1/3 justify-end" data-element="header-end">
+      <div className="flex items-center gap-3 lg:w-1/3 justify-end" data-element="header-end">
         <NotificationNav />
         <UserNav />
       </div>
@@ -176,7 +196,7 @@ export function DefaultHeaderContent() {
 export function AppHeader(props: React.ComponentProps<'header'>) {
   return (
     <header
-      className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10 h-12 overflow-hidden flex-wrap justify-between px-2">
+      className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10 h-12 overflow-hidden flex-wrap justify-between px-3">
       {props.children ?? <DefaultHeaderContent />}
     </header>
   );

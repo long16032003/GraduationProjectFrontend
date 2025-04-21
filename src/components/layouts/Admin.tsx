@@ -16,7 +16,7 @@ export function Admin() {
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
-            <div id="page-wraper" className="flex flex-col flex-1 relative">
+            <div id="page-wraper" className="flex flex-col flex-1 relative px-5">
               <PageHeader />
               <Outlet />
             </div>

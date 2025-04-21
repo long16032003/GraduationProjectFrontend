@@ -27,7 +27,7 @@ export const dataProvider: DataProvider = {
 
     return { data };
   },
-  getList: async ({ resource}) => {
+  getList: async ({ resource }) => {
     const response = await fetch(`${API_URL}/${resource}`);
 
     if (response.status < 200 || response.status > 299) throw response;
@@ -41,10 +41,10 @@ export const dataProvider: DataProvider = {
   },
   create: async ({ resource, variables }) => {
     const response = await fetch(`${API_URL}/${resource}`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(variables),
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
 
@@ -55,7 +55,7 @@ export const dataProvider: DataProvider = {
     return { data };
   },
   deleteOne: () => {
-    throw new Error("Not implemented");
+    throw new Error('Not implemented');
   },
   getApiUrl: () => API_URL,
   // Optional methods:

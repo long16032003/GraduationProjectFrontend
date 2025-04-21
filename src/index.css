@@ -78,7 +78,8 @@
         border-color: hsl(var(--border))
     }
     html {
-        scroll-behavior: smooth
+        scroll-behavior: smooth;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
     }
     body {
         overscroll-behavior: none;

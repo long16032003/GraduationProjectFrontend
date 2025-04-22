@@ -1,6 +1,7 @@
 import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider, ISchema } from '@formily/react';
-import { FormButtonGroup, FormItem, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
+import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
+import FormItem from '@/components/form/form-item';
 
 // https://react.formilyjs.org/api/components/schema-field
 const SchemaField = createSchemaField({
@@ -11,7 +12,28 @@ const SchemaField = createSchemaField({
     Password,
   },
   scope: {
-
+    renderPasswordLabel() {
+      return (
+        <div className="b-formily-item-label">
+          <div className="b-formily-item-label-content flex justify-between w-full">
+            <div className="flex items-center flex-row">
+              <label>Password</label>
+              {/*<span className={`b-formily-item-label-tooltip-icon`}>*/}
+              {/*  <Tooltip placement="top" title={'Password must be at least 8 characters'}>*/}
+              {/*    <QuestionCircleOutlined />*/}
+              {/*  </Tooltip>*/}
+              {/*</span>*/}
+            </div>
+            <a
+              href="#"
+              className="ml-auto text-sm underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </a>
+          </div>
+        </div>
+      )
+    }
   },
 });
 
@@ -63,6 +85,8 @@ const schema: ISchema = {
           'x-decorator-props': {
             colon: false,
             asterisk: false,
+            label: '{{ renderPasswordLabel() }}',
+            tooltip: 'Password must be at least 8 characters',
           },
           'x-component': 'Password',
           'x-component-props': {

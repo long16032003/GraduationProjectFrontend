@@ -39,15 +39,15 @@ const SchemaField = createSchemaField({
 
 const form = createForm({
   // form current values
-  values: {
-    email: 'hello',
-    password: '666666',
-  },
-  // form default values
-  initialValues: {
-    email: 'example@r0.test',
-    password: 'any thing more than 8 characters',
-  },
+  // values: {
+  //   email: 'hello',
+  //   password: '666666',
+  // },
+  // // form default values
+  // initialValues: {
+  //   email: 'example@r0.test',
+  //   password: 'any thing more than 8 characters',
+  // },
   validateFirst: true,
 });
 
@@ -74,6 +74,7 @@ const schema: ISchema = {
           'x-component': 'Input',
           required: true,
           'x-component-props': {
+            placeholder: 'user@example.com'
             // https://ant.design/components/input#input
           },
         },
@@ -102,24 +103,26 @@ const schema: ISchema = {
 const LoginForm = () => {
 
   return (
-    <FormProvider form={form}>
-      <SchemaField schema={schema} />
-      <Submit
-        onSubmit={(values) => {
-          return new Promise<void>((resolve) => {
-            setTimeout(() => {
-              console.log(values);
-              resolve();
-            }, 2000);
-          });
-        }}
-        onSubmitFailed={console.log}
-        block
-      >Submit</Submit>
-      <FormButtonGroup>
+    <div>
+      <FormProvider form={form}>
+        <SchemaField schema={schema} />
+        <Submit
+          onSubmit={(values) => {
+            return new Promise<void>((resolve) => {
+              setTimeout(() => {
+                console.log(values);
+                resolve();
+              }, 2000);
+            });
+          }}
+          onSubmitFailed={console.log}
+          block
+        >Submit</Submit>
+        <FormButtonGroup>
 
-      </FormButtonGroup>
-    </FormProvider>
+        </FormButtonGroup>
+      </FormProvider>
+    </div>
   );
 };
 

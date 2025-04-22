@@ -15,6 +15,8 @@ const theme: ThemeConfig = {
     motion: false,
     // Seed Token
     colorPrimary: '#5e6ae4',
+    colorTextPlaceholder: '#737373',
+    controlHeight: 36,
     // https://www.smashingmagazine.com/2015/11/using-system-ui-fonts-practical-guide/
     fontFamily: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace",
     // borderRadius: 2,

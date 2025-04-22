@@ -1,7 +1,7 @@
 import { RouteObject } from 'react-router';
 import { Auth } from '@/components/layouts/Auth.tsx';
 import { LoginPage } from '@/pages/auth/login.tsx';
-import { Register } from '@/pages/auth/register.tsx';
+import { RegisterPage } from '@/pages/auth/register.tsx';
 import { ForgotPassword } from '@/pages/auth/forgot-password.tsx';
 import { UpdatePassword } from '@/pages/auth/update-password.tsx';
 
@@ -15,7 +15,7 @@ export const routes: RouteObject[] = [
     Component: Auth,
     children: [
       { path: 'login', Component: LoginPage },
-      { path: 'register', Component: Register },
+      { path: 'register', Component: RegisterPage },
       { path: 'forgot-password', Component: ForgotPassword },
       { path: 'update-password', Component: UpdatePassword },
     ],

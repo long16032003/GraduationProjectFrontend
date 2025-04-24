@@ -15,6 +15,7 @@ interface AppStore {
   setting: Setting;
 }
 
+// https://legendapp.com/open-source/state/v3/usage/observable/
 const app$ = observable<AppStore>({
   preference: {
     theme: 'light',
@@ -23,6 +24,9 @@ const app$ = observable<AppStore>({
 });
 
 // Persist state
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/#indexeddb-react
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/#transform-data
 syncObservable(app$, {
   persist: {
     name: 'app',

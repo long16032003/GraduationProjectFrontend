@@ -19,6 +19,10 @@ const auth$ = observable<AuthStore>({
   isAuthenticated: (): boolean => !!auth$.user.get(),
 })
 
+// Persist state
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/#indexeddb-react
+// https://legendapp.com/open-source/state/v3/sync/persist-sync/#transform-data
 syncObservable(app$, {
   persist: {
     name: 'auth',

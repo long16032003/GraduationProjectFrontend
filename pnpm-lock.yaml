@@ -95,9 +95,15 @@ importers:
       collect.js:
         specifier: ^4.36.1
         version: 4.36.1
+      cookie-es:
+        specifier: ^2.0.0
+        version: 2.0.0
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      defu:
+        specifier: ^6.1.4
+        version: 6.1.4
       dompurify:
         specifier: ^3.2.5
         version: 3.2.5
@@ -2425,6 +2431,9 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  cookie-es@2.0.0:
+    resolution: {integrity: sha512-RAj4E421UYRgqokKUmotqAwuplYw15qtdXfY+hGzgCJ/MBjCVZcSoHK/kH9kocfjRjcDME7IiDWR/1WX1TM2Pg==}
 
   cookie@1.0.2:
     resolution: {integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==}
@@ -7276,6 +7285,8 @@ snapshots:
   consola@3.4.2: {}
 
   convert-source-map@2.0.0: {}
+
+  cookie-es@2.0.0: {}
 
   cookie@1.0.2: {}
 

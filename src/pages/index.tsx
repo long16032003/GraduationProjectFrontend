@@ -10,8 +10,9 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { LoginForm } from '@/forms/auth/login.tsx';
 // import { Icons } from "@/components/icons"
+
+
 
 const components: { title: string; href: string; description: string }[] = [
   {
@@ -153,7 +154,7 @@ export function Home() {
         </div>
       </div>
       <div className="p-7">
-        <LoginForm />
+
       </div>
 
     </div>

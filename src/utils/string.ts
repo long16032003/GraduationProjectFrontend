@@ -13,3 +13,14 @@ export const removeDiacritics = (str: string) => {
     // https://www.compart.com/en/unicode/block/U+0300
     .replace(/[\u0300-\u036f]/g, "")
 }
+
+// https://regex101.com/r/Y1UQsG/1
+// https://unicode.org/Public/emoji/latest/
+// https://github.com/slevithan/emoji-regex-xs/blob/main/regex.mjs
+export const removeEmojis = (str: string) => {
+  const r = String.raw;
+  const base = r`\p{Emoji}(?:\p{EMod}|[\u{E0020}-\u{E007E}]+\u{E007F}|\uFE0F?\u20E3?)`;
+  const regex = new RegExp(r`\p{RI}{2}|(?![#*\d](?!\uFE0F?\u20E3))${base}(?:\u200D${base})*`, 'gu');
+  // Remove emojis from the string using a regular expression
+  return str.replace(regex, "")
+}

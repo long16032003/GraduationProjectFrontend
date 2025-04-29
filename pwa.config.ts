@@ -53,6 +53,7 @@ export const pwa: Partial<VitePWAOptions> = {
   injectManifest: {
     enableWorkboxModulesLogs: true,
     globPatterns: ['**/*.{js,css,html,png,ico,svg,gif,json,jpg}'],
+    maximumFileSizeToCacheInBytes: 3000000, // 3MB
     // navigateFallback: 'index.html',
   },
 

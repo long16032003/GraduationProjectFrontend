@@ -10,7 +10,7 @@ import { parse } from 'cookie-es';
 // https://github.com/SMAccess/ecommerce/blob/master/composables/useAuthRequest.ts
 
 export const defaultOptions = {
-  baseURL: import.meta.env.VITE_API_URL,
+  // baseURL: import.meta.env.VITE_API_URL,
   retry: 1,
   // Default retry status codes:
   // 408 - Request Timeout

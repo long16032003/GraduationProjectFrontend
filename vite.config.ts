@@ -48,6 +48,39 @@ export default function(config: ConfigEnv): UserConfigExport {
       host: domain.hostname,
       // https: true,
       strictPort: true,
+      cors: true,
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL,
+          secure: false, // allow self-signed cert
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+          // configure: (proxy) => {
+          //   proxy.on('proxyReq', (proxyReq, req, res) => {
+          //     const originalCookie = req.headers.cookie || '';
+          //
+          //     const newCookie = originalCookie
+          //       .split(';')
+          //       .map(cookie => cookie.trim())
+          //       .filter(cookie => !cookie.startsWith('session='))
+          //       .concat('session=mock-session-123') // Gán cookie mới
+          //       .join('; ');
+          //
+          //     proxyReq.setHeader('cookie', newCookie);
+          //   });
+          //
+          //   proxy.on('proxyRes', (proxyRes, req, res) => {
+          //     const cookies = proxyRes.headers['set-cookie'];
+          //     if (cookies) {
+          //       const rewritten = cookies.map((cookie) =>
+          //         cookie.replace(/Domain=[^;]+/i, 'Domain=admin.r0.test')
+          //       );
+          //       proxyRes.headers['set-cookie'] = rewritten;
+          //     }
+          //   });
+          // },
+        },
+      }
     },
     // @link: https://vite.dev/config/build-options.html
     build: {

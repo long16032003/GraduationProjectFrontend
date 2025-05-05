@@ -2,6 +2,7 @@ import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider, ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
 import FormItem from '@/components/form/form-item';
+import { $http } from '@/utils/http.ts';
 
 // https://react.formilyjs.org/api/components/schema-field
 const SchemaField = createSchemaField({
@@ -107,13 +108,20 @@ const LoginForm = () => {
       <FormProvider form={form}>
         <SchemaField schema={schema} />
         <Submit
-          onSubmit={(values) => {
-            return new Promise<void>((resolve) => {
-              setTimeout(() => {
-                console.log(values);
-                resolve();
-              }, 2000);
-            });
+          onSubmit={async (values) => {
+            console.log(values);
+            const response = await $http('/api/login', {
+              method: 'post',
+              body: values,
+            })
+
+            console.log(await response.json());
+            // return new Promise<void>((resolve) => {
+            //   setTimeout(() => {
+            //     console.log(values);
+            //     resolve();
+            //   }, 2000);
+            // });
           }}
           onSubmitFailed={console.log}
           block

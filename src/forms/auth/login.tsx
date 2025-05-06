@@ -3,8 +3,10 @@ import { createSchemaField, FormProvider, ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
 import FormItem from '@/components/form/form-item';
 import { $http } from '@/utils/http.ts';
+import { FetchError } from 'ofetch';
 
 // https://react.formilyjs.org/api/components/schema-field
+// https://core.formilyjs.org/api/entry/form-validator-registry
 const SchemaField = createSchemaField({
   components: {
     FormLayout,
@@ -109,13 +111,27 @@ const LoginForm = () => {
         <SchemaField schema={schema} />
         <Submit
           onSubmit={async (values) => {
-            console.log(values);
-            const response = await $http('/api/login', {
-              method: 'post',
-              body: values,
-            })
+            // console.log(values);
+            try {
+              const response = await $http('login', {
+                method: 'post',
+                body: values,
+              })
 
-            console.log(await response.json());
+              return await response.json();
+            } catch (error) {
+              const serverErrors = (error as FetchError).data.errors
+              Object.entries(serverErrors).forEach(([field, messages]) => {
+                form.setFieldState(field as string, (state) => {
+                  console.log('state', state)
+                  state.setSelfErrors(messages as Array<string>)
+                })
+              })
+              // console.log(error.data)
+            }
+
+
+            // console.log(await response.json());
             // return new Promise<void>((resolve) => {
             //   setTimeout(() => {
             //     console.log(values);
@@ -123,7 +139,7 @@ const LoginForm = () => {
             //   }, 2000);
             // });
           }}
-          onSubmitFailed={console.log}
+          // onSubmitFailed={console.log}
           block
         >Submit</Submit>
         <FormButtonGroup>

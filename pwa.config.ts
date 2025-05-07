@@ -1,5 +1,6 @@
 import process from 'node:process';
 import { IconResource, VitePWAOptions } from 'vite-plugin-pwa';
+import { ConfigEnv } from 'vite';
 
 const appName: string = process.env.VITE_PWA_APP_NAME || 'r0';
 const appShortName: string = process.env.VITE_PWA_APP_NAME || 'r0';
@@ -31,36 +32,41 @@ const icons: IconResource[] = [
   },
 ];
 
-export const pwa: Partial<VitePWAOptions> = {
-  injectRegister: null,
-  strategies: 'injectManifest',
-  registerType: 'autoUpdate',
-  srcDir: 'src',
-  filename: 'sw.ts',
-  scope,
-  base: scope,
+// @ts-ignore
+export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) {
 
-  manifest: {
-    id: scope,
+  return {
+    injectRegister: null,
+    strategies: 'injectManifest',
+    registerType: 'autoUpdate',
+    srcDir: 'src',
+    filename: 'sw.ts',
     scope,
-    name: appName,
-    short_name: appShortName,
-    description: appDescription,
-    theme_color: '#00bd7e',
-    icons,
-  },
+    base: scope,
 
-  injectManifest: {
-    enableWorkboxModulesLogs: true,
-    globPatterns: ['**/*.{js,css,html,png,ico,svg,gif,json,jpg}'],
-    maximumFileSizeToCacheInBytes: 3000000, // 3MB
-    // navigateFallback: 'index.html',
-  },
+    manifest: {
+      id: scope,
+      scope,
+      name: appName,
+      short_name: appShortName,
+      description: appDescription,
+      theme_color: '#00bd7e',
+      icons,
+    },
 
-  devOptions: {
-    enabled: process.env.NODE_ENV === 'development',
-    // navigateFallbackAllowlist: [/^index.html$/],
-    navigateFallback: 'index.html',
-    type: 'module',
-  },
-};
+    injectManifest: {
+      sourcemap: !['false', '0', ''].includes(env.VITE_SOURCE_MAP) && env.VITE_SOURCE_MAP,
+      enableWorkboxModulesLogs: true,
+      globPatterns: ['**/*.{js,css,html,png,ico,svg,gif,json,jpg,map}'],
+      maximumFileSizeToCacheInBytes: 30000000, // 3MB
+      // navigateFallback: 'index.html',
+    },
+
+    devOptions: {
+      enabled: process.env.NODE_ENV === 'development',
+      // navigateFallbackAllowlist: [/^index.html$/],
+      navigateFallback: 'index.html',
+      type: 'module',
+    },
+  } as Partial<VitePWAOptions>;
+}

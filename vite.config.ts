@@ -5,7 +5,7 @@ import { ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport } from 'vite
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { VitePWA } from 'vite-plugin-pwa';
-import { pwa } from './pwa.config';
+import { createPwaConfig } from './pwa.config';
 import { visualizer } from 'rollup-plugin-visualizer';
 import sri from './plugins/sri';
 
@@ -24,7 +24,7 @@ export default function(config: ConfigEnv): UserConfigExport {
         source: 'coding',
       }),
       react(),
-      VitePWA(pwa),
+      VitePWA(createPwaConfig(env, config)),
       visualizer({
         gzipSize: true,
         // sourcemap: true,
@@ -83,6 +83,9 @@ export default function(config: ConfigEnv): UserConfigExport {
     },
     // @link: https://vite.dev/config/build-options.html
     build: {
+      // sourcemap: 'inline',
+      // @ts-ignore
+      sourcemap: !['false', '0', ''].includes(env.VITE_SOURCE_MAP) && env.VITE_SOURCE_MAP,
       // generate .vite/manifest.json in outDir
       manifest: true,
       assetsInlineLimit: 0,

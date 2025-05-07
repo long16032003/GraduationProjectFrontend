@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react'
-import { GenerateStyle } from '@formily/antd-v5/lib/__builtins__';
+import { GenerateStyle } from '@formily/antd-v5/esm/__builtins__';
 // import { GenerateStyle } from '../../__builtins__'
 
 export const genOtherStyle: GenerateStyle = (token) => {

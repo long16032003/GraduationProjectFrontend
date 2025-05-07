@@ -1,10 +1,14 @@
 import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider, ISchema } from '@formily/react';
-import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
+import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
 import FormItem from '@/components/form/form-item';
 import { $http } from '@/utils/http.ts';
 import { FetchError } from 'ofetch';
-import { showRemoteValidationErrors } from '@/utils/form.ts';
+import {
+  createEmailSchema,
+  createPasswordSchema,
+  showRemoteValidationErrors,
+} from '@/utils/form.ts';
 
 // https://react.formilyjs.org/api/components/schema-field
 // https://core.formilyjs.org/api/entry/form-validator-registry
@@ -66,44 +70,27 @@ const schema: ISchema = {
       type: 'void',
       'x-component': 'FormLayout',
       'x-component-props': {
-        labelCol: 6,
-        wrapperCol: 10,
+        // labelCol: 6,
+        // wrapperCol: 10,
         layout: 'vertical',
       },
       properties: {
-        email: {
-          type: 'string',
+        email: createEmailSchema({
+          required: true,
           title: 'Email',
-          'x-decorator': 'FormItem',
-          'x-validator': 'email',
           'x-decorator-props': {
-            colon: false,
             asterisk: false,
           },
-          'x-component': 'Input',
+        }),
+        password: createPasswordSchema({
           required: true,
-          'x-component-props': {
-            placeholder: 'user@example.com'
-            // https://ant.design/components/input#input
-          },
-        },
-        password: {
-          type: 'string',
           title: 'Password',
-          required: true,
-          'x-decorator': 'FormItem',
           'x-decorator-props': {
-            colon: false,
             asterisk: false,
             label: '{{ renderPasswordLabel() }}',
             tooltip: 'Password must be at least 8 characters',
           },
-          'x-component': 'Password',
-          'x-component-props': {
-            // https://ant.design/components/input#inputpassword
-            visibilityToggle: true,
-          },
-        },
+        }),
       },
     },
   },

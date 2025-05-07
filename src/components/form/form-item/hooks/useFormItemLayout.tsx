@@ -1,7 +1,7 @@
 import { QuestionCircleOutlined } from '@ant-design/icons'
 // import { useFormLayout } from '../../form-layout'
 import { IFormItemProps } from '../types'
-import { useFormLayout } from '@formily/antd-v5';
+import { useFormLayout } from '@formily/antd-v5/esm';
 
 export const useFormItemLayout = (props: IFormItemProps) => {
   const layout = useFormLayout()

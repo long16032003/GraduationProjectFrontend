@@ -83,6 +83,7 @@ export default function(config: ConfigEnv): UserConfigExport {
     },
     // @link: https://vite.dev/config/build-options.html
     build: {
+      // sourcemap: 'inline',
       // generate .vite/manifest.json in outDir
       manifest: true,
       assetsInlineLimit: 0,

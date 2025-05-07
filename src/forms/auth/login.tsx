@@ -1,4 +1,4 @@
-import { createForm } from '@formily/core';
+import { createForm, FeedbackMessage, Field, Form } from '@formily/core';
 import { createSchemaField, FormProvider, ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
 import FormItem from '@/components/form/form-item';
@@ -40,7 +40,7 @@ const SchemaField = createSchemaField({
   },
 });
 
-const form = createForm({
+const form: Form = createForm({
   // form current values
   // values: {
   //   email: 'hello',
@@ -120,12 +120,18 @@ const LoginForm = () => {
 
               return await response.json();
             } catch (error) {
-              const serverErrors = (error as FetchError).data.errors
-              Object.entries(serverErrors).forEach(([field, messages]) => {
-                form.setFieldState(field as string, (state) => {
-                  console.log('state', state)
-                  state.setSelfErrors(messages as Array<string>)
-                })
+              const serverErrors = (error as FetchError).data.errors || {};
+              Object.entries(serverErrors).forEach(([path, messages]) => {
+
+                const field = form.query(path as string).take();
+                if (field) {
+                  (field as Field).setFeedback({
+                    messages: messages as FeedbackMessage,
+                    type: 'error',
+                    code: 'ValidateError',
+                    triggerType: 'onInput'
+                  })
+                }
               })
               // console.log(error.data)
             }

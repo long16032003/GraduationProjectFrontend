@@ -1,9 +1,10 @@
-import { createForm, FeedbackMessage, Field, Form } from '@formily/core';
+import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider, ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5';
 import FormItem from '@/components/form/form-item';
 import { $http } from '@/utils/http.ts';
 import { FetchError } from 'ofetch';
+import { showRemoteValidationErrors } from '@/utils/form.ts';
 
 // https://react.formilyjs.org/api/components/schema-field
 // https://core.formilyjs.org/api/entry/form-validator-registry
@@ -40,7 +41,7 @@ const SchemaField = createSchemaField({
   },
 });
 
-const form: Form = createForm({
+const form = createForm({
   // form current values
   // values: {
   //   email: 'hello',
@@ -111,7 +112,6 @@ const LoginForm = () => {
         <SchemaField schema={schema} />
         <Submit
           onSubmit={async (values) => {
-            // console.log(values);
             try {
               const response = await $http('login', {
                 method: 'post',
@@ -120,32 +120,9 @@ const LoginForm = () => {
 
               return await response.json();
             } catch (error) {
-              const serverErrors = (error as FetchError).data.errors || {};
-              Object.entries(serverErrors).forEach(([path, messages]) => {
-
-                const field = form.query(path as string).take();
-                if (field) {
-                  (field as Field).setFeedback({
-                    messages: messages as FeedbackMessage,
-                    type: 'error',
-                    code: 'ValidateError',
-                    triggerType: 'onInput'
-                  })
-                }
-              })
-              // console.log(error.data)
+              showRemoteValidationErrors(form, error as FetchError);
             }
-
-
-            // console.log(await response.json());
-            // return new Promise<void>((resolve) => {
-            //   setTimeout(() => {
-            //     console.log(values);
-            //     resolve();
-            //   }, 2000);
-            // });
           }}
-          // onSubmitFailed={console.log}
           block
         >Submit</Submit>
         <FormButtonGroup>

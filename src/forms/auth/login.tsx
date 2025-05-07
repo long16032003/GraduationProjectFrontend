@@ -41,6 +41,7 @@ const SchemaField = createSchemaField({
   },
 });
 
+// https://core.formilyjs.org/api/models/form
 const form = createForm({
   // form current values
   // values: {
@@ -55,6 +56,9 @@ const form = createForm({
   validateFirst: true,
 });
 
+// https://react.formilyjs.org/api/shared/schema
+// https://core.formilyjs.org/api/models/field#fieldvalidator
+// https://formilyjs.org/guide/advanced/validate
 const schema: ISchema = {
   type: 'object',
   properties: {
@@ -71,6 +75,7 @@ const schema: ISchema = {
           type: 'string',
           title: 'Email',
           'x-decorator': 'FormItem',
+          'x-validator': 'email',
           'x-decorator-props': {
             colon: false,
             asterisk: false,

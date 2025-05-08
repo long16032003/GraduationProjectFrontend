@@ -8,6 +8,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { createPwaConfig } from './pwa.config';
 import { visualizer } from 'rollup-plugin-visualizer';
 import sri from './plugins/sri';
+import fileOverride from './plugins/replace-files.ts';
 
 // @see: https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim');
@@ -20,6 +21,14 @@ export default function(config: ConfigEnv): UserConfigExport {
 
   return defineConfig({
     plugins: [
+      fileOverride([
+        {
+          // Pattern để tìm file compiler.js trong @formily/json-schema
+          pattern: 'json-schema/esm/compiler.js',
+          // File thay thế
+          replacement: 'src/_patch/@formily/json-schema/compiler.js'
+        }
+      ]),
       mkcert({
         source: 'coding',
       }),

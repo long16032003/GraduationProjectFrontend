@@ -1,6 +1,6 @@
 import process from 'node:process';
 import { IconResource, VitePWAOptions } from 'vite-plugin-pwa';
-import { ConfigEnv } from 'vite';
+import { BuildOptions, ConfigEnv } from 'vite';
 
 const appName: string = process.env.VITE_PWA_APP_NAME || 'r0';
 const appShortName: string = process.env.VITE_PWA_APP_NAME || 'r0';
@@ -34,7 +34,6 @@ const icons: IconResource[] = [
 
 // @ts-ignore
 export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) {
-
   return {
     injectRegister: null,
     strategies: 'injectManifest',
@@ -55,7 +54,7 @@ export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) 
     },
 
     injectManifest: {
-      sourcemap: !['false', '0', ''].includes(env.VITE_SOURCE_MAP) && env.VITE_SOURCE_MAP,
+      sourcemap: true,
       enableWorkboxModulesLogs: true,
       globPatterns: ['**/*.{js,css,html,png,ico,svg,gif,json,jpg,map}'],
       maximumFileSizeToCacheInBytes: 30000000, // 3MB
@@ -69,4 +68,15 @@ export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) 
       type: 'module',
     },
   } as Partial<VitePWAOptions>;
+}
+
+export function getSourcemapFromEnv(env: Record<string, string>): BuildOptions['sourcemap'] {
+  if (['false', '0'].includes(env.VITE_SOURCE_MAP) || !env.VITE_SOURCE_MAP) {
+    return false;
+  }
+  if (['true', '1', true, 1].includes(env.VITE_SOURCE_MAP)) {
+    return true;
+  }
+
+  return env.VITE_SOURCE_MAP as ('inline' | 'hidden');
 }

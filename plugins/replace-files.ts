@@ -2,8 +2,9 @@ import type { PluginOption } from 'vite';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
-// Other Rollup hooks can be used here as well
-// More info: https://rollupjs.org/guide/en/#build-hooks
+// https://rollupjs.org/guide/en/#build-hooks
+// https://vite.dev/guide/api-plugin#universal-hooks
+// https://vite.dev/guide/api-plugin#vite-specific-hooks
 
 interface FileReplacement {
   /**

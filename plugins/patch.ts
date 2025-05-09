@@ -16,24 +16,24 @@ interface FileReplacement {
   /**
    * Path to replacement file (relative to project root)
    */
-  replacement: string;
+  to: string;
 }
 
 /**
  * Simple plugin to replace file contents in node_modules
  */
-export function replaceFiles(replacements: FileReplacement[]): PluginOption {
+export function patch(replacements: FileReplacement[]): PluginOption {
   const projectRoot = process.cwd();
   const normalizedReplacements = replacements.map(r => ({
     ...r,
-    replacement: path.normalize(path.join(projectRoot, r.replacement))
+    to: path.normalize(path.join(projectRoot, r.to))
   }));
 
   // Cache for replaced files to avoid logging multiple times
   const replacedFiles = new Set<string>();
 
   return {
-    name: 'vite-plugin-replace-files',
+    name: 'vite-plugin-patch',
     enforce: 'pre', // Run before other plugins
 
     // Load hook to replace file content
@@ -48,24 +48,24 @@ export function replaceFiles(replacements: FileReplacement[]): PluginOption {
 
       if (match) {
         // Check if replacement file exists
-        if (!fs.existsSync(match.replacement)) {
-          console.error(`\n[vite-plugin-replace-files] Replacement file not found: ${match.replacement}`);
+        if (!fs.existsSync(match.to)) {
+          console.error(`\n[vite-plugin-patch] Replacement file not found: ${match.to}`);
           return null;
         }
 
         try {
-          const content = fs.readFileSync(match.replacement, 'utf-8');
+          const content = fs.readFileSync(match.to, 'utf-8');
 
           // Avoid logging multiple times for the same file
           if (!replacedFiles.has(normalizedId)) {
-            console.log(`\n[vite-plugin-replace-files] \n${normalizedId} \n⟶ ${match.replacement} \n`);
+            console.log(`\n[vite-plugin-patch] \n${normalizedId} \n⟶ ${match.to} \n`);
             replacedFiles.add(normalizedId);
           }
 
           return content;
 
         } catch (err) {
-          console.error(`\n[vite-plugin-replace-files] Error reading replacement file: ${err}`);
+          console.error(`\n[vite-plugin-patch] Error reading replacement file: ${err}`);
           return null;
         }
       }

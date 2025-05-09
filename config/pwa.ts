@@ -32,7 +32,6 @@ const icons: IconResource[] = [
   },
 ];
 
-// @ts-ignore
 export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) {
   return {
     injectRegister: null,
@@ -70,7 +69,7 @@ export function createPwaConfig(env: Record<string, string>, config: ConfigEnv) 
   } as Partial<VitePWAOptions>;
 }
 
-export function getSourcemapFromEnv(env: Record<string, string>): BuildOptions['sourcemap'] {
+export function parseSourcemap(env: Record<string, string>): BuildOptions['sourcemap'] {
   if (['false', '0'].includes(env.VITE_SOURCE_MAP) || !env.VITE_SOURCE_MAP) {
     return false;
   }

@@ -5,10 +5,10 @@ import { ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport } from 'vite
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { VitePWA } from 'vite-plugin-pwa';
-import { createPwaConfig, getSourcemapFromEnv } from './config/pwa.ts';
+import { createPwaConfig, parseSourcemap } from './config/pwa.ts';
 import { visualizer } from 'rollup-plugin-visualizer';
 import sri from './plugins/sri';
-import { replaceFiles } from './plugins/replace-files.ts';
+import { patch } from './plugins/patch.ts';
 import { createProxyConfig } from './config/proxy.ts';
 
 // @see: https://vitejs.dev/config/server-options.html#server-host
@@ -22,10 +22,10 @@ export default function(config: ConfigEnv): UserConfigExport {
 
   return defineConfig({
     plugins: [
-      replaceFiles([
+      patch([
         {
           pattern: 'node_modules/@formily/json-schema/esm/compiler.js',
-          replacement: '.patch/@formily/json-schema/compiler.js',
+          to: '.patch/@formily/json-schema/compiler.js',
         },
       ]),
       mkcert({
@@ -61,8 +61,7 @@ export default function(config: ConfigEnv): UserConfigExport {
     },
     // @link: https://vite.dev/config/build-options.html
     build: {
-      // @ts-ignore
-      sourcemap: getSourcemapFromEnv(env),
+      sourcemap: parseSourcemap(env),
       // generate .vite/manifest.json in outDir
       manifest: true,
       assetsInlineLimit: 0,

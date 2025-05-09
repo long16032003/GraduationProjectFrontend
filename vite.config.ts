@@ -8,10 +8,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { createPwaConfig } from './pwa.config';
 import { visualizer } from 'rollup-plugin-visualizer';
 import sri from './plugins/sri';
-// import fileOverride from './plugins/replace-files.ts';
-import replace from 'vite-plugin-filter-replace';
-import path from 'node:path';
-import fs from 'node:fs';
+import { replaceFiles } from './plugins/replace-files.ts';
 
 // @see: https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim');
@@ -24,24 +21,11 @@ export default function(config: ConfigEnv): UserConfigExport {
 
   return defineConfig({
     plugins: [
-      replace([
+      replaceFiles([
         {
-          filter: ['node_modules/@formily/json-schema/esm/compiler.js'],
-          replace(_, id) {
-            const projectRoot = process.cwd();
-            const replacement = path.normalize(path.join(projectRoot, 'src/_patch/@formily/json-schema/compiler.js'))
-
-            const newContent = fs.readFileSync(replacement, 'utf-8');
-            console.log(newContent, id, replacement)
-            return newContent;
-          },
+          pattern: 'node_modules/@formily/json-schema/esm/compiler.js',
+          replacement: '.patch/@formily/json-schema/compiler.js',
         },
-        // {
-        //   // Pattern để tìm file compiler.js trong @formily/json-schema
-        //   pattern: 'json-schema/esm/compiler.js',
-        //   // File thay thế
-        //   replacement: 'src/_patch/@formily/json-schema/compiler.js'
-        // }
       ]),
       mkcert({
         source: 'coding',
@@ -84,7 +68,7 @@ export default function(config: ConfigEnv): UserConfigExport {
           },
           rewrite: (path) => path.replace(/^\/api/, ''),
           configure: (proxy) => {
-            let startTime: number = 0
+            let startTime: number = 0;
             proxy.on('proxyReq', (proxyReq, req) => {
               startTime = Date.now();
               const originalUrl = `/api${req.url || ''}`;
@@ -100,7 +84,7 @@ export default function(config: ConfigEnv): UserConfigExport {
 
               console.info(`[proxy][res] ${proxyRes.method} ${originalUrl} ← ${proxyRes.statusCode} (${duration}ms)`);
             });
-          }
+          },
         },
       },
     },

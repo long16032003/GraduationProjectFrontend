@@ -2,77 +2,72 @@ import type { PluginOption } from 'vite';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
-interface FileOverride {
+// Other Rollup hooks can be used here as well
+// More info: https://rollupjs.org/guide/en/#build-hooks
+
+interface FileReplacement {
   /**
-   * Pattern hoặc substring để tìm file trong node_modules
-   * VD: 'json-schema/esm/compiler.js'
+   * Pattern or substring to find file in node_modules
+   * Example: 'json-schema/esm/compiler.js'
    */
   pattern: string;
 
   /**
-   * Đường dẫn đến file thay thế (relative to project root)
+   * Path to replacement file (relative to project root)
    */
   replacement: string;
 }
 
 /**
- * Plugin đơn giản để thay thế nội dung file trong node_modules
+ * Simple plugin to replace file contents in node_modules
  */
-export default function fileOverride(overrides: FileOverride[]): PluginOption {
+export function replaceFiles(replacements: FileReplacement[]): PluginOption {
   const projectRoot = process.cwd();
-  const normalizedOverrides = overrides.map(override => ({
-    ...override,
-    replacement: path.normalize(path.join(projectRoot, override.replacement))
+  const normalizedReplacements = replacements.map(r => ({
+    ...r,
+    replacement: path.normalize(path.join(projectRoot, r.replacement))
   }));
 
-  // Cache cho các file đã thay thế để tránh log nhiều lần
+  // Cache for replaced files to avoid logging multiple times
   const replacedFiles = new Set<string>();
 
   return {
-    name: 'vite-plugin-file-override',
-    enforce: 'pre', // Chạy trước các plugin khác
+    name: 'vite-plugin-replace-files',
+    enforce: 'pre', // Run before other plugins
 
-    // Log các cấu hình khi khởi động
-    buildStart() {
-      console.log(`[vite-plugin-file-override] Initialized with ${normalizedOverrides.length} overrides`);
-      normalizedOverrides.forEach(override => {
-        console.log(`  - Pattern: ${override.pattern}, Replacement: ${override.replacement}`);
-      });
-    },
-
-    // Hook load để thay thế nội dung file
+    // Load hook to replace file content
     load(id) {
-      // Chuyển đổi đường dẫn sang dạng chuẩn hóa và sử dụng forward slashes
+      // Convert path to normalized form and use forward slashes
       const normalizedId = path.normalize(id).replace(/\\/g, '/');
 
-      // Kiểm tra xem file có khớp với bất kỳ pattern nào không
-      const matchingOverride = normalizedOverrides.find(override =>
-        normalizedId.includes(override.pattern)
+      // Check if file matches any pattern
+      const match = normalizedReplacements.find(
+        r => normalizedId.includes(r.pattern)
       );
 
-      if (matchingOverride) {
-        // Tránh log nhiều lần cho cùng một file
+      if (match) {
+        // Avoid logging multiple times for the same file
         if (!replacedFiles.has(normalizedId)) {
-          console.log(`[vite-plugin-file-override] Replacing content of ${normalizedId} with ${matchingOverride.replacement}`);
+          console.log(`[vite-plugin-replace-files] Replacing content of ${normalizedId} with ${match.replacement}`);
           replacedFiles.add(normalizedId);
         }
 
-        // Kiểm tra xem file thay thế có tồn tại không
-        if (!fs.existsSync(matchingOverride.replacement)) {
-          console.error(`[vite-plugin-file-override] Replacement file not found: ${matchingOverride.replacement}`);
+        // Check if replacement file exists
+        if (!fs.existsSync(match.replacement)) {
+          console.error(`[vite-plugin-replace-files] Replacement file not found: ${match.replacement}`);
           return null;
         }
 
-        // Đọc và trả về nội dung của file thay thế
+        // Read and return content of replacement file
         try {
-          return fs.readFileSync(matchingOverride.replacement, 'utf-8');
+          return fs.readFileSync(match.replacement, 'utf-8');
         } catch (err) {
-          console.error(`[vite-plugin-file-override] Error reading replacement file: ${err}`);
+          console.error(`[vite-plugin-replace-files] Error reading replacement file: ${err}`);
           return null;
         }
       }
 
-      return null; // Để Vite xử lý các file khác bình thường
+      return null; // Let Vite handle other files normally
     }
   };
 }

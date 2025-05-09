@@ -47,23 +47,25 @@ export function replaceFiles(replacements: FileReplacement[]): PluginOption {
       );
 
       if (match) {
-        // Avoid logging multiple times for the same file
-        if (!replacedFiles.has(normalizedId)) {
-          console.log(`[vite-plugin-replace-files] Replacing content of ${normalizedId} with ${match.replacement}`);
-          replacedFiles.add(normalizedId);
-        }
-
         // Check if replacement file exists
         if (!fs.existsSync(match.replacement)) {
-          console.error(`[vite-plugin-replace-files] Replacement file not found: ${match.replacement}`);
+          console.error(`\n[vite-plugin-replace-files] Replacement file not found: ${match.replacement}`);
           return null;
         }
 
-        // Read and return content of replacement file
         try {
-          return fs.readFileSync(match.replacement, 'utf-8');
+          const content = fs.readFileSync(match.replacement, 'utf-8');
+
+          // Avoid logging multiple times for the same file
+          if (!replacedFiles.has(normalizedId)) {
+            console.log(`\n[vite-plugin-replace-files] \n${normalizedId} \n⟶ ${match.replacement} \n`);
+            replacedFiles.add(normalizedId);
+          }
+
+          return content;
+
         } catch (err) {
-          console.error(`[vite-plugin-replace-files] Error reading replacement file: ${err}`);
+          console.error(`\n[vite-plugin-replace-files] Error reading replacement file: ${err}`);
           return null;
         }
       }

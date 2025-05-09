@@ -3,8 +3,6 @@ import { untracked, hasCollected } from '@formily/reactive';
 import { traverse, traverseSchema, isNoNeedCompileObject, hasOwnProperty, patchStateFormSchema, } from './shared';
 import jsep from 'jsep';
 
-console.log('patched with jsep')
-
 // Utility function to evaluate jsep AST with a scope
 function evaluateExpression(node, scope) {
   // Handle different node types

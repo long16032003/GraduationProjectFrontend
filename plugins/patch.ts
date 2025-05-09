@@ -20,21 +20,46 @@ interface FileReplacement {
   to: string;
 }
 
+interface PatchPluginOptions {
+  /**
+   * TypeScript compiler options to use
+   * If not provided, default options will be used
+   */
+  compilerOptions?: ts.CompilerOptions;
+}
+
 /**
  * Compiles TypeScript to JavaScript (ESM format)
  */
-function compileTypeScript(code: string): string {
-  const compilerOptions: ts.CompilerOptions = {
-    target: ts.ScriptTarget.ESNext,
+function compileTypeScript(code: string, filePath: string, compilerOptions?: ts.CompilerOptions): string {
+  // Add additional compiler options specifically for transpilation
+  const transpileOptions: ts.CompilerOptions = {
+    ...(compilerOptions || {}),
+    // Always ensure these options for proper ESM output
+    target: compilerOptions?.target || ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.ESNext,
+
+    // Bundler mode
     moduleResolution: ts.ModuleResolutionKind.Bundler,
-    esModuleInterop: true,
-    strict: true,
+    allowImportingTsExtensions: true,
+    isolatedModules: compilerOptions?.isolatedModules || true,
+    moduleDetection: ts.ModuleDetectionKind.Force,
+    // noEmit: true,
+    jsx: ts.JsxEmit.ReactJSX,
+
+    // Linting
+    strict: compilerOptions?.strict || true,
+
+    allowJs: compilerOptions?.allowJs || false,
+    // Avoid emitting declaration files during transpilation
+    declaration: false,
+    declarationMap: false,
   };
 
   // Compile the TypeScript code
   const result = ts.transpileModule(code, {
-    compilerOptions,
+    compilerOptions: transpileOptions,
+    fileName: filePath, // Provide the filename for better error messages
     reportDiagnostics: true,
   });
 
@@ -54,7 +79,7 @@ function compileTypeScript(code: string): string {
 /**
  * Simple plugin to replace file contents in node_modules
  */
-export function patch(replacements: FileReplacement[]): PluginOption {
+export function patch(replacements: FileReplacement[], options?: PatchPluginOptions): PluginOption {
   const projectRoot = process.cwd();
   const normalizedReplacements = replacements.map(r => ({
     ...r,
@@ -88,14 +113,22 @@ export function patch(replacements: FileReplacement[]): PluginOption {
         try {
           const content = fs.readFileSync(match.to, 'utf-8');
 
+          // Detect if the source file is TypeScript
+          const isSourceTypeScript = normalizedId.endsWith('.ts') || normalizedId.endsWith('.tsx')
+
           // Detect if the replacement file is TypeScript
-          const isTypeScript = match.to.endsWith('.ts') || match.to.endsWith('.tsx');
+          const isReplaceTypeScript = match.to.endsWith('.ts') || match.to.endsWith('.tsx');
+
+          if (isSourceTypeScript && !isReplaceTypeScript) {
+            console.error(`\n[vite-plugin-patch] Replacement file must be typescript (.ts, .tsx)`);
+            return null;
+          }
 
           // Process content based on file type
           let processedContent = content;
-          if (isTypeScript) {
-            // Transform TypeScript to ESM JavaScript
-            processedContent = compileTypeScript(content);
+          if (isReplaceTypeScript && !isSourceTypeScript) {
+            // Transform TypeScript to ESM JavaScript using the loaded compiler options
+            processedContent = compileTypeScript(content, match.to, options?.compilerOptions);
             console.log(`\n[vite-plugin-patch] Compiled TypeScript to ESM for: ${match.to}`);
           }
 
@@ -108,7 +141,7 @@ export function patch(replacements: FileReplacement[]): PluginOption {
           return processedContent;
 
         } catch (err) {
-          console.error(`\n[vite-plugin-patch] Error reading replacement file: ${err}`);
+          console.error(`\n[vite-plugin-patch] Error processing replacement file: ${err}`);
           return null;
         }
       }

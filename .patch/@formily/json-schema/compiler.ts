@@ -17,6 +17,137 @@ import {
   patchStateFormSchema,
 } from './shared'
 import { ISchema } from './types'
+import jsep, { Node, BinaryExpression, UnaryExpression, Identifier, Literal, CallExpression, MemberExpression, ArrayExpression, ObjectExpression, ConditionalExpression, ThisExpression, Compound } from 'jsep';
+
+// Define a type for the scope object
+type Scope = Record<string, any>;
+
+// Utility function to evaluate jsep AST with a scope
+function evaluateExpression(node: Node, scope: Scope): any {
+  // Handle different node types
+  switch (node.type) {
+    case 'BinaryExpression': {
+      const binaryNode = node as BinaryExpression;
+      const left = evaluateExpression(binaryNode.left, scope);
+      const right = evaluateExpression(binaryNode.right, scope);
+
+      switch (binaryNode.operator) {
+        case '+': return left + right;
+        case '-': return left - right;
+        case '*': return left * right;
+        case '/': return left / right;
+        case '%': return left % right;
+        case '==': return left == right;
+        case '===': return left === right;
+        case '!=': return left != right;
+        case '!==': return left !== right;
+        case '<': return left < right;
+        case '>': return left > right;
+        case '<=': return left <= right;
+        case '>=': return left >= right;
+        case '&&': return left && right;
+        case '||': return left || right;
+        default: throw new Error(`Unsupported binary operator: ${binaryNode.operator}`);
+      }
+    }
+
+    case 'UnaryExpression': {
+      const unaryNode = node as UnaryExpression;
+      const argument = evaluateExpression(unaryNode.argument, scope);
+      switch (unaryNode.operator) {
+        case '-': return -argument;
+        case '+': return +argument;
+        case '!': return !argument;
+        case '~': return ~argument;
+        default: throw new Error(`Unsupported unary operator: ${unaryNode.operator}`);
+      }
+    }
+
+    case 'Identifier': {
+      const identifierNode = node as Identifier;
+      return scope[identifierNode.name];
+    }
+
+    case 'Literal': {
+      const literalNode = node as Literal;
+      return literalNode.value;
+    }
+
+    case 'CallExpression': {
+      const callNode = node as CallExpression;
+      const callee = evaluateExpression(callNode.callee, scope);
+      const args: any[] = [];
+      for (let i = 0; i < callNode.arguments.length; i++) {
+        args.push(evaluateExpression(callNode.arguments[i], scope));
+      }
+      return callee.apply(null, args);
+    }
+
+    case 'MemberExpression': {
+      const memberNode = node as MemberExpression;
+      const object = evaluateExpression(memberNode.object, scope);
+      if (object === null || object === undefined) return undefined;
+
+      let property: string | number;
+      if (memberNode.computed) {
+        property = evaluateExpression(memberNode.property, scope);
+      } else {
+        property = (memberNode.property as Identifier).name;
+      }
+
+      return object[property];
+    }
+
+    case 'ArrayExpression': {
+      const arrayNode = node as ArrayExpression;
+      const elements: any[] = [];
+      for (let i = 0; i < arrayNode.elements.length; i++) {
+        elements.push(evaluateExpression(arrayNode.elements[i], scope));
+      }
+      return elements;
+    }
+
+    case 'ObjectExpression': {
+      const objectNode = node as ObjectExpression;
+      const obj: Record<string | number, any> = {};
+      for (let i = 0; i < objectNode.properties.length; i++) {
+        const prop = objectNode.properties[i];
+        let key: string | number;
+        if (prop.key.type === 'Identifier') {
+          key = (prop.key as Identifier).name;
+        } else {
+          key = evaluateExpression(prop.key, scope);
+        }
+        obj[key] = evaluateExpression(prop.value, scope);
+      }
+      return obj;
+    }
+
+    case 'ConditionalExpression': {
+      const condNode = node as ConditionalExpression;
+      return evaluateExpression(condNode.test, scope)
+        ? evaluateExpression(condNode.consequent, scope)
+        : evaluateExpression(condNode.alternate, scope);
+    }
+
+    case 'ThisExpression': {
+      return scope;
+    }
+
+    case 'Compound': {
+      const compoundNode = node as Compound;
+      // For multiple statements, return the value of the last one
+      let result: any;
+      for (let i = 0; i < compoundNode.body.length; i++) {
+        result = evaluateExpression(compoundNode.body[i], scope);
+      }
+      return result;
+    }
+
+    default:
+      throw new Error(`Unsupported node type: ${node.type}`);
+  }
+}
 
 const ExpRE = /^\s*\{\{([\s\S]*)\}\}\s*$/
 const Registry = {
@@ -24,14 +155,16 @@ const Registry = {
   compile(expression: string, scope = {}) {
     if (Registry.silent) {
       try {
-        return new Function('$root', `with($root) { return (${expression}); }`)(
-          scope
-        )
-      } catch {}
+        // Parse expression with jsep and evaluate it
+        const ast = jsep(expression);
+        return evaluateExpression(ast, scope);
+      } catch (_a) {
+        //
+      }
     } else {
-      return new Function('$root', `with($root) { return (${expression}); }`)(
-        scope
-      )
+      // Parse expression with jsep and evaluate it
+      const ast = jsep(expression);
+      return evaluateExpression(ast, scope);
     }
   },
 }

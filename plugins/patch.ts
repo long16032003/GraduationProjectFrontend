@@ -1,6 +1,7 @@
 import type { PluginOption } from 'vite';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import * as ts from 'typescript';
 
 // https://rollupjs.org/guide/en/#build-hooks
 // https://vite.dev/guide/api-plugin#universal-hooks
@@ -17,6 +18,37 @@ interface FileReplacement {
    * Path to replacement file (relative to project root)
    */
   to: string;
+}
+
+/**
+ * Compiles TypeScript to JavaScript (ESM format)
+ */
+function compileTypeScript(code: string): string {
+  const compilerOptions: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    esModuleInterop: true,
+    strict: true,
+  };
+
+  // Compile the TypeScript code
+  const result = ts.transpileModule(code, {
+    compilerOptions,
+    reportDiagnostics: true,
+  });
+
+  // Check for compilation errors
+  if (result.diagnostics && result.diagnostics.length > 0) {
+    const errors = ts.formatDiagnosticsWithColorAndContext(result.diagnostics, {
+      getCurrentDirectory: () => process.cwd(),
+      getCanonicalFileName: (fileName) => fileName,
+      getNewLine: () => '\n',
+    });
+    console.error(`\n[vite-plugin-patch] TypeScript compilation errors:\n${errors}`);
+  }
+
+  return result.outputText;
 }
 
 /**
@@ -56,13 +88,24 @@ export function patch(replacements: FileReplacement[]): PluginOption {
         try {
           const content = fs.readFileSync(match.to, 'utf-8');
 
+          // Detect if the replacement file is TypeScript
+          const isTypeScript = match.to.endsWith('.ts') || match.to.endsWith('.tsx');
+
+          // Process content based on file type
+          let processedContent = content;
+          if (isTypeScript) {
+            // Transform TypeScript to ESM JavaScript
+            processedContent = compileTypeScript(content);
+            console.log(`\n[vite-plugin-patch] Compiled TypeScript to ESM for: ${match.to}`);
+          }
+
           // Avoid logging multiple times for the same file
           if (!replacedFiles.has(normalizedId)) {
             console.log(`\n[vite-plugin-patch] \n${normalizedId} \n⟶ ${match.to} \n`);
             replacedFiles.add(normalizedId);
           }
 
-          return content;
+          return processedContent;
 
         } catch (err) {
           console.error(`\n[vite-plugin-patch] Error reading replacement file: ${err}`);
@@ -71,6 +114,6 @@ export function patch(replacements: FileReplacement[]): PluginOption {
       }
 
       return null; // Let Vite handle other files normally
-    }
+    },
   };
 }

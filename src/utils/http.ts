@@ -49,7 +49,7 @@ export const defaultOptions = {
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     if (response.status === 419) {
       // reinitialize XSRF-TOKEN cookie
-      await $http('/sanctum/csrf-cookie')
+      await $http('sanctum/csrf-cookie')
     }
   },
 } as FetchOptions;

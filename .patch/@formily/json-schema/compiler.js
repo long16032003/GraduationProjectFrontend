@@ -1,113 +1,307 @@
 import { isArr, isFn, isPlainObj, isStr, reduce, FormPath, } from '@formily/shared';
 import { untracked, hasCollected } from '@formily/reactive';
 import { traverse, traverseSchema, isNoNeedCompileObject, hasOwnProperty, patchStateFormSchema, } from './shared';
-import jsep from 'jsep';
-
-// Utility function to evaluate jsep AST with a scope
+import * as acorn from 'acorn';
+// Utility function to evaluate acorn AST with a scope
 function evaluateExpression(node, scope) {
   // Handle different node types
   switch (node.type) {
-    case 'BinaryExpression':
-      var left = evaluateExpression(node.left, scope);
-      var right = evaluateExpression(node.right, scope);
-
-      switch (node.operator) {
+    case 'Program': {
+      const program = node;
+      // For multiple statements, return the value of the last one
+      let result;
+      for (const statement of program.body) {
+        if (statement.type === 'ExpressionStatement') {
+          result = evaluateExpression(statement.expression, scope);
+        }
+      }
+      return result;
+    }
+    case 'ExpressionStatement': {
+      const expressionStatement = node;
+      return evaluateExpression(expressionStatement.expression, scope);
+    }
+    case 'BinaryExpression': {
+      const binaryNode = node;
+      const left = evaluateExpression(binaryNode.left, scope);
+      const right = evaluateExpression(binaryNode.right, scope);
+      switch (binaryNode.operator) {
         case '+': return left + right;
         case '-': return left - right;
         case '*': return left * right;
         case '/': return left / right;
         case '%': return left % right;
-        case '==': return left == right;
-        case '===': return left === right;
-        case '!=': return left != right;
-        case '!==': return left !== right;
         case '<': return left < right;
         case '>': return left > right;
         case '<=': return left <= right;
         case '>=': return left >= right;
-        case '&&': return left && right;
-        case '||': return left || right;
-        default: throw new Error("Unsupported binary operator: " + node.operator);
+        case '==': return left == right;
+        case '!=': return left != right;
+        case '===': return left === right;
+        case '!==': return left !== right;
+        case '&': return left & right;
+        case '|': return left | right;
+        case '^': return left ^ right;
+        case '<<': return left << right;
+        case '>>': return left >> right;
+        case '>>>': return left >>> right;
+        case 'in': return left in right;
+        case 'instanceof': return left instanceof right;
+        default: throw new Error(`Unsupported binary operator: ${binaryNode.operator}`);
       }
-
-    case 'UnaryExpression':
-      var argument = evaluateExpression(node.argument, scope);
-      switch (node.operator) {
+    }
+    case 'LogicalExpression': {
+      const logicalNode = node;
+      const left = evaluateExpression(logicalNode.left, scope);
+      switch (logicalNode.operator) {
+        case '&&': return left && evaluateExpression(logicalNode.right, scope);
+        case '||': return left || evaluateExpression(logicalNode.right, scope);
+        case '??': return left ?? evaluateExpression(logicalNode.right, scope);
+        default: throw new Error(`Unsupported logical operator: ${logicalNode.operator}`);
+      }
+    }
+    case 'UnaryExpression': {
+      const unaryNode = node;
+      const argument = evaluateExpression(unaryNode.argument, scope);
+      switch (unaryNode.operator) {
         case '-': return -argument;
         case '+': return +argument;
         case '!': return !argument;
         case '~': return ~argument;
-        default: throw new Error("Unsupported unary operator: " + node.operator);
+        case 'typeof': return typeof argument;
+        case 'void': return void argument;
+        case 'delete':
+          if (unaryNode.argument.type === 'MemberExpression') {
+            const obj = evaluateExpression(unaryNode.argument.object, scope);
+            const prop = unaryNode.argument.computed
+              ? evaluateExpression(unaryNode.argument.property, scope)
+              : unaryNode.argument.property.name;
+            return delete obj[prop];
+          }
+          return false;
+        default: throw new Error(`Unsupported unary operator: ${unaryNode.operator}`);
       }
-
-    case 'Identifier':
-      return scope[node.name];
-
-    case 'Literal':
-      return node.value;
-
-    case 'CallExpression':
-      var callee = evaluateExpression(node.callee, scope);
-      var args = [];
-      for (var i = 0; i < node.arguments.length; i++) {
-        args.push(evaluateExpression(node.arguments[i], scope));
+    }
+    case 'Identifier': {
+      const identifierNode = node;
+      return scope[identifierNode.name];
+    }
+    case 'Literal': {
+      const literalNode = node;
+      return literalNode.value;
+    }
+    case 'CallExpression': {
+      const callNode = node;
+      const callee = evaluateExpression(callNode.callee, scope);
+      if (typeof callee !== 'function') {
+        throw new Error(`${callNode.callee.type} is not a function`);
       }
+      const args = callNode.arguments.map(arg => evaluateExpression(arg, scope));
+      // Handle method calls (when callee is a member expression)
+      if (callNode.callee.type === 'MemberExpression') {
+        const object = evaluateExpression(callNode.callee.object, scope);
+        return callee.apply(object, args);
+      }
+      // eslint-disable-next-line prefer-spread
       return callee.apply(null, args);
-
-    case 'MemberExpression':
-      var object = evaluateExpression(node.object, scope);
-      if (object === null || object === undefined) return undefined;
-
-      var property;
-      if (node.computed) {
-        property = evaluateExpression(node.property, scope);
-      } else {
-        property = node.property.name;
+    }
+    case 'MemberExpression': {
+      const memberNode = node;
+      const object = evaluateExpression(memberNode.object, scope);
+      if (object === null || object === undefined)
+        return undefined;
+      let property;
+      if (memberNode.computed) {
+        property = evaluateExpression(memberNode.property, scope);
       }
-
+      else {
+        property = memberNode.property.name;
+      }
       return object[property];
-
-    case 'ArrayExpression':
-      var elements = [];
-      for (var i = 0; i < node.elements.length; i++) {
-        elements.push(evaluateExpression(node.elements[i], scope));
-      }
-      return elements;
-
-    case 'ObjectExpression':
-      var obj = {};
-      for (var i = 0; i < node.properties.length; i++) {
-        var prop = node.properties[i];
-        var key;
-        if (prop.key.type === 'Identifier') {
-          key = prop.key.name;
-        } else {
-          key = evaluateExpression(prop.key, scope);
+    }
+    case 'ArrayExpression': {
+      const arrayNode = node;
+      return arrayNode.elements.map(element => element ? evaluateExpression(element, scope) : undefined);
+    }
+    case 'ObjectExpression': {
+      const objectNode = node;
+      const obj = {};
+      for (const prop of objectNode.properties) {
+        if (prop.type === 'Property') {
+          let key;
+          if (prop.key.type === 'Identifier' && !prop.computed) {
+            key = prop.key.name;
+          }
+          else {
+            key = evaluateExpression(prop.key, scope);
+          }
+          obj[key] = evaluateExpression(prop.value, scope);
         }
-        obj[key] = evaluateExpression(prop.value, scope);
+        else if (prop.type === 'SpreadElement') {
+          const spreadValue = evaluateExpression(prop.argument, scope);
+          Object.assign(obj, spreadValue);
+        }
       }
       return obj;
-
-    case 'ConditionalExpression':
-      return evaluateExpression(node.test, scope)
-        ? evaluateExpression(node.consequent, scope)
-        : evaluateExpression(node.alternate, scope);
-
-    case 'ThisExpression':
+    }
+    case 'ConditionalExpression': {
+      const condNode = node;
+      return evaluateExpression(condNode.test, scope)
+        ? evaluateExpression(condNode.consequent, scope)
+        : evaluateExpression(condNode.alternate, scope);
+    }
+    case 'ThisExpression': {
       return scope;
-
-    case 'Compound':
-      // For multiple statements, return the value of the last one
-      var result;
-      for (var i = 0; i < node.body.length; i++) {
-        result = evaluateExpression(node.body[i], scope);
+    }
+    case 'ArrowFunctionExpression': {
+      const arrowNode = node;
+      return (...args) => {
+        // Create a new scope with arguments
+        const fnScope = { ...scope };
+        // Handle parameters
+        arrowNode.params.forEach((param, index) => {
+          if (param.type === 'Identifier') {
+            fnScope[param.name] = args[index];
+          }
+          // Additional handling for destructuring patterns could be added here
+        });
+        // Execute function body
+        if (arrowNode.body.type === 'BlockStatement') {
+          // Handle block body with multiple statements
+          const bodyScope = { ...fnScope };
+          for (const statement of arrowNode.body.body) {
+            if (statement.type === 'ReturnStatement' && statement.argument) {
+              return evaluateExpression(statement.argument, bodyScope);
+            }
+            // Execute each statement (limited support)
+            if (statement.type === 'ExpressionStatement') {
+              evaluateExpression(statement.expression, bodyScope);
+            }
+          }
+          return undefined;
+        }
+        else {
+          // Handle expression body (implicit return)
+          return evaluateExpression(arrowNode.body, fnScope);
+        }
+      };
+    }
+    case 'FunctionExpression': {
+      const funcNode = node;
+      const func = (...args) => {
+        // Create a new scope with arguments
+        const fnScope = { ...scope };
+        // Handle parameters
+        funcNode.params.forEach((param, index) => {
+          if (param.type === 'Identifier') {
+            fnScope[param.name] = args[index];
+          }
+          // Additional handling for destructuring patterns could be added here
+        });
+        // Execute function body
+        if (funcNode.body.type === 'BlockStatement') {
+          const bodyScope = { ...fnScope };
+          for (const statement of funcNode.body.body) {
+            if (statement.type === 'ReturnStatement' && statement.argument) {
+              return evaluateExpression(statement.argument, bodyScope);
+            }
+            // Limited support for other statements
+            if (statement.type === 'ExpressionStatement') {
+              evaluateExpression(statement.expression, bodyScope);
+            }
+          }
+        }
+        return undefined;
+      };
+      return func;
+    }
+    case 'TemplateLiteral': {
+      const templateNode = node;
+      let result = '';
+      for (let i = 0; i < templateNode.expressions.length; i++) {
+        result += templateNode.quasis[i].value.raw;
+        result += String(evaluateExpression(templateNode.expressions[i], scope));
+      }
+      // Add the final quasi
+      result += templateNode.quasis[templateNode.quasis.length - 1].value.raw;
+      return result;
+    }
+    case 'UpdateExpression': {
+      const updateNode = node;
+      let value = evaluateExpression(updateNode.argument, scope);
+      // Only update if it's a valid reference
+      if (updateNode.argument.type === 'Identifier') {
+        const name = updateNode.argument.name;
+        if (updateNode.operator === '++') {
+          value = updateNode.prefix ? ++scope[name] : scope[name]++;
+        }
+        else if (updateNode.operator === '--') {
+          value = updateNode.prefix ? --scope[name] : scope[name]--;
+        }
+      }
+      return value;
+    }
+    case 'AssignmentExpression': {
+      const assignNode = node;
+      const right = evaluateExpression(assignNode.right, scope);
+      // Handle simple identifier assignment
+      if (assignNode.left.type === 'Identifier') {
+        const name = assignNode.left.name;
+        switch (assignNode.operator) {
+          case '=': return scope[name] = right;
+          case '+=': return scope[name] += right;
+          case '-=': return scope[name] -= right;
+          case '*=': return scope[name] *= right;
+          case '/=': return scope[name] /= right;
+          case '%=': return scope[name] %= right;
+          case '**=': return scope[name] **= right;
+          case '<<=': return scope[name] <<= right;
+          case '>>=': return scope[name] >>= right;
+          case '>>>=': return scope[name] >>>= right;
+          case '|=': return scope[name] |= right;
+          case '^=': return scope[name] ^= right;
+          case '&=': return scope[name] &= right;
+          case '&&=': return scope[name] &&= right;
+          case '||=': return scope[name] ||= right;
+          case '??=': return scope[name] ??= right;
+          default: throw new Error(`Unsupported assignment operator: ${assignNode.operator}`);
+        }
+      }
+      // Handle property assignment
+      if (assignNode.left.type === 'MemberExpression') {
+        const memberNode = assignNode.left;
+        const object = evaluateExpression(memberNode.object, scope);
+        const property = memberNode.computed
+          ? evaluateExpression(memberNode.property, scope)
+          : memberNode.property.name;
+        switch (assignNode.operator) {
+          case '=': return object[property] = right;
+          case '+=': return object[property] += right;
+          case '-=': return object[property] -= right;
+          case '*=': return object[property] *= right;
+          case '/=': return object[property] /= right;
+          case '%=': return object[property] %= right;
+          default: throw new Error(`Unsupported assignment operator: ${assignNode.operator}`);
+        }
+      }
+      throw new Error(`Unsupported left-hand side in assignment: ${assignNode.left.type}`);
+    }
+    case 'SpreadElement': {
+      const spreadNode = node;
+      return evaluateExpression(spreadNode.argument, scope);
+    }
+    case 'SequenceExpression': {
+      const seqNode = node;
+      let result;
+      for (const expr of seqNode.expressions) {
+        result = evaluateExpression(expr, scope);
       }
       return result;
-
+    }
     default:
-      throw new Error("Unsupported node type: " + node.type);
+      throw new Error(`Unsupported node type: ${node.type}`);
   }
-};
+}
 
 var ExpRE = /^\s*\{\{([\s\S]*)\}\}\s*$/;
 
@@ -118,15 +312,23 @@ var Registry = {
 
     if (Registry.silent) {
       try {
-        // Parse expression with jsep and evaluate it
-        const ast = jsep(expression);
+        // Parse expression with acorn and evaluate it
+        const ast = acorn.parse(expression, {
+          ecmaVersion: 2022,
+          sourceType: 'script',
+          // Add any needed acorn plugins here
+        });
         return evaluateExpression(ast, scope);
       }
       catch (_a) { }
     }
     else {
-      // Parse expression with jsep and evaluate it
-      const ast = jsep(expression);
+      // Parse expression with acorn and evaluate it
+      const ast = acorn.parse(expression, {
+        ecmaVersion: 2022,
+        sourceType: 'script',
+        // Add any needed acorn plugins here
+      });
       return evaluateExpression(ast, scope);
     }
   },

@@ -25,7 +25,7 @@ export default function(config: ConfigEnv): UserConfigExport {
       patch([
         {
           pattern: 'node_modules/@formily/json-schema/esm/compiler.js',
-          to: '.patch/@formily/json-schema/compiler.js',
+          to: '.patch/@formily/json-schema/compiler.ts',
         },
       ]),
       mkcert({

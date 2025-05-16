@@ -9,6 +9,8 @@ import {
   createPasswordSchema,
   showRemoteValidationErrors,
 } from '@/utils/form.ts';
+import { useLogin } from "@refinedev/core";
+import { redirect } from 'react-router';
 
 // https://react.formilyjs.org/api/components/schema-field
 // https://core.formilyjs.org/api/entry/form-validator-registry
@@ -96,25 +98,41 @@ const schema: ISchema = {
   },
 };
 
+type LoginVariables = {
+  email: string;
+  password: string;
+};
+
 const LoginForm = () => {
+  const { mutate: login, isPending } = useLogin<LoginVariables>();
+
+  const handleLogin = (values: LoginVariables) => {
+    console.log(values);
+    login(values, {
+      onSuccess: (data) => {
+        if (data.success) {
+          return redirect('/admin')
+        }
+
+        const error = data.error as FetchError;
+
+        if (error.statusCode === 422) {
+          // 419: Validation error
+          showRemoteValidationErrors(form, error);
+        }
+
+        //   show notification
+      },
+    });
+  }
 
   return (
     <div>
       <FormProvider form={form}>
         <SchemaField schema={schema} />
         <Submit
-          onSubmit={async (values) => {
-            try {
-              const response = await $http('login', {
-                method: 'post',
-                body: values,
-              })
-
-              return await response.json();
-            } catch (error) {
-              showRemoteValidationErrors(form, error as FetchError);
-            }
-          }}
+          loading={isPending}
+          onSubmit={handleLogin}
           block
         >Submit</Submit>
         <FormButtonGroup>

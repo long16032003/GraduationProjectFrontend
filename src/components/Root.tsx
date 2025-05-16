@@ -1,5 +1,5 @@
 import { resources } from '@/config/resources';
-// import { authProvider } from '@/providers/authProvider';
+import { authProvider } from '@/providers/auth-provider.ts';
 import { dataProvider } from '@/providers/data-provider.ts';
 import { type IRefineOptions, Refine } from '@refinedev/core';
 import routerBindings, { UnsavedChangesNotifier } from '@refinedev/react-router';
@@ -21,7 +21,7 @@ export const Root = () => {
       resources={resources}
       options={options}
       routerProvider={routerBindings}
-      // authProvider={authProvider}
+      authProvider={authProvider}
       // accessControlProvider={accessControlProvider}
       dataProvider={dataProvider}
     >

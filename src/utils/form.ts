@@ -1,7 +1,8 @@
-import type { Field, FieldFeedbackTriggerTypes, Form } from '@formily/core';
+import type { Field, FieldFeedbackTriggerTypes, FeedbackMessage, Form, IFieldFeedback } from '@formily/core';
 import { FetchError } from 'ofetch';
 import { defu } from 'defu';
 import type { ISchema } from '@formily/react';
+import { collect } from 'ts-collect';
 
 export interface ValicationErrorJson {
   errors: {
@@ -9,6 +10,21 @@ export interface ValicationErrorJson {
   };
   message: string;
 }
+
+export const convertValidationErrorsToFeedbacks = (
+  error: FetchError,
+  triggerType: FieldFeedbackTriggerTypes = 'onInput',
+) => {
+  const json = error.data as ValicationErrorJson;
+
+  return collect(Object.entries(json.errors || {}))
+    .mapWithKeys(([path, messages]) => [path, {
+      messages: messages,
+      type: 'error',
+      code: 'ValidateError',
+      triggerType,
+    } as IFieldFeedback])
+};
 
 export function showRemoteValidationErrors(
   form: Form,
@@ -22,11 +38,11 @@ export function showRemoteValidationErrors(
 
     if (!field) return;
     (field as Field).setFeedback({
-      messages: messages,
+      messages: messages as FeedbackMessage,
       type: 'error',
       code: 'ValidateError',
       triggerType,
-    });
+    } as IFieldFeedback);
   });
 }
 

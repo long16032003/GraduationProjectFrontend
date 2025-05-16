@@ -9,8 +9,15 @@ import {
   createPasswordSchema,
   showRemoteValidationErrors,
 } from '@/utils/form.ts';
-import { useLogin } from "@refinedev/core";
-import { redirect } from 'react-router';
+import {
+  type OpenNotificationParams,
+  type RefineError,
+  type SuccessNotificationResponse,
+  useGo, useInvalidateAuthStore,
+  useLogin,
+  useNotification,
+} from '@refinedev/core';
+import HttpStatusCodes from '@/utils/http-status-codes.ts';
 
 // https://react.formilyjs.org/api/components/schema-field
 // https://core.formilyjs.org/api/entry/form-validator-registry
@@ -103,25 +110,73 @@ type LoginVariables = {
   password: string;
 };
 
+const buildNotification = (
+  error?: Error | RefineError,
+): OpenNotificationParams => {
+  return {
+    message: error?.name || "Login Error",
+    description: error?.message || "Invalid credentials",
+    key: "login-error",
+    type: "error",
+  };
+};
+
+const buildSuccessNotification = (
+  successNotification: SuccessNotificationResponse,
+): OpenNotificationParams => {
+  return {
+    message: successNotification.message,
+    description: successNotification.description,
+    key: "login-success",
+    type: "success",
+  };
+};
+
 const LoginForm = () => {
-  const { mutate: login, isPending } = useLogin<LoginVariables>();
+  const { mutate: login, isLoading } = useLogin<LoginVariables>();
+  const invalidateAuthStore = useInvalidateAuthStore();
+  const { close, open } = useNotification();
+  const go = useGo();
 
   const handleLogin = (values: LoginVariables) => {
     console.log(values);
     login(values, {
-      onSuccess: (data) => {
-        if (data.success) {
-          return redirect('/admin')
+      onSuccess: async ({ success, redirectTo, error, successNotification }) => {
+        console.log(error, redirectTo)
+        if (success) {
+          close?.("login-error");
+
+          if (successNotification) {
+            open?.(buildSuccessNotification(successNotification));
+          }
         }
 
-        const error = data.error as FetchError;
-
-        if (error.statusCode === 422) {
-          // 419: Validation error
-          showRemoteValidationErrors(form, error);
+        if (error || !success) {
+          if (error instanceof FetchError) {
+            if (error.statusCode === HttpStatusCodes.UNPROCESSABLE_ENTITY) {
+              // 422: Validation error
+              showRemoteValidationErrors(form, error);
+            }
+            if (error.statusCode === HttpStatusCodes.FORBIDDEN) {
+              console.log('FORBIDDEN')
+              // 403: Already logged in
+              open?.(buildNotification({
+                name: "Login Error",
+                message: "Already logged in",
+              }));
+            }
+          } else {
+            open?.(buildNotification(error));
+          }
         }
 
-        //   show notification
+        if (success) {
+          go({ to: '/admin', type: "replace" });
+        }
+
+        setTimeout(() => {
+          invalidateAuthStore();
+        }, 32);
       },
     });
   }
@@ -131,7 +186,7 @@ const LoginForm = () => {
       <FormProvider form={form}>
         <SchemaField schema={schema} />
         <Submit
-          loading={isPending}
+          loading={isLoading}
           onSubmit={handleLogin}
           block
         >Submit</Submit>

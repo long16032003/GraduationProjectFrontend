@@ -22,7 +22,7 @@ export const defaultOptions = {
   // 502 - Bad Gateway
   // 503 - Service Unavailable
   // 504 - Gateway Timeout
-  retryStatusCodes: [408, 409, 425, 429, 500, 502, 503, 504, 419],
+  retryStatusCodes: [408, 409, 425, 500, 502, 503, 504, 419],
   // Delay between retries in milliseconds.
   retryDelay: ({response}): number => {
     if(response?.status === 419) {

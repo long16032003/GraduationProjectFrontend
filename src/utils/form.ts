@@ -1,7 +1,7 @@
-import { Field, FieldFeedbackTriggerTypes, Form } from '@formily/core';
+import type { Field, FieldFeedbackTriggerTypes, Form } from '@formily/core';
 import { FetchError } from 'ofetch';
 import { defu } from 'defu';
-import { ISchema } from '@formily/react';
+import type { ISchema } from '@formily/react';
 
 export interface ValicationErrorJson {
   errors: {

@@ -1,5 +1,5 @@
 import { Admin } from '@/components/layouts/Admin';
-import { RouteObject } from 'react-router';
+import type { RouteObject } from 'react-router';
 
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy

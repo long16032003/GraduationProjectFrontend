@@ -2,7 +2,8 @@
 import { getAnimationStyle } from './animation'
 import { getGridStyle } from './grid'
 import { genOtherStyle } from './other'
-import { GenerateStyle, genStyleHook } from '@formily/antd-v5/esm/__builtins__';
+import { genStyleHook } from '@formily/antd-v5/esm/__builtins__';
+import type { GenerateStyle } from '@formily/antd-v5/esm/__builtins__';
 
 const genSmallStyle: GenerateStyle = (token) => {
   const {

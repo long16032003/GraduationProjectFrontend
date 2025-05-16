@@ -1,5 +1,5 @@
 import { Keyframes } from '@ant-design/cssinjs'
-import { GenerateStyle } from '@formily/antd-v5/esm/__builtins__';
+import type { GenerateStyle } from '@formily/antd-v5/esm/__builtins__';
 
 const antShowHelpIn = new Keyframes('antShowHelpIn', {
   '0%': {

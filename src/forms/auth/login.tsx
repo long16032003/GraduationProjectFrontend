@@ -1,5 +1,5 @@
 import { createForm } from '@formily/core';
-import { createSchemaField, FormProvider, ISchema } from '@formily/react';
+import { createSchemaField, FormProvider, type ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
 import FormItem from '@/components/form/form-item';
 import { $http } from '@/utils/http.ts';

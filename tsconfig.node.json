@@ -21,7 +21,8 @@
     "noUncheckedSideEffectImports": true,
 
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "resolveJsonModule": true
   },
   "include": ["vite.config.ts"]
 }

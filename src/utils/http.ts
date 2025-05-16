@@ -1,4 +1,5 @@
-import { $fetch, FetchOptions, FetchRequest } from 'ofetch';
+import { $fetch } from 'ofetch';
+import type { FetchOptions, FetchRequest } from 'ofetch';
 import { defu } from 'defu';
 import { parse } from 'cookie-es';
 

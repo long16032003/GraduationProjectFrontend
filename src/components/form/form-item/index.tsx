@@ -4,14 +4,14 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import { isVoidField } from '@formily/core'
-import { connect, mapProps, ReactFC } from '@formily/react'
+import { connect, mapProps, type ReactFC } from '@formily/react'
 import { Popover, Tooltip } from 'antd'
 import cls from 'classnames'
 import React, { isValidElement, useState } from 'react';
 import { pickDataProps, usePrefixCls } from '@formily/antd-v5/esm/__builtins__'
 import { useFormItemLayout, useOverflow } from './hooks'
 import useStyle from './style'
-import { FormLayoutShallowContext, IFormItemProps } from '@formily/antd-v5/esm';
+import { FormLayoutShallowContext, type IFormItemProps } from '@formily/antd-v5/esm';
 
 export * from './hooks'
 export * from './types'

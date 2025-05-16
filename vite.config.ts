@@ -33,6 +33,7 @@ export default function(config: ConfigEnv): UserConfigExport {
         source: 'coding',
       }),
       react(),
+      // https://vite-pwa-org.netlify.app/guide/cookbook.html
       VitePWA(createPwaConfig(env, config)),
       visualizer({
         gzipSize: true,

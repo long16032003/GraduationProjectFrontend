@@ -7,7 +7,7 @@
 <IfModule mod_mime.c>
     # Manifest file
     AddType application/manifest+json webmanifest
-    # Manifest file
+    # Sourcemap file
     AddType application/json map
 </IfModule>
 # Cache files of the following types for 1 month

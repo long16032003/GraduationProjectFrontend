@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register';
 const intervalMS = 2 * 60 * 1000;
 
 registerSW({
+  immediate: true,
   onRegisteredSW(swUrl, r) {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     r && setInterval(async () => {

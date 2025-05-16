@@ -5,11 +5,12 @@ import { ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport } from 'vite
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { VitePWA } from 'vite-plugin-pwa';
-import { createPwaConfig, parseSourcemap } from './config/pwa.ts';
+import { createPwaConfig } from './config/pwa.ts';
 import { visualizer } from 'rollup-plugin-visualizer';
 import sri from './plugins/sri';
 import { patch } from './plugins/patch.ts';
 import { createProxyConfig } from './config/proxy.ts';
+import { normalizeSourcemapValue } from './utility.ts';
 
 // @see: https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim');
@@ -61,7 +62,7 @@ export default function(config: ConfigEnv): UserConfigExport {
     },
     // @link: https://vite.dev/config/build-options.html
     build: {
-      sourcemap: parseSourcemap(env),
+      sourcemap: normalizeSourcemapValue(env.VITE_SOURCE_MAP),
       // generate .vite/manifest.json in outDir
       manifest: true,
       assetsInlineLimit: 0,

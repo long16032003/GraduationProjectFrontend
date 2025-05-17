@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.svg"
+    "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.svg",
+    "refine": "refine",
+    "switch": "refine swizzle"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^1.23.0",
@@ -32,8 +34,10 @@
     "@refinedev/antd": "^5.46.1",
     "@refinedev/core": "^4.57.9",
     "@refinedev/react-router": "^1.0.1",
+    "@refinedev/react-table": "^5.6.15",
     "@sqlite.org/sqlite-wasm": "3.49.2-build1",
     "@tanstack/react-query": "4.10.1",
+    "@tanstack/react-table": "^8.21.3",
     "@types/trusted-types": "^2.0.7",
     "acorn": "^8.14.1",
     "antd": "^5.25.1",
@@ -62,11 +66,12 @@
     "react-router": "^7.6.0",
     "shadcn": "2.3.0",
     "ts-collect": "^0.4.0",
-    "tw-animate-css": "^1.2.9",
+    "tw-animate-css": "^1.3.0",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.26.0",
+    "@eslint/js": "^9.27.0",
+    "@refinedev/cli": "^2.16.46",
     "@types/node": "^18.19.100",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.7",
@@ -75,7 +80,7 @@
     "autoprefixer": "^10.4.21",
     "cheerio": "^1.0.0",
     "cssnano": "^7.0.7",
-    "eslint": "^9.26.0",
+    "eslint": "^9.27.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",

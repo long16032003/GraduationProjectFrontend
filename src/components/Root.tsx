@@ -4,9 +4,7 @@ import { dataProvider } from '@/providers/data-provider.ts';
 import { type IRefineOptions, Refine } from '@refinedev/core';
 import routerBindings, { UnsavedChangesNotifier } from '@refinedev/react-router';
 import { Outlet } from 'react-router';
-import { iconPrefixCls, prefixCls, theme } from '@/config/theme.ts';
-import { ConfigProvider } from 'antd';
-import { StyleProvider } from '@ant-design/cssinjs';
+import { useNotificationProvider } from '@refinedev/antd';
 // import { accessControlProvider } from '@/providers/access-control-provider.ts';
 
 const options: IRefineOptions = {
@@ -17,20 +15,17 @@ const options: IRefineOptions = {
 
 export const Root = () => {
   return (
-    <Refine
-      resources={resources}
-      options={options}
-      routerProvider={routerBindings}
-      authProvider={authProvider}
-      // accessControlProvider={accessControlProvider}
-      dataProvider={dataProvider}
-    >
-      <StyleProvider layer>
-        <ConfigProvider prefixCls={prefixCls} iconPrefixCls={iconPrefixCls} theme={theme}>
-          <Outlet />
-        </ConfigProvider>
-      </StyleProvider>
-      <UnsavedChangesNotifier />
-    </Refine>
+      <Refine
+        resources={resources}
+        options={options}
+        routerProvider={routerBindings}
+        authProvider={authProvider}
+        notificationProvider={useNotificationProvider}
+        // accessControlProvider={accessControlProvider}
+        dataProvider={dataProvider}
+      >
+        <Outlet />
+        <UnsavedChangesNotifier />
+      </Refine>
   );
 };

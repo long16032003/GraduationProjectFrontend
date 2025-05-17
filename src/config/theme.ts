@@ -15,6 +15,10 @@ const theme: ThemeConfig = {
     motion: false,
     // Seed Token
     colorPrimary: '#5e6ae4',
+    colorLink: '#4653dd',
+    // colorLinkHover: '#818bed',
+    colorLinkHover: '#000000e0',
+    linkHoverDecoration: 'underline',
     colorTextPlaceholder: '#737373',
     controlHeight: 36,
     // https://www.smashingmagazine.com/2015/11/using-system-ui-fonts-practical-guide/

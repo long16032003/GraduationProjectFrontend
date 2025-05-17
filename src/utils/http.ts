@@ -1,6 +1,5 @@
 import { $fetch } from 'ofetch';
-import type { FetchOptions, FetchRequest } from 'ofetch';
-import { defu } from 'defu';
+import type { FetchOptions } from 'ofetch';
 import { parse } from 'cookie-es';
 
 // https://velog.io/@hafnium1923/Access-Token-Refresh-Token
@@ -50,12 +49,10 @@ export const defaultOptions = {
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     if (response.status === 419) {
       // reinitialize XSRF-TOKEN cookie
-      await $http('sanctum/csrf-cookie')
+      await httpClient('sanctum/csrf-cookie')
     }
   },
 } as FetchOptions;
 
 // use client side only
-export function $http(url: FetchRequest, options?: FetchOptions) {
-  return $fetch(url, defu(options, defaultOptions));
-}
+export const httpClient = $fetch.create(defaultOptions)

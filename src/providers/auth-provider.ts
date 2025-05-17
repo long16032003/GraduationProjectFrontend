@@ -1,4 +1,4 @@
-import { $http } from '@/utils/http';
+import { httpClient } from '@/utils/http';
 import type { AuthProvider } from '@refinedev/core';
 import { FetchError } from 'ofetch';
 
@@ -18,9 +18,8 @@ export const authProvider: AuthProvider = {
   // updatePassword: undefined,
   login: async (params: Credentials) => {
     try {
-      await $http('login', { method: 'post', body: params })
-      const response = await $http('@me');
-      const user = await response.json();
+      await httpClient('login', { method: 'post', body: params })
+      const user = await httpClient('@me');
 
       if (user) {
         localStorage.setItem("auth", JSON.stringify(user));

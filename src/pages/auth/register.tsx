@@ -32,7 +32,6 @@ export function RegisterPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form>
               <div className="grid gap-6">
                 <div className="flex flex-col gap-4">
                   <Button variant="outline" className="w-full">
@@ -68,7 +67,6 @@ export function RegisterPage({
                   </a>
                 </div>
               </div>
-            </form>
           </CardContent>
         </Card>
         <div

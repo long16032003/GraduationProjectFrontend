@@ -2,7 +2,7 @@ import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider, type ISchema } from '@formily/react';
 import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
 import FormItem from '@/components/form/form-item';
-import { $http } from '@/utils/http.ts';
+import { httpClient } from '@/utils/http.ts';
 import { FetchError } from 'ofetch';
 import {
   createEmailSchema,
@@ -76,12 +76,13 @@ const schema: ISchema = {
   type: 'object',
   properties: {
     layout: {
+      // https://github.com/formilyjs/antd/blob/master/packages/components/src/form-layout/index.tsx
       type: 'void',
       'x-component': 'FormLayout',
       'x-component-props': {
-        // labelCol: 6,
-        // wrapperCol: 10,
         layout: 'vertical',
+        feedbackLayout: 'terse',
+        // spaceGap: 4,
       },
       properties: {
         email: createEmailSchema({
@@ -143,9 +144,8 @@ const LoginForm = () => {
     login(values, {
       onSuccess: async ({ success, redirectTo, error, successNotification }) => {
         console.log(error, redirectTo)
+        close?.("login-error");
         if (success) {
-          close?.("login-error");
-
           if (successNotification) {
             open?.(buildSuccessNotification(successNotification));
           }
@@ -158,7 +158,6 @@ const LoginForm = () => {
               showRemoteValidationErrors(form, error);
             }
             if (error.statusCode === HttpStatusCodes.FORBIDDEN) {
-              console.log('FORBIDDEN')
               // 403: Already logged in
               open?.(buildNotification({
                 name: "Login Error",
@@ -182,7 +181,7 @@ const LoginForm = () => {
   }
 
   return (
-    <div>
+    <div className="grid gap-3">
       <FormProvider form={form}>
         <SchemaField schema={schema} />
         <Submit
@@ -190,9 +189,6 @@ const LoginForm = () => {
           onSubmit={handleLogin}
           block
         >Submit</Submit>
-        <FormButtonGroup>
-
-        </FormButtonGroup>
       </FormProvider>
     </div>
   );

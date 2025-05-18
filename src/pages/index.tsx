@@ -10,6 +10,10 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth.ts';
+import { Button } from 'antd';
+import { Link } from '@refinedev/core';
 // import { Icons } from "@/components/icons"
 
 
@@ -143,13 +147,26 @@ const ListItem = React.forwardRef<
 })
 
 export function Home() {
+  const user = use$(auth$.user)
   return (
     <div className="hidden flex-col md:flex">
       <div className="border-b">
         <div className="flex h-16 items-center px-4">
           <MainNav />
           <div className="ml-auto flex items-center space-x-4">
-            <UserNav />
+            {!!user && <UserNav user={user}/>}
+
+            {!user && (
+              <>
+                <Link to="/login">
+                  <Button type="primary">Log In</Button>
+                </Link>
+                <Link to="/register">
+                  <Button>Sign up</Button>
+                </Link>
+              </>
+            )}
+
           </div>
         </div>
       </div>

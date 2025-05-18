@@ -1,28 +1,23 @@
 import { httpClient } from '@/utils/http';
 import type { AuthProvider } from '@refinedev/core';
 import { FetchError } from 'ofetch';
+import auth$ from '@/stores/auth.ts';
 
 type Credentials = {
   email: string;
   password: string;
 };
 
-type UserModel = {
-  id: string;
-  uuid: string;
-  email: string;
-}
-
 export const authProvider: AuthProvider = {
   check: async () => {
-    const token: UserModel = JSON.parse(<string>localStorage.getItem('auth'));
+    const user = auth$.user.get();
 
-    return { authenticated: Boolean(token) };
+    return { authenticated: Boolean(user) };
   },
   logout: async () => {
     try {
       await httpClient('logout', { method: 'post'});
-      localStorage.removeItem('auth');
+      auth$.user.set(null)
       // We're returning success: true to indicate that the logout operation was successful.
       return { success: true };
     } catch (error) {
@@ -38,7 +33,7 @@ export const authProvider: AuthProvider = {
   getIdentity: async () => {
     try {
       const user = await httpClient('@me');
-      localStorage.setItem('auth', JSON.stringify(user));
+      auth$.user.set(user)
       return user;
     } catch (error) {
       return null;
@@ -75,7 +70,7 @@ export const authProvider: AuthProvider = {
       const user = await httpClient('@me');
 
       if (user) {
-        localStorage.setItem('auth', JSON.stringify(user));
+        auth$.user.set(user)
         return {
           success: true,
           redirectTo: '/admin',

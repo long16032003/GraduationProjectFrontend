@@ -1,6 +1,6 @@
 import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider} from '@formily/react';
-import { FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
+import { Form, FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
 import FormItem from '@/components/form/form-item';
 import { FetchError } from 'ofetch';
 import {
@@ -84,14 +84,20 @@ const RegisterForm = () => {
 
   return (
     <div className="grid gap-3">
-      <FormProvider form={form}>
+      <Form
+        form={form}
+        layout="vertical"
+        feedbackLayout="terse"
+        onAutoSubmit={console.log}
+        onAutoSubmitFailed={console.log}
+      >
         <SchemaField schema={schema} />
         <Submit
           loading={isLoading}
           onSubmit={handleSubmit}
-          block
-        >Create an account</Submit>
-      </FormProvider>
+            block
+          >Create an account</Submit>
+      </Form>
     </div>
   );
 };

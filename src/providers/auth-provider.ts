@@ -2,6 +2,7 @@ import { httpClient } from '@/utils/http';
 import type { AuthProvider } from '@refinedev/core';
 import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
+import type { User } from '@/types';
 
 type Credentials = {
   email: string;
@@ -10,7 +11,7 @@ type Credentials = {
 
 export const authProvider: AuthProvider = {
   check: async () => {
-    const user = auth$.user.get();
+    const user = JSON.parse(<string>localStorage.getItem('auth')) as User;
 
     return { authenticated: Boolean(user) };
   },
@@ -40,10 +41,14 @@ export const authProvider: AuthProvider = {
     }
   },
   // forgotPassword: undefined,
-  // getIdentity: undefined,
   // getPermissions: undefined,
-  // logout: {},
-  // onError: {},
+  onError: async (error: any) => {
+    console.log('[authProvider] onError', error);
+    return {
+      success: false,
+      error: error,
+    };
+  },
   register:  async (params) => {
     try {
       await httpClient('register', { method: 'post', body: params });

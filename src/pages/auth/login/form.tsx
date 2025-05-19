@@ -1,6 +1,6 @@
 import { createForm } from '@formily/core';
 import { createSchemaField, FormProvider } from '@formily/react';
-import { FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
+import { Form, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
 import FormItem from '@/components/form/form-item';
 import { FetchError } from 'ofetch';
 import {
@@ -47,8 +47,8 @@ const SchemaField = createSchemaField({
             </Link>
           </div>
         </div>
-      )
-    }
+      );
+    },
   },
 });
 
@@ -66,9 +66,9 @@ const LoginForm = () => {
   const handleLogin = (values: LoginFormValue) => {
     mutate(values, {
       onSuccess: async ({ success, redirectTo, error, successNotification }) => {
-        close?.("login-error");
+        close?.('login-error');
         if (success) {
-          form.setValues(defaultValues)
+          form.setValues(defaultValues);
           if (successNotification) {
             open?.(buildSuccessNotification(successNotification));
           }
@@ -83,8 +83,8 @@ const LoginForm = () => {
             if (error.statusCode === HttpStatusCodes.FORBIDDEN) {
               // 403: Already logged in
               open?.(buildNotification({
-                name: "Login Error",
-                message: "Already logged in",
+                name: 'Login Error',
+                message: 'Already logged in',
               }));
             }
           } else {
@@ -93,7 +93,7 @@ const LoginForm = () => {
         }
 
         if (success) {
-          go({ to: '/admin', type: "replace" });
+          go({ to: '/admin', type: 'replace' });
         }
 
         setTimeout(() => {
@@ -101,18 +101,24 @@ const LoginForm = () => {
         }, 32);
       },
     });
-  }
+  };
 
   return (
     <div className="grid gap-3">
-      <FormProvider form={form}>
+      <Form
+        form={form}
+        layout="vertical"
+        feedbackLayout="terse"
+        onAutoSubmit={console.log}
+        onAutoSubmitFailed={console.log}
+      >
         <SchemaField schema={schema} />
         <Submit
           loading={isLoading}
           onSubmit={handleLogin}
           block
         >Login</Submit>
-      </FormProvider>
+      </Form>
     </div>
   );
 };
@@ -121,10 +127,10 @@ const buildNotification = (
   error?: Error | RefineError,
 ): OpenNotificationParams => {
   return {
-    message: error?.name || "Login Error",
-    description: error?.message || "Invalid credentials",
-    key: "login-error",
-    type: "error",
+    message: error?.name || 'Login Error',
+    description: error?.message || 'Invalid credentials',
+    key: 'login-error',
+    type: 'error',
   };
 };
 
@@ -134,8 +140,8 @@ const buildSuccessNotification = (
   return {
     message: successNotification.message,
     description: successNotification.description,
-    key: "login-success",
-    type: "success",
+    key: 'login-success',
+    type: 'success',
   };
 };
 

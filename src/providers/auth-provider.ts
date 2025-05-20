@@ -11,7 +11,7 @@ type Credentials = {
 
 export const authProvider: AuthProvider = {
   check: async () => {
-    const user = JSON.parse(<string>localStorage.getItem('auth')) as User;
+    const user = auth$.user.get() as User;
 
     return { authenticated: Boolean(user) };
   },

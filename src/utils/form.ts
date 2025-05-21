@@ -53,6 +53,7 @@ export const defaultSchema: ISchema = {
   'x-decorator-props': {
     // https://antd5.formilyjs.org/components/form-item#formitem-api
     colon: false,
+    feedbackLayout: 'terse',
     labelStyle: {}
     // asterisk: false,
   },

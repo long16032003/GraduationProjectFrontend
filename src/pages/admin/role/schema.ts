@@ -2,7 +2,7 @@
 // https://core.formilyjs.org/api/models/field#fieldvalidator
 
 import type { ISchema } from "@formily/react";
-import { createEmailSchema, createPasswordSchema } from '@/utils/form.ts';
+import { createEmailSchema, createInputSchema, createPasswordSchema } from '@/utils/form.ts';
 
 export const defaultValues = {
   email: '',
@@ -23,22 +23,17 @@ export const schema: ISchema = {
         // spaceGap: 4,
       },
       properties: {
-        email: createEmailSchema({
+        name: createInputSchema({
           required: true,
-          title: 'Email',
-          'x-decorator-props': {
-            asterisk: false,
-          },
+          title: 'Name',
+          maxLength: 255,
         }),
-        password: createPasswordSchema({
-          required: true,
-          title: 'Password',
-          'x-decorator-props': {
-            asterisk: false,
-            label: '{{ renderPasswordLabel() }}',
-            // tooltip: 'Password must be at least 8 characters',
-          },
-        }),
+        permissions: {
+          type: 'array',
+          title: 'Permissions',
+          'x-component': 'ArrayItems',
+          'x-decorator': 'FormItem',
+        },
       },
     },
   },

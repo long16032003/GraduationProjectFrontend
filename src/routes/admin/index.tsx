@@ -1,5 +1,6 @@
 import { Admin } from '@/components/layouts/Admin';
 import type { RouteObject } from 'react-router';
+import { routes as role_routes } from '@/routes/admin/role';
 
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
@@ -17,6 +18,7 @@ export const routes: RouteObject[] = [
           Component: async () => (await import("@/pages/admin/dashboard.tsx")).DashboardPage,
         },
       },
+      ...role_routes
     ],
   },
 ];

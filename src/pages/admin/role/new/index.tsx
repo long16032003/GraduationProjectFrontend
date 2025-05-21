@@ -6,25 +6,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card.tsx';
-import { GalleryVerticalEnd } from 'lucide-react';
 import React from 'react';
-import { LoginForm } from '@/pages/auth/login/form.tsx';
-import { Link } from "@refinedev/core";
+import { Link, useList } from '@refinedev/core';
+import { PageHeader } from '@/components/app/page-header.tsx';
+import PermissionsForm from '@/pages/admin/role/PermissionList.tsx';
+// import { useLoaderData } from 'react-router';
+// import type { loader } from './loader';
 
 // https://github.com/shadcn-ui/ui/tree/main/apps/www/registry/default/blocks/login-03
-export default function RoleNewPage({
- className,
- ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export default function RoleNewPage() {
+
+  // const data = useLoaderData() as Awaited<
+  //   ReturnType<ReturnType<typeof loader>>
+  // >
+
+  // console.log(data)
+
+
   return (
-    <div className="flex w-full max-w-sm flex-col gap-6">
-      <Link className="flex items-center gap-2 self-center font-medium" to="/">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <GalleryVerticalEnd className="size-4" />
-        </div>
-        Acme Inc.
-      </Link>
-      <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <>
+      <PageHeader />
+      <div className="'flex flex-col gap-6'">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome back</CardTitle>
@@ -34,20 +36,11 @@ export default function RoleNewPage({
           </CardHeader>
           <CardContent>
             <div className="grid gap-6">
-              <LoginForm />
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <Link className="underline underline-offset-4" to="/register"> Sign up</Link>
-              </div>
+              <PermissionsForm />
             </div>
           </CardContent>
         </Card>
-        <div
-          className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-          By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-          and <a href="#">Privacy Policy</a>.
-        </div>
       </div>
-    </div>
+    </>
   );
 }

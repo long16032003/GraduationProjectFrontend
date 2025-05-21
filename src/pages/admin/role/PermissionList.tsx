@@ -37,7 +37,7 @@ const schema = {
       'x-component': 'Input',
       required: true,
     },
-    permissions: {  // Thêm trường permissions để chứa tất cả các checkbox
+    permissions: {
       type: 'object',
       title: 'Permissions',
       'x-component': 'FormItem',
@@ -122,7 +122,6 @@ const schema = {
 
 export default () => {
   const { data, isLoading } = useList({ resource: 'permissions' });
-
 
   if (isLoading) {
     return <div>Loading...</div>;

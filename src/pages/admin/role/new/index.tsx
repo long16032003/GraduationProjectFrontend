@@ -7,9 +7,9 @@ import {
   CardTitle,
 } from '@/components/ui/card.tsx';
 import React from 'react';
-import { Link, useList } from '@refinedev/core';
 import { PageHeader } from '@/components/app/page-header.tsx';
-import PermissionsForm from '@/pages/admin/role/PermissionList.tsx';
+import { RoleForm } from '@/pages/admin/role/form.tsx';
+// import PermissionsForm from '@/pages/admin/role/PermissionList.tsx';
 // import { useLoaderData } from 'react-router';
 // import type { loader } from './loader';
 
@@ -26,20 +26,8 @@ export default function RoleNewPage() {
   return (
     <>
       <PageHeader />
-      <div className="'flex flex-col gap-6'">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>
-              Login with your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6">
-              <PermissionsForm />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6 pt-7">
+        <RoleForm />
       </div>
     </>
   );

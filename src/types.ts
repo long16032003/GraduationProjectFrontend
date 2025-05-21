@@ -6,7 +6,7 @@ export interface User {
 }
 
 // Define the action interface
-interface PermissionAction {
+export interface PermissionAction {
   name: string;
   description: string;
   permission: string;
@@ -14,7 +14,7 @@ interface PermissionAction {
 }
 
 // Define the resource interface
-interface PermissionResource {
+export interface PermissionResource {
   type: 'resource';
   name: string;
   description: string;
@@ -25,7 +25,7 @@ interface PermissionResource {
 }
 
 // Define the group interface
-interface PermissionGroup {
+export interface PermissionGroup {
   type: 'group';
   name: string;
   description: string;
@@ -35,11 +35,13 @@ interface PermissionGroup {
   };
 }
 
+export interface PermissionsTree {
+  [key: string]: PermissionGroup;
+}
+
 // Define the tree structure
-interface PermissionsTree {
-  tree: {
-    [key: string]: PermissionGroup;
-  };
+export interface PermissionsResponse {
+  tree: PermissionsTree;
   flat: string[];
 }
 

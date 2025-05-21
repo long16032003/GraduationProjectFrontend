@@ -32,6 +32,9 @@ const theme: ThemeConfig = {
     Form: {
       // itemMarginBottom: 24,
     },
+    Tabs: {
+      verticalItemMargin: '0', // '16px 0 0 0'
+    }
   },
 }
 

@@ -16,7 +16,7 @@ import {
 } from '@refinedev/core';
 import HttpStatusCodes from '@/utils/http-status-codes.ts';
 import { defaultValues, schema } from '@/pages/auth/register/schema.ts';
-import type { RegisterFormValue } from '@/pages/auth/register/types.ts';
+import type { RegisterFormValues } from '@/types';
 
 // https://react.formilyjs.org/api/components/schema-field
 // https://core.formilyjs.org/api/entry/form-validator-registry
@@ -38,12 +38,12 @@ const form = createForm({
 });
 
 const RegisterForm = () => {
-  const { mutate, isLoading } = useRegister<RegisterFormValue>();
+  const { mutate, isLoading } = useRegister<RegisterFormValues>();
   const invalidateAuthStore = useInvalidateAuthStore();
   const { close, open } = useNotification();
   const go = useGo();
 
-  const handleSubmit = (values: RegisterFormValue) => {
+  const handleSubmit = (values: RegisterFormValues) => {
     console.log(values);
     mutate(values, {
       onSuccess: async ({ success, redirectTo, error, successNotification }) => {

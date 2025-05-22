@@ -36,7 +36,7 @@ export const defaultOptions = {
   headers: {
     Accept: 'application/json',
   },
-  async onRequest({ options }) {
+  async onRequest({ options, request }) {
     // automatically set x-xsrf-token header for request
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     const csrfToken = parse(document.cookie)['XSRF-TOKEN']
@@ -49,7 +49,7 @@ export const defaultOptions = {
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     if (response.status === 419) {
       // reinitialize XSRF-TOKEN cookie
-      await httpClient('sanctum/csrf-cookie')
+      await $fetch('sanctum/csrf-cookie')
     }
   },
 } as FetchOptions;

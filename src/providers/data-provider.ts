@@ -1,10 +1,26 @@
+import { httpClient } from '@/utils/http';
 import type { DataProvider } from '@refinedev/core';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const dataProvider: DataProvider = {
+  create: async ({ resource, variables, meta }) => {
+    const response = await httpClient(`${API_URL}/${resource}`, {
+      method: 'POST',
+      body: variables as Record<string, any>,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status < 200 || response.status > 299) throw response;
+
+    const data = await response.json();
+
+    return { data };
+  },
   getOne: async ({ resource, id }) => {
-    const response = await fetch(`${API_URL}/${resource}/${id}`);
+    const response = await httpClient(`${API_URL}/${resource}/${id}`);
 
     if (response.status < 200 || response.status > 299) throw response;
 
@@ -13,7 +29,7 @@ export const dataProvider: DataProvider = {
     return { data };
   },
   update: async ({ resource, id, variables }) => {
-    const response = await fetch(`${API_URL}/${resource}/${id}`, {
+    const response = await httpClient(`${API_URL}/${resource}/${id}`, {
       method: "PATCH",
       body: JSON.stringify(variables),
       headers: {
@@ -28,7 +44,7 @@ export const dataProvider: DataProvider = {
     return { data };
   },
   getList: async ({ resource }) => {
-    const response = await fetch(`${API_URL}/${resource}`);
+    const response = await httpClient(`${API_URL}/${resource}`);
 
     if (response.status < 200 || response.status > 299) throw response;
 
@@ -39,21 +55,7 @@ export const dataProvider: DataProvider = {
       total: 0, // We'll cover this in the next steps.
     };
   },
-  create: async ({ resource, variables }) => {
-    const response = await fetch(`${API_URL}/${resource}`, {
-      method: 'POST',
-      body: JSON.stringify(variables),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.status < 200 || response.status > 299) throw response;
-
-    const data = await response.json();
-
-    return { data };
-  },
+  
   deleteOne: () => {
     throw new Error('Not implemented');
   },

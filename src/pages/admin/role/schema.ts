@@ -1,16 +1,31 @@
 // https://react.formilyjs.org/api/shared/schema
 // https://core.formilyjs.org/api/models/field#fieldvalidator
 
-import type { ISchema } from "@formily/react";
-import { createEmailSchema, createInputSchema, createPasswordSchema } from '@/utils/form.ts';
+import { createSchemaField, type ISchema } from "@formily/react";
+import { createInputSchema } from '@/utils/form.ts';
 import type { PermissionGroup, PermissionResource, PermissionsTree } from '@/types.ts';
 import { collect } from 'ts-collect';
 import { defu } from 'defu';
+import { Checkbox, FormItem, FormLayout, FormTab, Input } from "@formily/antd-v5";
 
 export const defaultValues = {
-  email: '',
-  password: '',
+  name: '',
+  passwords: {},
 }
+
+// https://react.formilyjs.org/api/components/schema-field
+// https://core.formilyjs.org/api/entry/form-validator-registry
+export const SchemaField = createSchemaField({
+  components: {
+    FormLayout,
+    FormItem,
+    Input,
+    Checkbox,
+    FormTab
+  },
+  scope: {
+  },
+});
 
 // https://formilyjs.org/guide/advanced/validate
 export const schema: ISchema = {
@@ -91,6 +106,13 @@ function createPermissionResourceSchema(resource: PermissionResource) {
         type: 'boolean',
         'x-decorator': 'FormItem',
         'x-component': 'Checkbox',
+        'x-component-props': {
+          className: 'w-full',
+          style: {
+            height: '34px',
+            lineHeight: '34px',
+          },
+        },
         'x-content': action.description,
         'x-decorator-props': {
           feedbackLayout: 'none',

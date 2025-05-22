@@ -1,15 +1,31 @@
 // https://react.formilyjs.org/api/shared/schema
 // https://core.formilyjs.org/api/models/field#fieldvalidator
 // https://formilyjs.org/guide/advanced/validate
-import type { ISchema } from '@formily/react';
+import { createSchemaField, type ISchema } from '@formily/react';
 import { createEmailSchema, createInputSchema, createPasswordSchema } from '@/utils/form.ts';
+import type { RegisterFormValues } from '@/types';
+import { FormItem, FormLayout, Input, Password } from '@formily/antd-v5';
 
-export const defaultValues = {
+export const defaultValues: RegisterFormValues = {
   name: '',
   email: '',
   password: '',
   password_confirmation: ''
 }
+
+// https://react.formilyjs.org/api/components/schema-field
+// https://core.formilyjs.org/api/entry/form-validator-registry
+export const SchemaField = createSchemaField({
+  components: {
+    FormLayout,
+    FormItem,
+    Input,
+    Password,
+  },
+  scope: {
+    //
+  },
+});
 
 export const schema: ISchema = {
   type: 'object',

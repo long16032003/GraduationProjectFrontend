@@ -15,22 +15,9 @@ import {
   useNotification,
 } from '@refinedev/core';
 import HttpStatusCodes from '@/utils/http-status-codes.ts';
-import { defaultValues, schema } from '@/pages/auth/register/schema.ts';
+import { defaultValues, schema, SchemaField } from '@/pages/auth/register/schema.ts';
 import type { RegisterFormValues } from '@/types';
 
-// https://react.formilyjs.org/api/components/schema-field
-// https://core.formilyjs.org/api/entry/form-validator-registry
-const SchemaField = createSchemaField({
-  components: {
-    FormLayout,
-    FormItem,
-    Input,
-    Password,
-  },
-  scope: {
-    //
-  },
-});
 
 // https://core.formilyjs.org/api/models/form
 const form = createForm({

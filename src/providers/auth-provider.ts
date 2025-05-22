@@ -2,33 +2,34 @@ import { httpClient } from '@/utils/http';
 import type { AuthActionResponse, AuthProvider, CheckResponse, IdentityResponse, OnErrorResponse, PermissionResponse } from '@refinedev/core';
 import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
-import type { LoginFormValues, RegisterFormValues, User } from '@/types';
+import type { LoginFormValues, PermissionsResponse, RegisterFormValues, User } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
 
 export const authProvider: AuthProvider = {
   check: async (): Promise<CheckResponse> => {
-    const user = auth$.user.get() as User;
+    const user = auth$.user.get();
     return { authenticated: Boolean(user) };
   },
   logout: async (): Promise<AuthActionResponse> => {
-    try {
-      await httpClient('logout', { method: 'post'});
-      auth$.user.set(null)
-      // We're returning success: true to indicate that the logout operation was successful.
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: {
-          message: 'Whoops, something went wrong.',
-          name: 'Logout Error',
-        },
-      };
-    }
+    auth$.user.set(null)
+    httpClient('logout', { method: 'post' })
+      .catch((error: FetchError) => {
+        // Handle the error if needed
+        if (error instanceof FetchError) {
+          if (error.statusCode === HttpStatusCode.UNAUTHORIZED) {
+            // 401: Already logged out
+            auth$.user.set(null)
+          }
+        } else {
+          console.error('Logout error:', error);
+        }
+      })
+    // We're returning success: true to indicate that the logout operation was successful.
+    return { success: true };
   },
   getIdentity: async (): Promise<IdentityResponse> => {
     try {
-      const user = await httpClient('@me');
+      const user: User = await httpClient('@me');
       auth$.user.set(user)
       return user;
     } catch (error) {
@@ -36,88 +37,57 @@ export const authProvider: AuthProvider = {
     }
   },
   getPermissions: async (): Promise<PermissionResponse> => {
-    const response = await httpClient('permissions', { method: 'get'});
-    console.log('[authProvider] getPermissions', response);
-    return response
+    return await httpClient('permissions', { method: 'get' }) as PermissionsResponse;
   },
-  register:  async (params: RegisterFormValues): Promise<AuthActionResponse> => {
-    try {
-      await httpClient('register', { method: 'post', body: params });
+  register: async ({ redirectPath, ...rest }: RegisterFormValues): Promise<AuthActionResponse> => {
+    await httpClient('register', { method: 'post', body: rest });
 
-      return {
-        success: true,
-        redirectTo: '/login',
-        successNotification: {
-          message: 'Login Successful',
-          description: 'Welcome back!',
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error as FetchError,
-      };
-    }
+    return {
+      success: true,
+      redirectTo: redirectPath,
+      successNotification: {
+        message: "Registration Successful",
+        description: "You have successfully registered.",
+      },
+    };
   },
-  login: async (params: LoginFormValues): Promise<AuthActionResponse> => {
-    try {
-      await httpClient('login', { method: 'post', body: params });
-      const user = await httpClient('@me');
-
-      if (user) {
-        auth$.user.set(user)
-        return {
-          success: true,
-          redirectTo: '/admin',
-          successNotification: {
-            message: 'Login Successful',
-            description: 'Welcome back!',
-          },
-        };
-      }
-
-      return {
-        success: false,
-        error: {
-          message: 'Invalid response',
-          name: 'Login Error',
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error as FetchError,
-      };
-    }
+  login: async ({ redirectPath, ...rest }: LoginFormValues): Promise<AuthActionResponse> => {
+    await httpClient('login', { method: 'post', body: rest });
+    // After a successful login, we can fetch the user data
+    const user = await httpClient('@me');
+    // Set the user data in the auth store
+    auth$.user.set(user)
+    // Return a success response
+    return {
+      success: true,
+      redirectTo: redirectPath,
+      successNotification: {
+        message: "Login Successful",
+        description: "You have successfully logged in.",
+      },
+    };
   },
   // forgotPassword: undefined,
   // updatePassword: undefined,
-  onError: async (error: Error|FetchError): Promise<OnErrorResponse>  => {
+  onError: async (error: Error | FetchError): Promise<OnErrorResponse> => {
     console.log('[authProvider] onError', error);
     if (error instanceof FetchError) {
-      if (error.status === HttpStatusCode.UNPROCESSABLE_ENTITY) {
-        // 422: Validation error
-        return {
-          error: {
-            name: 'Validation Error',
-            message: 'Validation error',
-          },
-        };
-      }
-
+      // Logout the user if the error is 401 Unauthorized
       if (error.status === HttpStatusCode.UNAUTHORIZED) {
         auth$.user.set(null)
         return {
           redirectTo: '/login',
           logout: true,
           error: {
-            message: 'Unauthorized',
-            name: 'Login Error',
+            name: 'Session Expired',
+            message: 'Your session has expired. Please log in again.',
           },
         };
       }
     }
 
-    return {}
+    return {
+      error
+    }
   },
 };

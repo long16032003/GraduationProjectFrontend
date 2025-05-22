@@ -17,7 +17,7 @@ import {
 } from '@refinedev/core';
 import HttpStatusCodes from '@/utils/http-status-codes.ts';
 import React, { useMemo } from 'react';
-import type { RoleFormValue } from '@/pages/admin/role/types.ts';
+import type { RoleFormValues } from '@/pages/admin/role/types.ts';
 import { defaultValues, schema as defaultSchema, updateSchema, SchemaField } from '@/pages/admin/role/schema.ts';
 import { Checkbox, FormButtonGroup, FormTab, Reset } from '@formily/antd-v5';
 import type { PermissionsResponse, PermissionsTree } from '@/types';
@@ -27,11 +27,11 @@ import type { PermissionsResponse, PermissionsTree } from '@/types';
 const form = createForm({
   validateFirst: true,
 });
-const formTab = FormTab.createFormTab()
+const formTab = FormTab.createFormTab();
 
 const RoleForm = () => {
-  const { mutate, isLoading: isSubmiting } = useCreate<RoleFormValue>({
-    resource: "role",
+  const { mutate, isLoading: isSubmiting } = useCreate<RoleFormValues>({
+    resource: 'role',
   });
   const { close, open } = useNotification();
   const go = useGo();
@@ -42,16 +42,16 @@ const RoleForm = () => {
     if (!data?.tree) {
       return defaultSchema;
     }
-    return updateSchema(defaultSchema, data?.tree)
+    return updateSchema(defaultSchema, data?.tree);
   }, [data]);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  const handleSubmit = (values: RoleFormValue) => {
+  const handleSubmit = (values: RoleFormValues) => {
     mutate({
-      values: values
+      values: values,
     }, {
       // onSuccess: async ({ success, redirectTo, error, successNotification }) => {
       //   // close?.("login-error");
@@ -85,7 +85,7 @@ const RoleForm = () => {
       //   // }
       // },
     });
-  }
+  };
 
   return (
     <div className="grid gap-3">
@@ -97,7 +97,7 @@ const RoleForm = () => {
         onAutoSubmitFailed={console.log}
         className="max-w-screen-sm"
       >
-        <SchemaField schema={schema} scope={{formTab}}/>
+        <SchemaField schema={schema} scope={{ formTab }} />
         <FormButtonGroup.Sticky align="center">
           <FormButtonGroup>
             <Reset>Reset</Reset>
@@ -117,10 +117,10 @@ const buildNotification = (
   error?: Error | RefineError,
 ): OpenNotificationParams => {
   return {
-    message: error?.name || "Login Error",
-    description: error?.message || "Invalid credentials",
-    key: "login-error",
-    type: "error",
+    message: error?.name || 'Login Error',
+    description: error?.message || 'Invalid credentials',
+    key: 'login-error',
+    type: 'error',
   };
 };
 
@@ -130,8 +130,8 @@ const buildSuccessNotification = (
   return {
     message: successNotification.message,
     description: successNotification.description,
-    key: "login-success",
-    type: "success",
+    key: 'login-success',
+    type: 'success',
   };
 };
 

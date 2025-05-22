@@ -1,4 +1,4 @@
-export type RoleFormValue = {
+export type RoleFormValues = {
   name: string;
-  permissions: string[];
+  permissions: Record<string, number>;
 };

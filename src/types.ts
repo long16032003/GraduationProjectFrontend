@@ -1,6 +1,8 @@
 export interface LoginFormValues {
   email: string;
   password: string;
+  redirectPath?: string;
+  remember?: boolean;
 }
 
 export interface RegisterFormValues {
@@ -8,6 +10,7 @@ export interface RegisterFormValues {
   email: string;
   password: string;
   password_confirmation: string;
+  redirectPath?: string;
 }
 
 export interface User {

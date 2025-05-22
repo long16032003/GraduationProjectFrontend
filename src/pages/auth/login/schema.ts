@@ -1,13 +1,26 @@
 // https://react.formilyjs.org/api/shared/schema
 // https://core.formilyjs.org/api/models/field#fieldvalidator
 
-import type { ISchema } from "@formily/react";
+import { createSchemaField, type ISchema } from "@formily/react";
 import { createEmailSchema, createPasswordSchema } from '@/utils/form.ts';
+import { FormItem, FormLayout, Input, Password } from "@formily/antd-v5";
+import type { LoginFormValues } from "@/types";
 
-export const defaultValues = {
+export const defaultValues: LoginFormValues = {
   email: '',
   password: '',
 }
+
+// https://react.formilyjs.org/api/components/schema-field
+// https://core.formilyjs.org/api/entry/form-validator-registry
+export const SchemaField = createSchemaField({
+  components: {
+    FormLayout,
+    FormItem,
+    Input,
+    Password,
+  },
+});
 
 // https://formilyjs.org/guide/advanced/validate
 export const schema: ISchema = {
@@ -35,7 +48,7 @@ export const schema: ISchema = {
           title: 'Password',
           'x-decorator-props': {
             asterisk: false,
-            label: '{{ renderPasswordLabel() }}',
+            label: '{{ PasswordLabel() }}',
             // tooltip: 'Password must be at least 8 characters',
           },
         }),

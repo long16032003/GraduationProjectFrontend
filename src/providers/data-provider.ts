@@ -7,7 +7,7 @@ export const dataProvider: DataProvider = {
   create: async ({ resource, variables, meta }) => {
     const response = await httpClient(`${API_URL}/${resource}`, {
       method: 'POST',
-      body: variables as Record<string, any>,
+      body: variables as Record<string, unknown>,
       headers: {
         'Content-Type': 'application/json',
       },

@@ -1,26 +1,18 @@
 import { createForm } from '@formily/core';
-import { createSchemaField, FormProvider } from '@formily/react';
-import { Form, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
-import FormItem from '@/components/form/form-item';
-import { FetchError } from 'ofetch';
+import { Form, Submit } from '@formily/antd-v5/esm';
 import {
-  showRemoteValidationErrors,
-} from '@/utils/form.ts';
-import {
-  Link,
   type OpenNotificationParams,
   type RefineError,
   type SuccessNotificationResponse, useCreate,
-  useGo, useInvalidateAuthStore, useList,
-  useLogin,
+  useGo, 
   useNotification, usePermissions,
 } from '@refinedev/core';
-import HttpStatusCodes from '@/utils/http-status-codes.ts';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import type { RoleFormValues } from '@/pages/admin/role/types.ts';
-import { defaultValues, schema as defaultSchema, updateSchema, SchemaField } from '@/pages/admin/role/schema.ts';
-import { Checkbox, FormButtonGroup, FormTab, Reset } from '@formily/antd-v5';
-import type { PermissionsResponse, PermissionsTree } from '@/types';
+import { schema as defaultSchema, updateSchema, SchemaField } from '@/pages/admin/role/.form/schema.ts';
+import { FormButtonGroup, FormTab, Reset } from '@formily/antd-v5/esm';
+import type { PermissionsResponse } from '@/types.ts';
+import type { ISchema, Schema } from '@formily/react';
 
 
 // https://core.formilyjs.org/api/models/form
@@ -97,7 +89,7 @@ const RoleForm = () => {
         onAutoSubmitFailed={console.log}
         className="max-w-screen-sm"
       >
-        <SchemaField schema={schema} scope={{ formTab }} />
+        <SchemaField schema={schema as ISchema} scope={{ formTab }} />
         <FormButtonGroup.Sticky align="center">
           <FormButtonGroup>
             <Reset>Reset</Reset>
@@ -135,6 +127,4 @@ const buildSuccessNotification = (
   };
 };
 
-export {
-  RoleForm,
-};
+export default RoleForm;

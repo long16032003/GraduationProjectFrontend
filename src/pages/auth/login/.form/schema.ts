@@ -3,8 +3,9 @@
 
 import { createSchemaField, type ISchema } from "@formily/react";
 import { createEmailSchema, createPasswordSchema } from '@/utils/form.ts';
-import { FormItem, FormLayout, Input, Password } from "@formily/antd-v5";
-import type { LoginFormValues } from "@/types";
+import { FormLayout, Input, Password } from "@formily/antd-v5/esm";
+import type { LoginFormValues } from "@/types.ts";
+import FormItem from "@/components/form/form-item";
 
 export const defaultValues: LoginFormValues = {
   email: '',

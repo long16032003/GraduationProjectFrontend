@@ -7,7 +7,6 @@ import { authProvider } from "@/providers/auth-provider";
 export type TRegisterData = void | false | string;
 
 export type UseRegisterProps<TVariables> = {
-  v3LegacyAuthProviderCompatible?: false;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse,
@@ -20,7 +19,6 @@ export type UseRegisterProps<TVariables> = {
 };
 
 export type UseRegisterCombinedProps<TVariables> = {
-  v3LegacyAuthProviderCompatible: boolean;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse | TRegisterData,
@@ -65,25 +63,11 @@ export function useRegister<TVariables = object>(
  *
  */
 export function useRegister<TVariables = object>(
-  props: UseRegisterProps<TVariables> | UseRegisterCombinedProps<TVariables> = {},
+  props?: UseRegisterProps<TVariables> | UseRegisterCombinedProps<TVariables>
 ): UseRegisterReturnType<TVariables> | UseRegisterCombinedReturnType<TVariables> {
   const { mutationOptions } = props || {};
   const invalidateAuthStore = useInvalidateAuthStore();
   const go = useGo();
-
-  const registerFromContext = async (params: unknown) => {
-    try {
-      const result = await authProvider.register?.(params);
-
-      return result;
-    } catch (error) {
-      console.warn(
-        "Unhandled Error in register: refine always expects a resolved promise.",
-        error,
-      );
-      return Promise.reject(error);
-    }
-  };
 
   const { close, open } = useNotification();
 
@@ -96,8 +80,8 @@ export function useRegister<TVariables = object>(
     unknown
   >({
     mutationKey: keys().auth().action("register").get(preferLegacyKeys),
-    mutationFn: registerFromContext,
-    onSuccess: async ({ success, redirectTo, error, successNotification }) => {
+    mutationFn: authProvider.register,
+    onSuccess: async ({ success, redirectTo, error, successNotification }: AuthActionResponse) => {
       if (success) {
         close?.("register-error");
 
@@ -118,7 +102,7 @@ export function useRegister<TVariables = object>(
         go({ to: '/', type: "replace" });
       }
     },
-    onError: (error: any) => {
+    onError: (error: RefineError | Error) => {
       open?.(buildNotification(error));
     },
     ...mutationOptions,
@@ -127,7 +111,7 @@ export function useRegister<TVariables = object>(
   return mutation;
 }
 
-const buildNotification = (
+export const buildNotification = (
   error?: Error | RefineError,
 ): OpenNotificationParams => {
   return {

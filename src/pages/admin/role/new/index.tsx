@@ -1,14 +1,5 @@
-import { cn } from '@/lib/utils.ts';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card.tsx';
-import React from 'react';
 import { PageHeader } from '@/components/app/page-header.tsx';
-import { RoleForm } from '@/pages/admin/role/form.tsx';
+import RoleForm from '../.form/RoleForm.tsx';
 // import PermissionsForm from '@/pages/admin/role/PermissionList.tsx';
 // import { useLoaderData } from 'react-router';
 // import type { loader } from './loader';

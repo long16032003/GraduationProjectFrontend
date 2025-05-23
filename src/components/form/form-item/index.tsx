@@ -13,7 +13,9 @@ import { useFormItemLayout, useOverflow } from './hooks'
 import useStyle from './style'
 import { FormLayoutShallowContext, type IFormItemProps } from '@formily/antd-v5/esm';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export * from './hooks'
+// eslint-disable-next-line react-refresh/only-export-components
 export * from './types'
 
 type ComposeFormItem = ReactFC<IFormItemProps> & {

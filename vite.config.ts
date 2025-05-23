@@ -59,7 +59,7 @@ export default function(config: ConfigEnv): UserConfigExport {
       strictPort: true,
       // https://vite.dev/config/server-options#server-proxy
       // https://github.com/http-party/node-http-proxy#options
-      proxy: createProxyConfig(env),
+      proxy: createProxyConfig(env, config),
     },
     // @link: https://vite.dev/config/build-options.html
     build: {
@@ -67,6 +67,17 @@ export default function(config: ConfigEnv): UserConfigExport {
       // generate .vite/manifest.json in outDir
       manifest: true,
       assetsInlineLimit: 0,
+      rollupOptions: {
+        output: {
+          // https://rollupjs.org/guide/en/#outputmanualchunks
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              // Split vendor chunks into separate files
+              return 'vendor';
+            }
+          },
+        },
+      },
     },
   });
 }

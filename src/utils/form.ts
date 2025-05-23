@@ -2,7 +2,7 @@ import type { Field, FieldFeedbackTriggerTypes, FeedbackMessage, Form, IFieldFee
 import { FetchError } from 'ofetch';
 import { defu } from 'defu';
 import type { ISchema } from '@formily/react';
-import { collect } from 'ts-collect';
+import { collect } from 'collect.js';
 
 export interface ValicationErrorJson {
   errors: {
@@ -18,7 +18,7 @@ export const convertValidationErrorsToFeedbacks = (
   const json = error.data as ValicationErrorJson;
 
   return collect(Object.entries(json.errors || {}))
-    .mapWithKeys(([path, messages]) => [path, {
+    .mapWithKeys(([path, messages]: [string, string[]]) => [path, {
       messages: messages,
       type: 'error',
       code: 'ValidateError',
@@ -64,7 +64,7 @@ export const defaultSchema: ISchema = {
 }
 
 export function createInputSchema(props: ISchema) {
-  return defu(props, defaultSchema)
+  return defu(props, defaultSchema) as ISchema;
 }
 
 export function createEmailSchema(props: ISchema) {

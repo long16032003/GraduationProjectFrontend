@@ -1,4 +1,4 @@
-import { type QueryClient, queryOptions } from '@tanstack/react-query';
+import { type QueryClient } from '@tanstack/react-query';
 import type { LoaderFunctionArgs } from 'react-router';
 
 // export async function getContact(id: string) {

@@ -47,7 +47,7 @@ export const authProvider: AuthProvider = {
       redirectTo: redirectPath,
       successNotification: {
         message: "Registration Successful",
-        description: "You have successfully registered.",
+        // description: "You have successfully registered.",
       },
     };
   },
@@ -63,7 +63,7 @@ export const authProvider: AuthProvider = {
       redirectTo: redirectPath,
       successNotification: {
         message: "Login Successful",
-        description: "You have successfully logged in.",
+        // description: "You have successfully logged in.",
       },
     };
   },

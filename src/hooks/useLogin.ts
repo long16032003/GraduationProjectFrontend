@@ -6,16 +6,8 @@ import React from "react";
 
 export type TLoginData = void | false | string | object;
 
-export type UseLoginLegacyProps<TVariables> = {
-  v3LegacyAuthProviderCompatible: true;
-  mutationOptions?: Omit<
-    UseMutationOptions<TLoginData, Error | RefineError, TVariables, unknown>,
-    "mutationFn" | "onError" | "onSuccess"
-  >;
-};
 
 export type UseLoginProps<TVariables> = {
-  v3LegacyAuthProviderCompatible?: false;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse,
@@ -28,7 +20,6 @@ export type UseLoginProps<TVariables> = {
 };
 
 export type UseLoginCombinedProps<TVariables> = {
-  v3LegacyAuthProviderCompatible: boolean;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse | TLoginData,
@@ -39,13 +30,6 @@ export type UseLoginCombinedProps<TVariables> = {
     "mutationFn"
   >;
 };
-
-export type UseLoginLegacyReturnType<TVariables> = UseMutationResult<
-  TLoginData,
-  Error | RefineError,
-  TVariables,
-  unknown
->;
 
 export type UseLoginReturnType<TVariables> = UseMutationResult<
   AuthActionResponse,
@@ -80,7 +64,7 @@ export function useLogin<TVariables = object>(
  *
  */
 export function useLogin<TVariables = object>(
-  props?: UseLoginProps<TVariables> | UseLoginCombinedProps<TVariables>,
+  props?: UseLoginProps<TVariables> | UseLoginCombinedProps<TVariables>
 ): UseLoginReturnType<TVariables> | UseLoginCombinedReturnType<TVariables> {
   const { mutationOptions } = props || {};
   const invalidateAuthStore = useInvalidateAuthStore();
@@ -122,6 +106,8 @@ export function useLogin<TVariables = object>(
         if (successNotification) {
           open?.(buildSuccessNotification(successNotification));
         }
+
+        await invalidateAuthStore();
       }
 
       if (error || !success) {
@@ -138,7 +124,7 @@ export function useLogin<TVariables = object>(
       }
 
     //   setTimeout(() => {
-        await invalidateAuthStore();
+        // await invalidateAuthStore();
     //   }, 32);
     },
     onError: (error: any) => {

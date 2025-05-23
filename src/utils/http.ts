@@ -32,15 +32,15 @@ export const defaultOptions = {
     return 500;
   },
   timeout: 10000, // 10s timeout
-  credentials: 'same-origin',
+  credentials: 'include', // include cookies in requests
   headers: {
     Accept: 'application/json',
   },
-  async onRequest({ options, request }) {
-    // automatically set x-xsrf-token header for request
+  async onRequest({ options }) {
+    // automatically set x-xsrf-token header for post request
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     const csrfToken = parse(document.cookie)['XSRF-TOKEN']
-    if (csrfToken) {
+    if (csrfToken && !isReadingRequest(options.method)) {
       options.headers.set('x-xsrf-token', csrfToken)
     }
   },
@@ -49,10 +49,14 @@ export const defaultOptions = {
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     if (response.status === 419) {
       // reinitialize XSRF-TOKEN cookie
-      await $fetch('sanctum/csrf-cookie')
+      await httpClient('sanctum/csrf-cookie')
     }
   },
 } as FetchOptions;
 
 // use client side only
 export const httpClient = $fetch.create(defaultOptions)
+
+const isReadingRequest = (method: string | undefined): boolean => {
+  return ['HEAD', 'GET', 'OPTIONS'].includes(method || 'GET')
+}

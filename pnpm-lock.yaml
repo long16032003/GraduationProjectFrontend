@@ -225,6 +225,9 @@ importers:
       rollup-plugin-visualizer:
         specifier: ^5.14.0
         version: 5.14.0(rollup@2.79.2)
+      swc-plugin-another-transform-imports:
+        specifier: ^1.11.1
+        version: 1.11.1
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.3.0
@@ -5568,6 +5571,9 @@ packages:
     resolution: {integrity: sha512-OoohrmuUlBs8B8o6MB2Aevn+pRIH9zDALSR+6hhqVfa6fRwG/Qw9VUMSMW9VNg2CFc/MTIfabtdOVl9ODIJjpw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
+
+  swc-plugin-another-transform-imports@1.11.1:
+    resolution: {integrity: sha512-a7v1NBJ9WFzoCEOPAjtPgtzYSD2D4jbXA9Grs4TCaSdm6PskHCQjwgmYQ220XRYNT4c4WYEz8VmRbckmgoHiDg==}
 
   swr@2.3.3:
     resolution: {integrity: sha512-dshNvs3ExOqtZ6kJBaAsabhPdHyeY4P2cKwRCniDVifBMoG/SVI7tfLWqPXriVspf2Rg4tPzXJTnwaihIeFw2A==}
@@ -12079,6 +12085,8 @@ snapshots:
       css-what: 6.1.0
       csso: 5.0.5
       picocolors: 1.1.1
+
+  swc-plugin-another-transform-imports@1.11.1: {}
 
   swr@2.3.3(react@18.3.1):
     dependencies:

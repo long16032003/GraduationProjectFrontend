@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils.ts';
 import {
   Card,
   CardContent,
@@ -7,14 +6,10 @@ import {
   CardTitle,
 } from '@/components/ui/card.tsx';
 import { GalleryVerticalEnd } from 'lucide-react';
-import React from 'react';
 import { Link } from '@refinedev/core';
-import { RegisterForm } from '@/pages/auth/register/form.tsx';
+import RegisterForm from './.form/RegisterForm.tsx';
 
-export function RegisterPage({
-                                    className,
-                                    ...props
-                                  }: React.ComponentPropsWithoutRef<'div'>) {
+export function RegisterPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <a href="#" className="flex items-center gap-2 self-center font-medium">
@@ -23,7 +18,7 @@ export function RegisterPage({
         </div>
         Acme Inc.
       </a>
-      <div className={cn('flex flex-col gap-6', className)} {...props}>
+      <div className="flex flex-col gap-6">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Sign Up</CardTitle>

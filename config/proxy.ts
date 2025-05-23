@@ -1,8 +1,12 @@
-import type { ProxyOptions } from 'vite';
+import type { ConfigEnv, ProxyOptions } from 'vite';
 
 // https://vite.dev/config/server-options#server-proxy
 // https://github.com/http-party/node-http-proxy#options
-export function createProxyConfig(env: Record<string, string>): Record<string, ProxyOptions> {
+export function createProxyConfig(env: Record<string, string>, config: ConfigEnv): Record<string, ProxyOptions> | undefined {
+  if (config.mode === 'production') {
+    return undefined;
+  }
+    
   return {
     '/api': {
       target: env.VITE_PROXY_URL,

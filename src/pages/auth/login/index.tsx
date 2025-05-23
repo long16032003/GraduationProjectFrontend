@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils.ts';
 import {
   Card,
   CardContent,
@@ -7,15 +6,11 @@ import {
   CardTitle,
 } from '@/components/ui/card.tsx';
 import { GalleryVerticalEnd } from 'lucide-react';
-import React from 'react';
-import { LoginForm } from '@/pages/auth/login/form.tsx';
 import { Link } from "@refinedev/core";
+import LoginForm from './.form/LoginForm.tsx';
 
 // https://github.com/shadcn-ui/ui/tree/main/apps/www/registry/default/blocks/login-03
-export default function LoginPage({
- className,
- ...props
-}: React.ComponentPropsWithoutRef<'div'>) {
+export default function LoginPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <Link className="flex items-center gap-2 self-center font-medium" to="/">
@@ -24,7 +19,7 @@ export default function LoginPage({
         </div>
         Acme Inc.
       </Link>
-      <div className={cn('flex flex-col gap-6', className)} {...props}>
+      <div className="flex flex-col gap-6">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Welcome back</CardTitle>

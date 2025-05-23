@@ -1,7 +1,5 @@
 import { createForm } from '@formily/core';
-import { createSchemaField, FormProvider} from '@formily/react';
-import { Form, FormButtonGroup, FormLayout, Input, Password, Submit } from '@formily/antd-v5/esm';
-import FormItem from '@/components/form/form-item';
+import { Form, Submit } from '@formily/antd-v5/esm';
 import { FetchError } from 'ofetch';
 import {
   showRemoteValidationErrors,
@@ -11,12 +9,12 @@ import {
   type RefineError,
   type SuccessNotificationResponse,
   useGo, useInvalidateAuthStore,
-  useRegister,
   useNotification,
 } from '@refinedev/core';
 import HttpStatusCodes from '@/utils/http-status-codes.ts';
-import { defaultValues, schema, SchemaField } from '@/pages/auth/register/schema.ts';
-import type { RegisterFormValues } from '@/types';
+import { defaultValues, schema, SchemaField } from '@/pages/auth/register/.form/schema.ts';
+import type { RegisterFormValues } from '@/types.ts';
+import { useRegister } from '@/hooks/useRegister.ts';
 
 
 // https://core.formilyjs.org/api/models/form
@@ -112,6 +110,4 @@ const buildSuccessNotification = (
 };
 
 
-export {
-  RegisterForm,
-};
+export default RegisterForm;

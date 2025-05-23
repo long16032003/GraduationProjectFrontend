@@ -3,8 +3,8 @@
 // https://formilyjs.org/guide/advanced/validate
 import { createSchemaField, type ISchema } from '@formily/react';
 import { createEmailSchema, createInputSchema, createPasswordSchema } from '@/utils/form.ts';
-import type { RegisterFormValues } from '@/types';
-import { FormItem, FormLayout, Input, Password } from '@formily/antd-v5';
+import type { RegisterFormValues } from '@/types.ts';
+import { FormItem, FormLayout, Input, Password } from '@formily/antd-v5/esm';
 
 export const defaultValues: RegisterFormValues = {
   name: '',

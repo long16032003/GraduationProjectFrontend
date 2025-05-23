@@ -20,8 +20,22 @@ import {
   BreadcrumbList, BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb.tsx';
+import { useLogout } from '@refinedev/core';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
+import type { User } from '@/types.ts';
 
-export function UserNav() {
+interface UserNavProps {
+  user: User
+}
+
+export function UserNav({user, ...rest}: UserNavProps) {
+  const { mutate, isLoading } = useLogout();
+
+  const handleLogout = () => {
+    mutate()
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -35,9 +49,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
+            <p className="text-sm font-medium leading-none">{user?.name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -59,7 +73,7 @@ export function UserNav() {
           <DropdownMenuItem>New Team</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
@@ -163,6 +177,8 @@ export function NotificationNav() {
 
 
 export function DefaultHeaderContent() {
+  const user = use$(auth$.user)
+
   return (
     <Fragment>
       <div className="flex items-center gap-2 lg:w-1/3 justify-start" data-element="header-start">
@@ -187,7 +203,7 @@ export function DefaultHeaderContent() {
       </div>
       <div className="flex items-center gap-3 lg:w-1/3 justify-end" data-element="header-end">
         <NotificationNav />
-        <UserNav />
+        {!!user && <UserNav user={user}/>}
       </div>
     </Fragment>
   );

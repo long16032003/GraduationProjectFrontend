@@ -1,15 +1,17 @@
 <IfModule mod_rewrite.c>
     RewriteEngine on
     RewriteCond %{REQUEST_URI} !^/index.html$
-    RewriteCond %{REQUEST_URI} !.(gif|jpeg|png|css|js|svg|jpg|ico|webmanifest|json)$
+    RewriteCond %{REQUEST_URI} !.(gif|jpeg|png|css|js|svg|jpg|ico|webmanifest|json|map)$
     RewriteRule .* /index.html [L]
 </IfModule>
 <IfModule mod_mime.c>
     # Manifest file
     AddType application/manifest+json webmanifest
+    # Sourcemap file
+    AddType application/json map
 </IfModule>
 # Cache files of the following types for 1 month
-<FilesMatch "\.(ico|pdf|webp|jpg|jpeg|png|gif|js|css|svg|ttf|otf|woff2|woff)$">
+<FilesMatch "\.(ico|pdf|webp|jpg|jpeg|png|gif|js|css|svg|ttf|otf|woff2|woff|map)$">
     Header always set Cache-Control "max-age=2592000, public"
     Header merge Vary Accept-Encoding
 </FilesMatch>
@@ -29,8 +31,8 @@
     # Browser Sniffing Protection
     Header always set X-Content-Type-Options "nosniff"
     # XSS Protection https://csp-evaluator.withgoogle.com/
-    Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self' https://up.test;style-src-elem 'self' 'unsafe-inline';require-trusted-types-for 'script';"
-    # Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self';style-src 'self' 'unsafe-inline';require-trusted-types-for 'script';"
+    Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self' https://r0.test;style-src-elem 'self' 'unsafe-inline';require-trusted-types-for 'script';"
+#     Header always set Content-Security-Policy "object-src 'none';base-uri 'none';default-src 'self';style-src 'self' 'unsafe-inline';require-trusted-types-for 'script';"
 
         # Header for service worker file
     <Files "sw.js">

@@ -7,6 +7,8 @@ import { authProvider } from "@/providers/auth-provider";
 export type TRegisterData = void | false | string;
 
 export type UseRegisterProps<TVariables> = {
+  onSuccess?: (data: AuthActionResponse) => Promise<void>;
+  onError?: (error: Error | RefineError) => Promise<void>;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse,
@@ -19,6 +21,8 @@ export type UseRegisterProps<TVariables> = {
 };
 
 export type UseRegisterCombinedProps<TVariables> = {
+  onSuccess?: (data: AuthActionResponse) => Promise<void>;
+  onError?: (error: Error | RefineError) => Promise<void>;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse | TRegisterData,
@@ -65,7 +69,7 @@ export function useRegister<TVariables = object>(
 export function useRegister<TVariables = object>(
   props?: UseRegisterProps<TVariables> | UseRegisterCombinedProps<TVariables>
 ): UseRegisterReturnType<TVariables> | UseRegisterCombinedReturnType<TVariables> {
-  const { mutationOptions } = props || {};
+  const { mutationOptions, onSuccess, onError } = props || {};
   const invalidateAuthStore = useInvalidateAuthStore();
   const go = useGo();
 
@@ -92,6 +96,8 @@ export function useRegister<TVariables = object>(
         await invalidateAuthStore();
       }
 
+      await onSuccess?.({ success, redirectTo, error, successNotification });
+
       if (error || !success) {
         open?.(buildNotification(error));
       }
@@ -102,8 +108,9 @@ export function useRegister<TVariables = object>(
         go({ to: '/', type: "replace" });
       }
     },
-    onError: (error: RefineError | Error) => {
+    onError: async (error: RefineError | Error) => {
       open?.(buildNotification(error));
+      await onError?.(error);
     },
     ...mutationOptions,
   });
@@ -122,7 +129,7 @@ export const buildNotification = (
   };
 };
 
-const buildSuccessNotification = (
+export const buildSuccessNotification = (
   successNotification: SuccessNotificationResponse,
 ): OpenNotificationParams => {
   return {

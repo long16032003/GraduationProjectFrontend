@@ -6,8 +6,9 @@ import React from "react";
 
 export type TLoginData = void | false | string | object;
 
-
 export type UseLoginProps<TVariables> = {
+  onSuccess?: (data: AuthActionResponse) => Promise<void>;
+  onError?: (error: Error | RefineError) => Promise<void>;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse,
@@ -20,6 +21,8 @@ export type UseLoginProps<TVariables> = {
 };
 
 export type UseLoginCombinedProps<TVariables> = {
+  onSuccess?: (data: AuthActionResponse) => Promise<void>;
+  onError?: (error: Error | RefineError) => void;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse | TLoginData,
@@ -66,25 +69,11 @@ export function useLogin<TVariables = object>(
 export function useLogin<TVariables = object>(
   props?: UseLoginProps<TVariables> | UseLoginCombinedProps<TVariables>
 ): UseLoginReturnType<TVariables> | UseLoginCombinedReturnType<TVariables> {
-  const { mutationOptions } = props || {};
+  const { mutationOptions, onError, onSuccess } = props || {};
   const invalidateAuthStore = useInvalidateAuthStore();
   const go = useGo();
   const parsed = useParsed();
-
   const { close, open } = useNotification();
-
-  const loginFromContext = async (params: unknown) => {
-    try {
-      return await authProvider.login?.(params);
-    } catch (error) {
-      console.warn(
-        "Unhandled Error in login: refine always expects a resolved promise.",
-        error,
-      );
-      return Promise.reject(error);
-    }
-  };
-
   const { keys, preferLegacyKeys } = useKeys();
 
   const to = React.useMemo(() => {
@@ -98,7 +87,7 @@ export function useLogin<TVariables = object>(
     unknown
   >({
     mutationKey: keys().auth().action("login").get(preferLegacyKeys),
-    mutationFn: loginFromContext,
+    mutationFn: authProvider.login,
     onSuccess: async ({ success, redirectTo, error, successNotification }) => {
       if (success) {
         close?.("login-error");
@@ -109,6 +98,8 @@ export function useLogin<TVariables = object>(
 
         await invalidateAuthStore();
       }
+
+      await onSuccess?.({ success, redirectTo, error, successNotification });
 
       if (error || !success) {
         open?.(buildNotification(error));
@@ -127,8 +118,9 @@ export function useLogin<TVariables = object>(
         // await invalidateAuthStore();
     //   }, 32);
     },
-    onError: (error: any) => {
+    onError: async (error: RefineError | Error) => {
       open?.(buildNotification(error));
+      await onError?.(error);
     },
     ...mutationOptions,
   });
@@ -147,7 +139,7 @@ export const buildNotification = (
   };
 };
 
-const buildSuccessNotification = (
+export const buildSuccessNotification = (
   successNotification: SuccessNotificationResponse,
 ): OpenNotificationParams => {
   return {

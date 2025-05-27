@@ -5,6 +5,7 @@ import { routes as tables_routes } from '@/routes/admin/tables';
 import { routes as dishcategories_routes } from '@/routes/admin/dishcategories';
 import { routes as dish_routes } from '@/routes/admin/dish';
 import { routes as reservations_routes } from '@/routes/admin/reservations';
+import HomePage from '@/pages/home/home.tsx';
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
 // https://github.com/remix-run/react-router/blob/main/CHANGELOG.md#v750
@@ -12,20 +13,15 @@ import { routes as reservations_routes } from '@/routes/admin/reservations';
 
 export const routes: RouteObject[] = [
   {
-    path: 'admin',
-    Component: Admin,
+    path: 'home',
+    Component: HomePage,
     children: [
       {
         index: true,
         lazy: {
-          Component: async () => (await import("@/pages/admin/dashboard.tsx")).DashboardPage,
+          Component: async () => (await import("@/pages/home/home.tsx")).default,
         },
       },
-      ...role_routes,
-      ...tables_routes,
-      ...dishcategories_routes,
-      ...dish_routes,
-      ...reservations_routes,
     ],
   },
 ];

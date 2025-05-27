@@ -20,7 +20,7 @@ const RegisterForm = () => {
   const { mutate, isLoading } = useRegister<RegisterFormValues>({
     onSuccess: async ({ success }) => {
       if (success) {
-        form.setValues(defaultValues);
+        form.reset();
       }
     },
     onError: async (error) => {

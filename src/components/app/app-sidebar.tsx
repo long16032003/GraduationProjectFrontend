@@ -6,12 +6,15 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
+  LampDesk,
   LifeBuoy,
   Map,
   PieChart,
   Send,
   Settings2,
   SquareTerminal,
+  SquareUserRound,
+  Table,
 } from "lucide-react"
 
 import { NavMain } from "@/components/app/nav-main.tsx"
@@ -53,7 +56,7 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Thống kê",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
@@ -73,7 +76,7 @@ const data = {
       ],
     },
     {
-      title: "Models",
+      title: "Quản lý hóa đơn",
       url: "#",
       icon: Bot,
       items: [
@@ -92,30 +95,7 @@ const data = {
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
+      title: "Quản lý thực đơn",
       url: "#",
       icon: Settings2,
       items: [
@@ -152,17 +132,57 @@ const data = {
   ],
   projects: [
     {
-      name: "Design Engineering",
-      url: "#",
+      name: "Quản lý bàn",
+      url: "/admin/tables",
       icon: Frame,
     },
     {
-      name: "Sales & Marketing",
-      url: "#",
+      name: "Quản lý đặt bàn",
+      url: "/admin/reservations",
       icon: PieChart,
     },
     {
-      name: "Travel",
+      name: "Quản lý danh mục thực đơn",
+      url: "/admin/dishcategories",
+      icon: Map,
+    },
+    {
+      name: "Quản lý thực đơn",
+      url: "/admin/dish",
+      icon: Map,
+    },
+    {
+      name: "Quản lý hóa đơn",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý gọi món",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý nhân viên",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý khách hàng",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý bài viết",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý ưu đãi",
+      url: "#",
+      icon: Map,
+    },
+    {
+      name: "Quản lý kho",
       url: "#",
       icon: Map,
     },
@@ -182,8 +202,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate font-semibold">BamBoo Sông Chanh</span>
+                  <span className="truncate text-xs">Nhà hàng</span>
                 </div>
               </a>
             </SidebarMenuButton>
@@ -192,8 +212,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/*<TeamSwitcher teams={data.teams} />*/}
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
+        {/* <NavMain items={data.navMain} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavSecondary items={data.navSecondary} className="mt-auto p-0" />

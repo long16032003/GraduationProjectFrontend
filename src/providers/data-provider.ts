@@ -15,9 +15,7 @@ export const dataProvider: DataProvider = {
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return { data };
+    return response;
   },
   getOne: async ({ resource, id }) => {
     const response = await httpClient(`${API_URL}/${resource}/${id}`);
@@ -30,7 +28,7 @@ export const dataProvider: DataProvider = {
   },
   update: async ({ resource, id, variables }) => {
     const response = await httpClient(`${API_URL}/${resource}/${id}`, {
-      method: "PATCH",
+      method: "PUT",
       body: JSON.stringify(variables),
       headers: {
         "Content-Type": "application/json",
@@ -39,25 +37,24 @@ export const dataProvider: DataProvider = {
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return { data };
+    return response;
   },
   getList: async ({ resource }) => {
     const response = await httpClient(`${API_URL}/${resource}`);
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return {
-      data,
-      total: 0, // We'll cover this in the next steps.
-    };
+    return response;
   },
   
-  deleteOne: () => {
-    throw new Error('Not implemented');
+  deleteOne: async ({ resource, id }) => {
+    const response = await httpClient(`${API_URL}/${resource}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.status < 200 || response.status > 299) throw response;
+
+    return response;
   },
   getApiUrl: () => API_URL,
   // Optional methods:

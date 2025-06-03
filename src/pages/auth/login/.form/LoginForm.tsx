@@ -57,7 +57,7 @@ const LoginForm = () => {
     <Form
       form={form}
       layout='vertical'
-      feedbackLayout='terse'
+      feedbackLayout='terse'  
       onAutoSubmit={console.log}
       onAutoSubmitFailed={console.log}
     >
@@ -68,7 +68,7 @@ const LoginForm = () => {
           onSubmit={handleLogin}
           block
         >
-          Login
+          Đăng nhập
         </Submit>
       </div>
     </Form>

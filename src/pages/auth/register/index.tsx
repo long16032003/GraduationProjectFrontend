@@ -12,35 +12,38 @@ import RegisterForm from './.form/RegisterForm.tsx';
 export function RegisterPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
-      <a href="#" className="flex items-center gap-2 self-center font-medium">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <GalleryVerticalEnd className="size-4" />
-        </div>
-        Acme Inc.
-      </a>
+      <div className='flex justify-center'>
+        <Link to='/'>
+          <div className='flex items-center gap-4 group'>
+            <img
+              src='/logo_restaurant.jpg'
+              alt='Logo'
+              className='h-12 w-12 rounded-full object-cover border-2 border-orange-600 p-0.5 bg-white shadow-sm group-hover:border-orange-700 transition-colors'
+            />
+            <span className='text-2xl font-semibold text-orange-700 group-hover:text-orange-800 transition-colors'>
+              BamBoo Sông Chanh
+            </span>
+          </div>
+        </Link>
+      </div>
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Sign Up</CardTitle>
+            <CardTitle className="text-xl">Đăng ký</CardTitle>
             <CardDescription>
-              Enter your information to create an account
+              Nhập thông tin để tạo tài khoản
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-6">
               <RegisterForm />
               <div className="text-center text-sm">
-                Already have an account?{' '}
-                <Link className="underline underline-offset-4" to="/login">Log in</Link>
+                Đã có tài khoản?{' '}
+                <Link className="underline underline-offset-4" to="/login">Đăng nhập</Link>
               </div>
             </div>
           </CardContent>
         </Card>
-        <div
-          className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-          By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-          and <a href="#">Privacy Policy</a>.
-        </div>
       </div>
     </div>
   );

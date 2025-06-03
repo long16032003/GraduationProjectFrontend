@@ -5,6 +5,9 @@ import { routes as tables_routes } from '@/routes/admin/tables';
 import { routes as dishcategories_routes } from '@/routes/admin/dishcategories';
 import { routes as dish_routes } from '@/routes/admin/dish';
 import { routes as reservations_routes } from '@/routes/admin/reservations';
+import { routes as post_routes } from '@/routes/admin/post';
+import { routes as staff_routes } from '@/routes/admin/staff';
+import { routes as promotion_routes } from '@/routes/admin/promotion';
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
 // https://github.com/remix-run/react-router/blob/main/CHANGELOG.md#v750
@@ -26,6 +29,9 @@ export const routes: RouteObject[] = [
       ...dishcategories_routes,
       ...dish_routes,
       ...reservations_routes,
+      ...post_routes,
+      ...staff_routes,
+      ...promotion_routes,
     ],
   },
 ];

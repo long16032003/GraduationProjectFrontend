@@ -62,7 +62,7 @@ const RegisterForm = () => {
           onSubmit={handleSubmit}
           block
         >
-          Create an account
+          Đăng ký tài khoản
         </Submit>
       </div>
     </Form>

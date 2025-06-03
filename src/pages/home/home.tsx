@@ -45,13 +45,16 @@ const HomePage: React.FC = () => {
             >
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="text-center text-white p-8">
-                  <Title level={1} className="text-white mb-6">
-                    Nhà Hàng Phương Nam
+                  <Title level={1} className="text-white mb-6 !text-5xl font-bold">
+                    Nhà Hàng Bamboo Sông Chanh
                   </Title>
-                  <Text className="text-xl block mb-8">
-                    Nơi hội tụ tinh hoa ẩm thực Việt Nam
+                  <Text className="text-xl block mb-8 text-white/90">
+                    Tinh hoa ẩm thực Quảng Yên
                   </Text>
-                  <Button type="primary" size="large">
+                  <Button 
+                    type="primary" 
+                    size="large"
+                  >
                     Đặt bàn ngay
                   </Button>
                 </div>
@@ -66,24 +69,24 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <Row gutter={[32, 32]} justify="center">
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full" bordered={false}>
-                <PhoneOutlined className="text-4xl text-primary mb-4" />
-                <Title level={4}>Liên hệ</Title>
-                <Text>0123 456 789</Text>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+                <PhoneOutlined className="text-4xl text-orange-600 mb-4" />
+                <Title level={4} className="!text-orange-700">Liên hệ</Title>
+                <Text className="text-gray-600">033 328 3999</Text>
               </Card>
             </Col>
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full" bordered={false}>
-                <EnvironmentOutlined className="text-4xl text-primary mb-4" />
-                <Title level={4}>Địa chỉ</Title>
-                <Text>123 Đường ABC, Quận 1, TP.HCM</Text>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+                <EnvironmentOutlined className="text-4xl text-orange-600 mb-4" />
+                <Title level={4} className="!text-orange-700">Địa chỉ</Title>
+                <Text className="text-gray-600">Bắc Cầu sông Chanh phường Quảng Yên, T.X Quảng Yên, Tỉnh Quảng Ninh, Vietnam</Text>
               </Card>
             </Col>
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full" bordered={false}>
-                <ClockCircleOutlined className="text-4xl text-primary mb-4" />
-                <Title level={4}>Giờ mở cửa</Title>
-                <Text>10:00 - 22:00</Text>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+                <ClockCircleOutlined className="text-4xl text-orange-600 mb-4" />
+                <Title level={4} className="!text-orange-700">Giờ mở cửa</Title>
+                <Text className="text-gray-600">10:00 - 22:30</Text>
               </Card>
             </Col>
           </Row>
@@ -91,9 +94,9 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Món ăn nổi bật */}
-      <div className="bg-gray-50 py-16">
+      <div className="bg-orange-50 py-16">
         <div className="container mx-auto px-4">
-          <Title level={2} className="text-center mb-12">
+          <Title level={2} className="text-center mb-12 !text-orange-700">
             Món Ăn Nổi Bật
           </Title>
           <Row gutter={[32, 32]}>
@@ -108,11 +111,11 @@ const HomePage: React.FC = () => {
                       className="h-64 object-cover"
                     />
                   }
-                  className="h-full"
+                  className="h-full hover:shadow-xl transition-all duration-300"
                 >
-                  <Title level={4}>{dish.name}</Title>
-                  <Text className="block mb-4">{dish.description}</Text>
-                  <Text strong className="text-primary text-lg">
+                  <Title level={4} className="!text-orange-700">{dish.name}</Title>
+                  <Text className="block mb-4 text-gray-600">{dish.description}</Text>
+                  <Text strong className="text-orange-600 text-lg">
                     {dish.price}
                   </Text>
                 </Card>
@@ -130,17 +133,20 @@ const HomePage: React.FC = () => {
               <img
                 src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600"
                 alt="Về chúng tôi"
-                className="rounded-lg shadow-lg"
+                className="rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
               />
             </Col>
             <Col xs={24} md={12}>
-              <Title level={2}>Về Chúng Tôi</Title>
-              <Text className="text-lg block mb-6">
-                Nhà hàng Phương Nam tự hào là điểm đến ẩm thực hàng đầu tại Thành phố Hồ Chí Minh, 
+              <Title level={2} className="!text-orange-700">Về Chúng Tôi</Title>
+              <Text className="text-lg block mb-6 text-gray-600">
+                Nhà hàng Bamboo Sông Chanh tự hào là điểm đến ẩm thực hàng đầu tại Thị xã Quảng Yên, 
                 mang đến cho thực khách những trải nghiệm ẩm thực độc đáo với các món ăn được chế biến 
                 từ nguyên liệu tươi ngon nhất.
               </Text>
-              <Button type="primary" size="large">
+              <Button 
+                type="primary" 
+                size="large"
+              >
                 Xem thêm
               </Button>
             </Col>
@@ -161,10 +167,13 @@ const HomePage: React.FC = () => {
             <Title level={2} className="text-white mb-6">
               Đặt Bàn Ngay
             </Title>
-            <Text className="text-lg block mb-8">
+            <Text className="text-lg block mb-8 text-white/90">
               Hãy để chúng tôi phục vụ bạn một bữa ăn tuyệt vời
             </Text>
-            <Button type="primary" size="large">
+            <Button 
+              type="primary" 
+              size="large"
+            >
               Đặt bàn
             </Button>
           </div>
@@ -176,30 +185,30 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <Row gutter={32}>
             <Col xs={24} sm={8}>
-              <Title level={4} className="text-white">
-                Nhà Hàng Phương Nam
+              <Title level={4} className="!text-white">
+                Nhà Hàng Bamboo Sông Chanh
               </Title>
               <Text className="text-gray-400 block">
-                Nơi hội tụ tinh hoa ẩm thực
+                Tinh hoa ẩm thực Quảng Yên
               </Text>
             </Col>
             <Col xs={24} sm={8}>
-              <Title level={4} className="text-white">
+              <Title level={4} className="!text-white">
                 Liên Hệ
               </Title>
               <Space direction="vertical" className="text-gray-400">
-                <Text>Điện thoại: 0123 456 789</Text>
-                <Text>Email: info@phuongnam.com</Text>
-                <Text>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</Text>
+                <Text className="text-gray-400">- Điện thoại: 033 328 3999</Text>
+                <Text className="text-gray-400">- Email: nhahangbamboo@gmail.com</Text>
+                <Text className="text-gray-400">- Địa chỉ: Bắc Cầu sông Chanh phường Quảng Yên, T.X Quảng Yên, Tỉnh Quảng Ninh, Vietnam</Text>
               </Space>
             </Col>
             <Col xs={24} sm={8}>
-              <Title level={4} className="text-white">
+              <Title level={4} className="!text-white">
                 Giờ Mở Cửa
               </Title>
               <Space direction="vertical" className="text-gray-400">
-                <Text>Thứ 2 - Thứ 6: 10:00 - 22:00</Text>
-                <Text>Thứ 7 - Chủ nhật: 09:00 - 23:00</Text>
+                <Text className="text-gray-400">Thứ 2 - Thứ 6: 10:00 - 22:30</Text>
+                <Text className="text-gray-400">Thứ 7 - Chủ nhật: 09:00 - 23:00</Text>
               </Space>
             </Col>
           </Row>

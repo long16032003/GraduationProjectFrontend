@@ -4,6 +4,7 @@ import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
 import type { LoginFormValues, PermissionsResponse, RegisterFormValues, User } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
+import { message } from 'antd';
 
 export const authProvider: AuthProvider = {
   check: async (): Promise<CheckResponse> => {
@@ -19,6 +20,7 @@ export const authProvider: AuthProvider = {
           if (error.statusCode === HttpStatusCode.UNAUTHORIZED) {
             // 401: Already logged out
             auth$.user.set(null)
+            message.success('Bạn đã bị đăng xuất');
           }
         } else {
           console.error('Logout error:', error);
@@ -62,7 +64,7 @@ export const authProvider: AuthProvider = {
       success: true,
       redirectTo: redirectPath,
       successNotification: {
-        message: "Login Successful",
+        message: "Đăng nhập thành công",
         // description: "You have successfully logged in.",
       },
     };

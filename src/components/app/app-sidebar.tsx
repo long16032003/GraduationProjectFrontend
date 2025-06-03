@@ -15,6 +15,18 @@ import {
   SquareTerminal,
   SquareUserRound,
   Table,
+  LayoutDashboard,
+  TableProperties,
+  CalendarCheck,
+  ListOrdered,
+  UtensilsCrossed,
+  Receipt,
+  ClipboardList,
+  Users,
+  UserCircle,
+  FileText,
+  Tag,
+  PackageSearch,
 } from "lucide-react"
 
 import { NavMain } from "@/components/app/nav-main.tsx"
@@ -58,61 +70,19 @@ const data = {
     {
       title: "Thống kê",
       url: "#",
-      icon: SquareTerminal,
+      icon: LayoutDashboard,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "Thống kê doanh thu",
           url: "#",
         },
         {
-          title: "Starred",
+          title: "Thống kê món ăn được gọi nhiều nhất",
           url: "#",
         },
         {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Quản lý hóa đơn",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Quản lý thực đơn",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Thống kê nguyên liệu",
           url: "#",
         },
       ],
@@ -132,59 +102,59 @@ const data = {
   ],
   projects: [
     {
-      name: "Quản lý bàn",
+      name: "Bàn ăn",
       url: "/admin/tables",
-      icon: Frame,
+      icon: TableProperties,
     },
     {
-      name: "Quản lý đặt bàn",
+      name: "Đặt bàn",
       url: "/admin/reservations",
-      icon: PieChart,
+      icon: CalendarCheck,
     },
     {
-      name: "Quản lý danh mục thực đơn",
+      name: "Danh mục thực đơn",
       url: "/admin/dishcategories",
-      icon: Map,
+      icon: ListOrdered,
     },
     {
-      name: "Quản lý thực đơn",
+      name: "Thực đơn",
       url: "/admin/dish",
-      icon: Map,
+      icon: UtensilsCrossed,
     },
     {
-      name: "Quản lý hóa đơn",
-      url: "#",
-      icon: Map,
+      name: "Hóa đơn",
+      url: "/admin/bills",
+      icon: Receipt,
     },
     {
-      name: "Quản lý gọi món",
-      url: "#",
-      icon: Map,
+      name: "Gọi món",
+      url: "/admin/orders",
+      icon: ClipboardList,
     },
     {
-      name: "Quản lý nhân viên",
-      url: "#",
-      icon: Map,
+      name: "Nhân viên",
+      url: "/admin/staffs",
+      icon: Users,
     },
     {
-      name: "Quản lý khách hàng",
-      url: "#",
-      icon: Map,
+      name: "Khách hàng",
+      url: "/admin/customers",
+      icon: UserCircle,
     },
     {
-      name: "Quản lý bài viết",
-      url: "#",
-      icon: Map,
+      name: "Bài viết",
+      url: "/admin/posts",
+      icon: FileText,
     },
     {
-      name: "Quản lý ưu đãi",
-      url: "#",
-      icon: Map,
+      name: "Ưu đãi",
+      url: "/admin/promotions",
+      icon: Tag,
     },
     {
-      name: "Quản lý kho",
-      url: "#",
-      icon: Map,
+      name: "Kho",
+      url: "/admin/inventory",
+      icon: PackageSearch,
     },
   ],
 }
@@ -198,8 +168,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                  <img src="/logo_restaurant.jpg" alt="logo" className="w-full h-full object-cover" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">BamBoo Sông Chanh</span>
@@ -213,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={data.projects} />
-        {/* <NavMain items={data.navMain} /> */}
+        <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavSecondary items={data.navSecondary} className="mt-auto p-0" />

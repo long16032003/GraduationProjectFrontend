@@ -60,3 +60,55 @@ export interface PermissionsResponse {
   flat: string[];
 }
 
+export interface Staff {
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DishCategory {
+  id: string;
+  name: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Dish {
+  id: number;
+  creator_id: number;
+  name: string;
+  description: string | null;
+  image_id: number | null;
+  price: string;
+  category_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  dish_categories?: DishCategory;
+  creator?: User;
+  image?: Media;
+}
+
+export interface Media {
+  id: number;
+  title: string;
+  path: string;
+  type: string;
+  size: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  created_at: string;
+}
+

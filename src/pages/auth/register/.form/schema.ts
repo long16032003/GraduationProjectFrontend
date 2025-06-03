@@ -41,7 +41,7 @@ export const schema: ISchema = {
       properties: {
         name: createInputSchema({
           required: true,
-          title: 'Full Name',
+          title: 'Họ và tên',
           maxLength: 255,
           'x-decorator-props': {
             asterisk: false,
@@ -56,7 +56,7 @@ export const schema: ISchema = {
         }),
         password: createPasswordSchema({
           required: true,
-          title: 'Password',
+          title: 'Mật khẩu',
           minLength: 8,
           maxLength: 64,
           'x-decorator-props': {
@@ -66,7 +66,7 @@ export const schema: ISchema = {
         }),
         password_confirmation: createPasswordSchema({
           required: true,
-          title: 'Confirm Password',
+          title: 'Xác nhận mật khẩu',
           maxLength: 64,
           'x-reactions': [
             {

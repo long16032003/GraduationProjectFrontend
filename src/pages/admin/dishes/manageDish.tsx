@@ -13,31 +13,14 @@ import {
   Tag,
   Upload,
 } from 'antd';
-import { PlusOutlined, ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { PlusOutlined, ExclamationCircleOutlined, LoadingOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
+import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
+import dayjs from 'dayjs';
+import type { DishCategory, Dish, Media } from '@/types';
 
-interface Dish {
-  id: string;
-  code: string;
-  name: string;
-  categoryId: string;
-  categoryName: string;
-  price: number;
-  description?: string;
-  status: 'available' | 'unavailable';
-  image?: string;
-}
-
-interface DishFormData {
-  name: string;
-  categoryId: string;
-  price: number;
-  description?: string;
-  status: 'available' | 'unavailable';
-  image?: string;
-}
 
 const ManageDish: React.FC = () => {
   const [form] = Form.useForm();
@@ -45,104 +28,53 @@ const ManageDish: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
-  const [imageUrl, setImageUrl] = useState<string>();
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<Media | null>(null);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
 
-  // Mock data - sẽ được thay thế bằng API call
-  const categories = [
-    { id: '1', name: 'Món khai vị' },
-    { id: '2', name: 'Món chính' },
-    { id: '3', name: 'Tráng miệng' },
-  ];
+  // Lấy danh sách món ăn
+  const { data: dishes, isLoading: isLoadingDishes } = useList<Dish>({
+    resource: 'dishes',
+  });
 
-  const data: Dish[] = [
-    {
-      id: '1',
-      code: 'MA001',
-      name: 'Gỏi cuốn',
-      categoryId: '1',
-      categoryName: 'Món khai vị',
-      price: 50000,
-      description: 'Gỏi cuốn tôm thịt tươi ngon',
-      status: 'available',
-      image: 'https://images.unsplash.com/photo-1553163147-622ab57be1c7?q=80&w=300',
-    },
-    {
-      id: '2',
-      code: 'MA002',
-      name: 'Phở bò',
-      categoryId: '2',
-      categoryName: 'Món chính',
-      price: 75000,
-      description: 'Phở bò với nước dùng đặc biệt',
-      status: 'available',
-      image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?q=80&w=300',
-    },
-    {
-      id: '3',
-      code: 'MA003',
-      name: 'Chè thái',
-      categoryId: '3',
-      categoryName: 'Tráng miệng',
-      price: 35000,
-      description: 'Chè thái thơm ngon, nhiều topping',
-      status: 'available',
-      image: 'https://images.unsplash.com/photo-1628191139360-4083564d03fd?q=80&w=300',
-    },
-    {
-      id: '4',
-      code: 'MA004',
-      name: 'Cơm rang hải sản',
-      categoryId: '2',
-      categoryName: 'Món chính',
-      price: 85000,
-      description: 'Cơm rang với hải sản tươi sống',
-      status: 'unavailable',
-      image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=300',
-    },
-    {
-      id: '5',
-      code: 'MA005',
-      name: 'Salad trộn',
-      categoryId: '1',
-      categoryName: 'Món khai vị',
-      price: 45000,
-      description: 'Salad trộn với sốt đặc biệt',
-      status: 'available',
-      image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=300',
-    },
-  ];
+  // Lấy danh sách danh mục
+  const { data: categoriesData } = useList<DishCategory[]>({
+    resource: 'dish-categories',
+  });
+
+  // Các mutation để thêm/sửa/xóa
+  const { mutate: createDish, isLoading: isCreating } = useCreate();
+  const { mutate: updateDish, isLoading: isUpdating } = useUpdate();
+  const { mutate: deleteDish, isLoading: isDeleting } = useDelete();
+
+  const { mutate: uploadImage, isLoading: isUploading } = useCreate();
 
   const columns = [
-    {
-      title: 'Mã món',
-      dataIndex: 'code',
-      key: 'code',
-      width: '10%',
-    },
     {
       title: 'Tên món',
       dataIndex: 'name',
       key: 'name',
       width: '20%',
-      sorter: (a: Dish, b: Dish) => a.name.localeCompare(b.name),
+      render: (text: string) => (
+        <span className="font-medium text-gray-800">{text}</span>
+      ),
     },
     {
       title: 'Ảnh',
       dataIndex: 'image',
       key: 'image',
       width: '120px',
-      render: (image: string) => (
-        <div className='w-20 h-20'>
+      render: (image: Media | null) => (
+        <div className="w-20 h-20">
           {image ? (
             <img
-              src={image}
-              alt='Món ăn'
-              className='w-full h-full object-cover rounded'
+              src={image.path}
+              alt="Món ăn"
+              className="w-full h-full object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
             />
           ) : (
-            <div className='w-full h-full bg-gray-200 rounded flex items-center justify-center'>
-              <span className='text-gray-500'>No image</span>
+            <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+              <span className="text-gray-400 text-sm">No image</span>
             </div>
           )}
         </div>
@@ -150,55 +82,72 @@ const ManageDish: React.FC = () => {
     },
     {
       title: 'Danh mục',
-      dataIndex: 'categoryName',
-      key: 'categoryName',
+      dataIndex: ['dish_categories', 'name'],
+      key: 'category',
       width: '15%',
-      filters: categories.map((cat) => ({ text: cat.name, value: cat.id })),
-      onFilter: (value: string, record: Dish) => record.categoryId === value,
+      render: (text: string) => (
+        <Tag color="blue" className="px-3 py-1">
+          {text}
+        </Tag>
+      ),
     },
     {
       title: 'Giá',
       dataIndex: 'price',
       key: 'price',
       width: '15%',
-      render: (price: number) =>
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price),
-      sorter: (a: Dish, b: Dish) => a.price - b.price,
+      render: (price: number) => (
+        <span className='text-orange-600 font-bold'>
+          {new Intl.NumberFormat('vi-VN', { 
+            style: 'currency', 
+            currency: 'VND' 
+          }).format(price)}
+        </span>
+      ),
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
+      dataIndex: 'is_active',
+      key: 'is_active',
       width: '15%',
-      render: (status: string) => (
-        <Tag color={status === 'available' ? 'green' : 'red'}>
-          {status === 'available' ? 'Có sẵn' : 'Không có'}
+      render: (isActive: boolean) => (
+        <Tag 
+          color={isActive ? 'success' : 'error'}
+          className="px-3 py-1"
+        >
+          {isActive ? 'Đang kinh doanh' : 'Ngừng kinh doanh'}
         </Tag>
       ),
-      filters: [
-        { text: 'Có sẵn', value: 'available' },
-        { text: 'Không có', value: 'unavailable' },
-      ],
-      onFilter: (value: string, record: Dish) => record.status === value,
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      width: '15%',
+      render: (date: string) => (
+        <span className="text-gray-500">
+          {dayjs(date).format('DD/MM/YYYY HH:mm')}
+        </span>
+      ),
     },
     {
       title: 'Hành động',
       key: 'action',
       width: '15%',
       render: (_: any, record: Dish) => (
-        <Space size='middle'>
+        <Space>
           <Button
-            type='primary'
+            type="text"
+            icon={<EditOutlined />}
+            className="text-blue-500 hover:text-blue-600"
             onClick={() => handleEdit(record)}
-          >
-            Sửa
-          </Button>
+          />
           <Button
+            type="text"
             danger
+            icon={<DeleteOutlined />}
             onClick={() => showDeleteConfirm(record)}
-          >
-            Xóa
-          </Button>
+          />
         </Space>
       ),
     },
@@ -212,13 +161,13 @@ const ManageDish: React.FC = () => {
 
   const handleEdit = (record: Dish) => {
     setEditingDish(record);
-    setImageUrl(record.image);
+    setImageFile(record.image || null);
     form.setFieldsValue({
       name: record.name,
-      categoryId: record.categoryId,
+      category_id: record.category_id,
       price: record.price,
       description: record.description,
-      status: record.status,
+      is_active: record.is_active,
     });
     setIsModalVisible(true);
   };
@@ -232,48 +181,58 @@ const ManageDish: React.FC = () => {
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          setLoading(true);
-          // API call để xóa món ăn
-          // await deleteDish(record.id);
+          await deleteDish({
+            resource: 'dishes',
+            id: record.id,
+          });
           message.success('Xóa món ăn thành công');
         } catch (error) {
           message.error('Có lỗi xảy ra khi xóa món ăn');
-        } finally {
-          setLoading(false);
         }
       },
     });
   };
 
-  const getBase64 = (img: RcFile, callback: (url: string) => void) => {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => callback(reader.result as string));
-    reader.readAsDataURL(img);
-  };
-
-  const beforeUpload = (file: RcFile) => {
+  const beforeUpload = async (file: RcFile) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-    if (!isJpgOrPng) {
-      message.error('Chỉ có thể tải lên file JPG/PNG!');
-    }
     const isLt2M = file.size / 1024 / 1024 < 2;
+  
+    if (!isJpgOrPng) {
+      message.error('Chỉ chấp nhận JPG/PNG!');
+      return false;
+    }
+  
     if (!isLt2M) {
       message.error('Ảnh phải nhỏ hơn 2MB!');
+      return false;
     }
-    return isJpgOrPng && isLt2M;
+  
+    try {
+      setUploadLoading(true);
+      console.log("file: ", file);
+      const fileData = {
+        file: file,
+      }
+      console.log("fileData: ", fileData);
+      const response = await uploadImage({
+        resource: 'upload-image',
+        values: fileData,
+      });
+      setImageFile(response.data);
+      form.setFieldValue('image', response.data);
+      message.success('Tải ảnh thành công');
+    } catch (error) {
+      message.error('Lỗi khi upload: ' + (error as Error).message);
+    } finally {
+      setUploadLoading(false);
+    }
+  
+    return false; // Không upload mặc định, vì bạn đã xử lý tay
   };
+  
 
   const handleChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
-    if (info.file.status === 'uploading') {
-      setUploadLoading(true);
-      return;
-    }
-    if (info.file.status === 'done') {
-      getBase64(info.file.originFileObj as RcFile, (url) => {
-        setUploadLoading(false);
-        setImageUrl(url);
-      });
-    }
+    setFileList(info.fileList.slice(-1)); // Chỉ giữ file mới nhất
   };
 
   const uploadButton = (
@@ -283,69 +242,97 @@ const ManageDish: React.FC = () => {
     </div>
   );
 
-  const handleSubmit = async (values: DishFormData) => {
+  const handleSubmit = async (values: Dish) => {
     try {
       setLoading(true);
-      const formData = new FormData();
-      Object.keys(values).forEach((key) => {
-        if (key !== 'image') {
-          formData.append(key, values[key]);
-        }
-      });
-      if (imageUrl) {
-        formData.append('image', imageUrl);
-      }
+      const data: Dish = {
+        id: editingDish?.id || 0,
+        name: values.name,
+        description: values.description,
+        price: values.price,
+        category_id: values.category_id,
+        is_active: values.is_active,
+        creator_id: values.creator_id,
+        image_id: imageFile?.id || null,
+        created_at: values.created_at,
+        updated_at: values.updated_at,
+      };
 
       if (editingDish) {
-        // API call để cập nhật món ăn
-        // await updateDish(editingDish.id, formData);
+        await updateDish({
+          resource: 'dishes',
+          id: editingDish.id,
+          values: data,
+        });
         message.success('Cập nhật món ăn thành công');
       } else {
-        // API call để thêm món ăn mới
-        // await createDish(formData);
+        await createDish({
+          resource: 'dishes',
+          values: data,
+        });
         message.success('Thêm món ăn thành công');
       }
+
       setIsModalVisible(false);
       form.resetFields();
-      setImageUrl(undefined);
+      setImageFile(null);
+      setFileList([]);
     } catch (error) {
+      console.error('Error submitting:', error);
       message.error('Có lỗi xảy ra. Vui lòng thử lại');
     } finally {
       setLoading(false);
     }
   };
 
+  console.log("dishes: ", dishes);
+
   return (
     <Card
-      title='Quản lý thực đơn'
-      className='m-4'
-    >
-      <div className='mb-4 flex justify-between items-center'>
-        <Input.Search
-          placeholder='Tìm kiếm món ăn...'
-          allowClear
-          onSearch={(value) => setSearchText(value)}
-          style={{ width: 300 }}
-        />
+      title={
+        <div className="flex items-center space-x-2">
+          <span className="text-lg font-medium">Quản lý thực đơn</span>
+          <Tag color="orange" className="uppercase">
+            {dishes?.data?.length || 0} món
+          </Tag>
+        </div>
+      }
+      className="m-4 shadow-md"
+      extra={
         <Button
-          type='primary'
+          type="primary"
           icon={<PlusOutlined />}
           onClick={handleAdd}
         >
           Thêm món mới
         </Button>
+      }
+    >
+      <div className="mb-4 flex justify-between items-center">
+        <Input.Search
+          placeholder="Tìm kiếm món ăn..."
+          allowClear
+          onSearch={(value) => setSearchText(value)}
+          style={{ width: 300 }}
+          className="shadow-sm"
+        />
       </div>
 
       <Table
-        columns={columns as any}
-        dataSource={data}
-        loading={loading}
-        rowKey='id'
+        columns={columns}
+        dataSource={dishes?.data}
+        loading={isLoadingDishes || isCreating || isUpdating || isDeleting}
+        rowKey="id"
         pagination={{
+          total: dishes?.total,
+          pageSize: 10,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total) => `Tổng số ${total} món`,
+          className: "pagination-table"
         }}
+        className="shadow-sm"
+        rowClassName="hover:bg-gray-50 transition-colors duration-200"
       />
 
       <Modal
@@ -383,19 +370,19 @@ const ManageDish: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name='categoryId'
+            name='category_id'
             label='Danh mục'
             rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
           >
             <Select>
-              {categories.map((category) => (
+              {categoriesData?.map((category: DishCategory) => (
                 <Select.Option
                   key={category.id}
                   value={category.id}
                 >
                   {category.name}
                 </Select.Option>
-              ))}
+              )) || []}
             </Select>
           </Form.Item>
 
@@ -424,18 +411,17 @@ const ManageDish: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name='status'
+            name='is_active'
             label='Trạng thái'
-            initialValue='available'
+            initialValue={true}
           >
             <Select>
-              <Select.Option value='available'>Có sẵn</Select.Option>
-              <Select.Option value='unavailable'>Không có</Select.Option>
+              <Select.Option value={true}>Đang bán</Select.Option>
+              <Select.Option value={false}>Ngừng bán</Select.Option>
             </Select>
           </Form.Item>
 
           <Form.Item
-            name='image'
             label='Ảnh món ăn'
             valuePropName='fileList'
             getValueFromEvent={(e) => {
@@ -446,18 +432,16 @@ const ManageDish: React.FC = () => {
             }}
           >
             <Upload
-              name='avatar'
               listType='picture-card'
               className='avatar-uploader'
               showUploadList={false}
-              // action='https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188'
-              action={``}
               beforeUpload={beforeUpload}
               onChange={handleChange}
+              fileList={fileList}
             >
-              {imageUrl ? (
+              {dishes?.image ? (
                 <img
-                  src={imageUrl}
+                  src={dishes?.image?.path}
                   alt='avatar'
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />

@@ -3,12 +3,15 @@ import { type RefineError, type AuthActionResponse, useInvalidateAuthStore, useG
 import type { UseMutationOptions, UseMutationResult } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
+import { httpClient } from "@/utils/http";
+import type { LoginCustomerFormValues } from "@/types";
+import auth$ from "@/stores/auth";
 
 export type TLoginData = void | false | string | object;
 
-export type UseLoginProps<TVariables> = {
+export type UseCustomerLoginProps<TVariables> = {
   onSuccess?: (data: AuthActionResponse) => Promise<void>;
-  onError?: (error: Error | RefineError) => Promise<void>;
+  onError?: (error: Error | RefineError) => Promise<void> | void;
   mutationOptions?: Omit<
     UseMutationOptions<
       AuthActionResponse,
@@ -20,7 +23,7 @@ export type UseLoginProps<TVariables> = {
   >;
 };
 
-export type UseLoginCombinedProps<TVariables> = {
+export type UseCustomerLoginCombinedProps<TVariables> = {
   onSuccess?: (data: AuthActionResponse) => Promise<void>;
   onError?: (error: Error | RefineError) => void;
   mutationOptions?: Omit<
@@ -34,41 +37,37 @@ export type UseLoginCombinedProps<TVariables> = {
   >;
 };
 
-export type UseLoginReturnType<TVariables> = UseMutationResult<
+export type UseCustomerLoginReturnType<TVariables> = UseMutationResult<
   AuthActionResponse,
   Error | RefineError,
   TVariables,
   unknown
 >;
 
-export type UseLoginCombinedReturnType<TVariables> = UseMutationResult<
+export type UseCustomerLoginCombinedReturnType<TVariables> = UseMutationResult<
   AuthActionResponse | TLoginData,
   Error | RefineError,
   TVariables,
   unknown
 >;
 
+export function useCustomerLogin<TVariables = object>(
+  props?: UseCustomerLoginProps<TVariables>,
+): UseCustomerLoginReturnType<TVariables>;
 
-export function useLogin<TVariables = object>(
-  props?: UseLoginProps<TVariables>,
-): UseLoginReturnType<TVariables>;
-
-export function useLogin<TVariables = object>(
-  props?: UseLoginCombinedProps<TVariables>,
-): UseLoginCombinedReturnType<TVariables>;
+export function useCustomerLogin<TVariables = object>(
+  props?: UseCustomerLoginCombinedProps<TVariables>,
+): UseCustomerLoginCombinedReturnType<TVariables>;
 
 /**
- * `useLogin` calls `login` method from {@link https://refine.dev/docs/api-reference/core/providers/auth-provider `authProvider`} under the hood.
+ * `useCustomerLogin` is a custom hook for customer login that uses a different API endpoint.
  *
- * @see {@link https://refine.dev/docs/api-reference/core/hooks/auth/useLogin} for more details.
- *
- * @typeParam TData - Result data of the query
  * @typeParam TVariables - Values for mutation function. default `{}`
  *
  */
-export function useLogin<TVariables = object>(
-  props?: UseLoginProps<TVariables> | UseLoginCombinedProps<TVariables>
-): UseLoginReturnType<TVariables> | UseLoginCombinedReturnType<TVariables> {
+export function useCustomerLogin<TVariables = object>(
+  props?: UseCustomerLoginProps<TVariables> | UseCustomerLoginCombinedProps<TVariables>
+): UseCustomerLoginReturnType<TVariables> | UseCustomerLoginCombinedReturnType<TVariables> {
   const { mutationOptions, onError, onSuccess } = props || {};
   const invalidateAuthStore = useInvalidateAuthStore();
   const go = useGo();
@@ -80,14 +79,43 @@ export function useLogin<TVariables = object>(
     return parsed.params?.to;
   }, [parsed.params]);
 
+  // Customer login function that calls the customer-specific endpoint
+  const customerLogin = async (variables: TVariables) => {
+    try {
+      // Use the customer-specific endpoint
+      const response = await httpClient('login-customer', { 
+        method: 'post', 
+        body: variables as Record<string, unknown>
+      });
+      
+      // Get user data after login
+      const user = await httpClient('@customer');
+      
+      // Set user data in auth store
+      auth$.user.set(user);
+      
+      // Return success response with redirection to home page
+      return {
+        success: true,
+        redirectTo: '/',
+        successNotification: {
+          message: "Đăng nhập thành công",
+        },
+      };
+    } catch (error) {
+      console.error("Customer login error:", error);
+      throw error;
+    }
+  };
+
   const mutation = useMutation<
     AuthActionResponse,
     Error | RefineError,
     TVariables,
     unknown
   >({
-    mutationKey: keys().auth().action("login").get(preferLegacyKeys),
-    mutationFn: authProvider.login,
+    mutationKey: keys().auth().action("customer-login").get(preferLegacyKeys),
+    mutationFn: customerLogin,
     onSuccess: async ({ success, redirectTo, error, successNotification }) => {
       if (success) {
         close?.("login-error");
@@ -96,7 +124,7 @@ export function useLogin<TVariables = object>(
           open?.(buildSuccessNotification(successNotification));
         }
 
-        await invalidateAuthStore();
+        // await invalidateAuthStore();
       }
 
       await onSuccess?.({ success, redirectTo, error, successNotification });
@@ -110,15 +138,12 @@ export function useLogin<TVariables = object>(
       } else if (redirectTo) {
         go({ to: redirectTo, type: "replace" });
       } else {
-        // if no redirectTo, go to home page
+        // If no redirectTo, go to home page instead of admin
         go({ to: "/", type: "replace" });
       }
-
-    //   setTimeout(() => {
-        // await invalidateAuthStore();
-    //   }, 32);
     },
     onError: async (error: RefineError | Error) => {
+      console.error("Customer login mutation error:", error);
       open?.(buildNotification(error));
       await onError?.(error);
     },
@@ -132,8 +157,8 @@ export const buildNotification = (
   error?: Error | RefineError,
 ): OpenNotificationParams => {
   return {
-    message: error?.name || "Login Error",
-    description: error?.message || "Invalid credentials",
+    message: error?.name || "Lỗi đăng nhập",
+    description: error?.message || "Thông tin đăng nhập không chính xác",
     key: "login-error",
     type: "error",
   };
@@ -148,4 +173,4 @@ export const buildSuccessNotification = (
     key: "login-success",
     type: "success",
   };
-};
+}; 

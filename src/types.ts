@@ -5,6 +5,13 @@ export interface LoginFormValues {
   remember?: boolean;
 }
 
+export interface LoginCustomerFormValues {
+  phone: string;
+  password: string;
+  redirectPath?: string;
+  remember?: boolean;
+}
+
 export interface RegisterFormValues {
   name: string;
   email: string;
@@ -17,6 +24,14 @@ export interface User {
   id?: number;
   uuid?: string;
   email: string;
+  name: string;
+}
+
+export interface Customer {
+  id?: number;
+  uuid?: string;
+  email?: string;
+  phone: string;
   name: string;
 }
 

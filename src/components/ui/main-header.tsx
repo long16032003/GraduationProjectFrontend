@@ -83,7 +83,7 @@ export const MainHeader = () => {
               <UserNav user={user}/>
             ) : (
               <>
-                <Link to="/login">
+                <Link to="/login-customer">
                   <Button 
                     type="primary"
                     icon={<UserOutlined />}

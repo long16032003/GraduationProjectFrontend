@@ -30,8 +30,8 @@ export default function LoginPage() {
       <div className='flex flex-col gap-6'>
         <Card>
           <CardHeader className='text-center'>
-            <CardTitle className='text-xl'>Chào mừng trở lại</CardTitle>
-            <CardDescription>Đăng nhập với tài khoản của bạn</CardDescription>
+            <CardTitle className='text-xl'>Nơi đăng nhập dành cho nhân viên</CardTitle>
+            <CardDescription>Đăng nhập với tài khoản của bạn để quản lý hệ thống</CardDescription>
           </CardHeader>
           <CardContent>
             <div className='grid gap-6'>

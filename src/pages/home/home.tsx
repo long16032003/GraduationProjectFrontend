@@ -69,21 +69,21 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <Row gutter={[32, 32]} justify="center">
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300">
                 <PhoneOutlined className="text-4xl text-orange-600 mb-4" />
                 <Title level={4} className="!text-orange-700">Liên hệ</Title>
                 <Text className="text-gray-600">033 328 3999</Text>
               </Card>
             </Col>
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300">
                 <EnvironmentOutlined className="text-4xl text-orange-600 mb-4" />
                 <Title level={4} className="!text-orange-700">Địa chỉ</Title>
                 <Text className="text-gray-600">Bắc Cầu sông Chanh phường Quảng Yên, T.X Quảng Yên, Tỉnh Quảng Ninh, Vietnam</Text>
               </Card>
             </Col>
             <Col xs={24} sm={8}>
-              <Card className="text-center h-full hover:shadow-lg transition-all duration-300" bordered={false}>
+              <Card className="text-center h-full hover:shadow-lg transition-all duration-300">
                 <ClockCircleOutlined className="text-4xl text-orange-600 mb-4" />
                 <Title level={4} className="!text-orange-700">Giờ mở cửa</Title>
                 <Text className="text-gray-600">10:00 - 22:30</Text>

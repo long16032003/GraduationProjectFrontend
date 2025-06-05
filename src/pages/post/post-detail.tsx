@@ -1,28 +1,26 @@
 import React from 'react';
 import { useOne, useList } from '@refinedev/core';
-import { Typography, Breadcrumb, Space, Spin, Card, Row, Col, Avatar, List, Layout } from 'antd';
+import { Typography, Breadcrumb, Space, Spin, Card, Row, Col, Avatar, List, Layout, Button, Tooltip } from 'antd';
 import {
   CalendarOutlined,
   UserOutlined,
   EyeOutlined,
   ClockCircleOutlined,
+  HomeOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { theme } from '@/config/theme';
 import dayjs from 'dayjs';
 import { Link, useParams } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
+import type { Post } from '@/types';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
+import { Result } from 'antd/lib';
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
 const { token } = theme;
-
-interface Post {
-  id: string;
-  title: string;
-  summary: string;
-  content: string;
-  created_at: string;
-}
 
 const PostDetail: React.FC = () => {
   const { id } = useParams();
@@ -41,256 +39,132 @@ const PostDetail: React.FC = () => {
   const post = data?.data;
   const relatedPosts = relatedData?.data || [];
 
+  const user = use$(auth$.user);
+
+  // Kiểm tra quyền edit của user với post
+  const canEdit = user?.id === post?.creator_id || user?.role === 'admin';
+
   if (isLoading) {
     return (
-      <Row
-        justify='center'
-        align='middle'
-        style={{ minHeight: '100vh' }}
-      >
-        <Spin size='large' />
-      </Row>
-    );
-  }
-
-  if (!post) {
-    return (
-      <Row
-        justify='center'
-        style={{ padding: token?.paddingLG }}
-      >
-        <Col>
-          <Title level={3}>Không tìm thấy bài viết</Title>
-          <Link to='/posts'>Quay lại danh sách</Link>
-        </Col>
-      </Row>
+        <MainLayout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <Spin size="large" />
+            <div className="mt-4 text-gray-500">Đang tải bài viết...</div>
+          </div>
+        </div>
+      </MainLayout>
     );
   }
 
   return (
     <MainLayout>
-      <Layout
-        style={{
-          background: `linear-gradient(to bottom, ${token?.colorBgSpotlight}, ${token?.menuItemHoverBg})`,
-          minHeight: '100vh',
-        }}
-      >
-        {/* Header Area */}
-        <div
-          style={{
-            backgroundColor: token?.colorBgContainer + 'B3',
-            backdropFilter: 'blur(8px)',
-            borderBottom: `1px solid ${token?.colorBorderSecondary}`,
-            padding: `${token?.paddingMD}px 0`,
-            position: 'sticky',
-            top: 0,
-            zIndex: 1,
-          }}
-        >
-          <Row justify='center'>
-            <Col
-              xs={23}
-              sm={23}
-              md={22}
-              lg={20}
-              xl={18}
-            >
-              <Breadcrumb
-                items={[
-                  { title: <Link to='/'>Trang chủ</Link> },
-                  { title: <Link to='/posts'>Bài viết</Link> },
-                  { title: <Text ellipsis>{post.title}</Text> },
-                ]}
+      <div className="container mx-auto px-4 py-6">
+        {/* Breadcrumb */}
+        <Breadcrumb 
+          className="mb-6"
+          items={[
+            {
+              title: (
+                <Link to="/" className="flex items-center">
+                  <HomeOutlined className="mr-1" />
+                  Trang chủ
+                </Link>
+              ),
+            },
+            {
+              title: <Link to="/posts">Tin tức</Link>,
+            },
+            {
+              title: post.title,
+            },
+          ]}
+        />
+
+        <div className="max-w-6xl mx-auto">
+          {/* Post Header with Edit Button */}
+          <div className="mb-8 relative">
+            <Title level={1} className="!mb-4 text-gray-800 pr-32">
+              {post.title}
+            </Title>
+
+            {/* Edit Button */}
+            {canEdit && (
+              <div className="absolute top-0 right-0">
+                <Tooltip title="Chỉnh sửa bài viết">
+                  <Link to={`/posts/edit/${post.id}`}>
+                    <Button 
+                      type="primary"
+                      icon={<EditOutlined />}
+                      className="bg-orange-600 hover:bg-orange-700 border-none"
+                    >
+                      Chỉnh sửa
+                    </Button>
+                  </Link>
+                </Tooltip>
+              </div>
+            )}
+            
+            {/* Meta info */}
+            <div className="flex flex-wrap items-center gap-6 text-gray-500">
+              <Space>
+                <CalendarOutlined />
+                <span>{dayjs(post.created_at).format('DD/MM/YYYY')}</span>
+              </Space>
+              <Space>
+                <Avatar 
+                  size="small"
+                  icon={<UserOutlined />}
+                  src={post.creator?.avatar}
+                  className="bg-orange-500"
+                />
+                <span>{post.creator?.name}</span>
+              </Space>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <Card className="mb-8 bg-orange-50/50 border-orange-100">
+            <Paragraph className="text-lg text-gray-600 italic m-0">
+              {post.summary}
+            </Paragraph>
+          </Card>
+
+          {/* Main Content */}
+          <Card className="!border-none shadow-sm">
+            <div className="prose prose-lg max-w-none">
+              <div 
+                dangerouslySetInnerHTML={{ __html: post.content }}
+                className="prose prose-headings:text-gray-800 
+                  prose-p:text-gray-600 
+                  prose-a:text-orange-600 prose-a:no-underline hover:prose-a:text-orange-700
+                  prose-img:rounded-lg prose-img:mx-auto
+                  prose-strong:text-gray-800"
               />
-            </Col>
-          </Row>
+            </div>
+          </Card>
+
+          {/* Author Card */}
+          <Card className="mt-8 bg-gray-50 border-none shadow-sm">
+            <div className="flex items-center gap-4">
+              <Avatar 
+                size={64}
+                icon={<UserOutlined />}
+                src={post.creator?.avatar}
+                className="bg-orange-500"
+              />
+              <div>
+                <div className="text-lg font-medium">
+                  {post.creator?.name}
+                </div>
+                <div className="text-gray-500">
+                  Tác giả
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
-
-        <Content style={{ padding: `${token?.paddingLG}px 0` }}>
-          <Row justify='center'>
-            <Col
-              xs={23}
-              sm={23}
-              md={22}
-              lg={20}
-              xl={18}
-            >
-              <Row gutter={[24, 24]}>
-                {/* Main Content */}
-                <Col
-                  xs={24}
-                  lg={16}
-                >
-                  <Card
-                    bordered={false}
-                    style={{
-                      boxShadow: token?.boxShadow,
-                      borderRadius: token?.borderRadiusLG,
-                    }}
-                  >
-                    <Title
-                      level={1}
-                      style={{
-                        fontSize: { xs: '1.75rem', sm: '2.5rem' },
-                        marginBottom: token?.marginMD,
-                      }}
-                    >
-                      {post.title}
-                    </Title>
-
-                    <Space
-                      wrap
-                      size={[16, 8]}
-                      style={{ marginBottom: token?.marginLG }}
-                    >
-                      <Space>
-                        <Avatar
-                          icon={<UserOutlined />}
-                          style={{ backgroundColor: token?.colorPrimary }}
-                        />
-                        <Text type='secondary'>Admin</Text>
-                      </Space>
-                      <Text type='secondary'>
-                        <CalendarOutlined /> {dayjs(post.created_at).format('DD/MM/YYYY')}
-                      </Text>
-                      <Text type='secondary'>
-                        <ClockCircleOutlined /> {dayjs(post.created_at).format('HH:mm')}
-                      </Text>
-                      <Text type='secondary'>
-                        <EyeOutlined /> 123 lượt xem
-                      </Text>
-                    </Space>
-
-                    <Card
-                      bordered={false}
-                      style={{
-                        backgroundColor: token?.colorPrimaryBg,
-                        marginBottom: token?.marginLG,
-                      }}
-                    >
-                      <Paragraph
-                        style={{
-                          fontSize: token?.fontSizeLG,
-                          color: token?.colorTextSecondary,
-                          fontStyle: 'italic',
-                          margin: 0,
-                        }}
-                      >
-                        {post.summary}
-                      </Paragraph>
-                    </Card>
-
-                    <div
-                      dangerouslySetInnerHTML={{ __html: post.content }}
-                      style={{
-                        fontSize: token?.fontSize,
-                        lineHeight: 1.8,
-                        '& h2': {
-                          fontSize: '1.5rem',
-                          fontWeight: 600,
-                          color: token?.colorPrimary,
-                          margin: `${token?.marginLG}px 0 ${token?.marginMD}px`,
-                        },
-                        '& p': {
-                          marginBottom: token?.marginMD,
-                        },
-                        '& img': {
-                          maxWidth: '100%',
-                          height: 'auto',
-                          borderRadius: token?.borderRadius,
-                          marginBottom: token?.marginMD,
-                        },
-                        '& blockquote': {
-                          borderLeft: `4px solid ${token?.colorPrimary}`,
-                          margin: `${token?.marginLG}px 0`,
-                          padding: token?.paddingMD,
-                          backgroundColor: token?.colorBgLayout,
-                          borderRadius: `0 ${token?.borderRadius}px ${token?.borderRadius}px 0`,
-                        },
-                      }}
-                    />
-                  </Card>
-                </Col>
-
-                {/* Sidebar */}
-                <Col
-                  xs={24}
-                  lg={8}
-                >
-                  <Card
-                    title={
-                      <Title
-                        level={4}
-                        style={{ margin: 0, color: token?.colorPrimary }}
-                      >
-                        Bài viết mới nhất
-                      </Title>
-                    }
-                    bordered={false}
-                    style={{
-                      boxShadow: token?.boxShadow,
-                      borderRadius: token?.borderRadiusLG,
-                    }}
-                  >
-                    <List
-                      itemLayout='vertical'
-                      dataSource={relatedPosts}
-                      split={false}
-                      renderItem={(item) => (
-                        <List.Item
-                          style={{
-                            padding: token?.padding,
-                            borderRadius: token?.borderRadius,
-                            transition: 'all 0.3s',
-                            cursor: 'pointer',
-                            '&:hover': {
-                              backgroundColor: token?.colorBgLayout,
-                            },
-                          }}
-                        >
-                          <List.Item.Meta
-                            title={
-                              <Link
-                                to={`/posts/${item.id}`}
-                                style={{
-                                  color: token?.colorTextBase,
-                                  fontSize: token?.fontSizeLG,
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {item.title}
-                              </Link>
-                            }
-                            description={
-                              <Space
-                                direction='vertical'
-                                size={4}
-                              >
-                                <Text
-                                  type='secondary'
-                                  ellipsis={{ rows: 2 }}
-                                >
-                                  {item.summary}
-                                </Text>
-                                <Space size='small'>
-                                  <CalendarOutlined />
-                                  <Text type='secondary'>
-                                    {dayjs(item.created_at).format('DD/MM/YYYY')}
-                                  </Text>
-                                </Space>
-                              </Space>
-                            }
-                          />
-                        </List.Item>
-                      )}
-                    />
-                  </Card>
-                </Col>
-              </Row>
-            </Col>
-          </Row>
-        </Content>
-      </Layout>
+      </div>
     </MainLayout>
   );
 };

@@ -31,19 +31,45 @@ const LoginForm = () => {
     },
     onError: async (error) => {
       if (error instanceof FetchError) {
-        if (error.statusCode === HttpStatusCodes.UNPROCESSABLE_ENTITY) {
-          close?.("login-error");
-          // 422: Validation error
-          showRemoteValidationErrors(form, error);
-        }
-        if (error.statusCode === HttpStatusCodes.FORBIDDEN) {
-          // 403: Already logged in
-          open?.(
-            buildNotification({
-              name: 'Login Error',
-              message: 'Already logged in',
-            }),
-          );
+        close?.("login-error");
+        
+        switch (error.statusCode) {
+          case HttpStatusCodes.UNPROCESSABLE_ENTITY:
+            // 422: Validation error
+            showRemoteValidationErrors(form, error);
+            break;
+            
+          case HttpStatusCodes.FORBIDDEN:
+            // 403: Already logged in
+            open?.(
+              buildNotification({
+                type: 'error',
+                name: 'Lỗi đăng nhập',
+                message: 'Bạn đã đăng nhập rồi',
+              }),
+            );
+            break;
+            
+          case HttpStatusCodes.UNAUTHORIZED:
+            // 401: Unauthorized
+            open?.(
+              buildNotification({
+                type: 'warning',
+                name: 'Phiên đăng nhập hết hạn',
+                message: 'Vui lòng đăng nhập lại',
+              }),
+            );
+            break;
+            
+          default:
+            // Other errors
+            open?.(
+              buildNotification({
+                type: 'error',
+                name: 'Lỗi đăng nhập',
+                message: 'Có lỗi xảy ra, vui lòng thử lại sau',
+              }),
+            );
         }
       }
     }

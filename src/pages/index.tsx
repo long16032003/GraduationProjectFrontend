@@ -17,12 +17,13 @@ import { Link } from '@refinedev/core';
 import HomePage from './home/home';
 import { GiftOutlined, ShopOutlined, UserOutlined, BookOutlined } from '@ant-design/icons';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
+import { CalendarCheck, FileText, UtensilsCrossed } from 'lucide-react';
 
 
 const mainMenuItems = [
   {
     title: "Thực đơn",
-    icon: <ShopOutlined className="text-xl" />,
+    icon: <UtensilsCrossed className="text-xl" />,
     description: "Khám phá các món ăn đặc sắc của nhà hàng",
     href: "/menu",
     // items: [
@@ -31,16 +32,6 @@ const mainMenuItems = [
     //     description: "Những món ăn mới nhất tại nhà hàng",
     //     href: "/menu/new"
     //   },
-    //   {
-    //     title: "Món đặc biệt",
-    //     description: "Các món đặc sản nổi tiếng",
-    //     href: "/menu/special"
-    //   },
-    //   {
-    //     title: "Set menu",
-    //     description: "Combo món ăn hấp dẫn",
-    //     href: "/menu/sets"
-    //   }
     // ]
   },
   {
@@ -51,12 +42,12 @@ const mainMenuItems = [
   },
   {
     title: "Bài viết",
-    icon: <BookOutlined className="text-xl" />,
+    icon: <FileText className="text-xl" />,
     href: "/posts"
   },
   {
     title: "Đặt bàn",
-    icon: <BookOutlined className="text-xl" />,
+    icon: <CalendarCheck className="text-xl" />,
     href: "/reservation"
   }
 ];

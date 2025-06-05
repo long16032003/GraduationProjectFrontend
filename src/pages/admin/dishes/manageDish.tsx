@@ -85,6 +85,8 @@ const ManageDish: React.FC = () => {
       dataIndex: ['dish_categories', 'name'],
       key: 'category',
       width: '15%',
+      filters: categoriesData?.map((category: DishCategory) => ({ text: category.name, value: category.id })),
+      onFilter: (value: number, record: Dish) => record.category_id === value,  
       render: (text: string) => (
         <Tag color="blue" className="px-3 py-1">
           {text}
@@ -96,6 +98,7 @@ const ManageDish: React.FC = () => {
       dataIndex: 'price',
       key: 'price',
       width: '15%',
+      sorter: (a: Dish, b: Dish) => a.price - b.price,
       render: (price: number) => (
         <span className='text-orange-600 font-bold'>
           {new Intl.NumberFormat('vi-VN', { 
@@ -124,6 +127,7 @@ const ManageDish: React.FC = () => {
       dataIndex: 'created_at',
       key: 'created_at',
       width: '15%',
+      sorter: (a: Dish, b: Dish) => dayjs(a.created_at).diff(dayjs(b.created_at)),
       render: (date: string) => (
         <span className="text-gray-500">
           {dayjs(date).format('DD/MM/YYYY HH:mm')}

@@ -69,6 +69,7 @@ const ManagePromotions: React.FC = () => {
       dataIndex: 'discount_percentage',
       key: 'discount_percentage',
       width: '12%',
+      sorter: (a: Promotion, b: Promotion) => a.discount_percentage - b.discount_percentage,
       render: (value: number) => (
         <Tag color="red" className="text-sm px-3 py-1">
           {value}%

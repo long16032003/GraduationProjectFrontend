@@ -5,6 +5,7 @@ import auth$ from '@/stores/auth.ts';
 import type { LoginFormValues, PermissionsResponse, RegisterFormValues, User } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
 import { message } from 'antd';
+import { DEFAULT_ERROR_MESSAGES } from '@/utils/error-handler';
 
 export const authProvider: AuthProvider = {
   check: async (): Promise<CheckResponse> => {
@@ -81,8 +82,8 @@ export const authProvider: AuthProvider = {
           redirectTo: '/login',
           logout: true,
           error: {
-            name: 'Session Expired',
-            message: 'Your session has expired. Please log in again.',
+            name: 'Phiên đăng nhập hết hạn',
+            message: DEFAULT_ERROR_MESSAGES.UNAUTHORIZED,
           },
         };
       }

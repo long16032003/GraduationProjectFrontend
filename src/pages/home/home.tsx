@@ -34,7 +34,7 @@ const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen ">
       {/* Hero Section với Carousel */} 
       <Carousel autoplay effect="fade" className="h-[600px]">
         {bannerImages.map((image, index) => (

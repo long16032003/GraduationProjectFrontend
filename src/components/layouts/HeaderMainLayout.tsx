@@ -16,11 +16,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }}>
       <MainHeader />
       <Content>
-        <div style={{ 
-          maxWidth: 1200,
-          margin: '0 auto',
-          padding: `0 ${token?.padding}px`,
-        }}>
+        <div className="mx-auto max-w-6xl">
           {children}
         </div>
       </Content>

@@ -26,6 +26,7 @@ import auth$ from '@/stores/auth';
 import type { User } from '@/types.ts';
 import { Link, useLocation } from 'react-router';
 import { theme } from '@/config/theme';
+import { UserOutlined, DashboardOutlined, HistoryOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 
 interface UserNavProps {
   user: User
@@ -113,23 +114,29 @@ export function UserNav({user, ...rest}: UserNavProps) {
             className="hover:bg-primary/10"
             style={{ color: colorTextBase }}
           >
+            <UserOutlined className="mr-2 h-4 w-4" />
             Thông tin cá nhân
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/admin">Trang quản trị</Link>
+            <Link to="/admin" className="flex items-center">
+              <DashboardOutlined className="mr-2 h-4 w-4" />
+              Trang quản trị
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/orders" className="flex items-center">
-              <History className="mr-2 h-4 w-4" />
+              <HistoryOutlined className="mr-2 h-4 w-4" />
               Lịch sử đặt bàn
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem className="flex items-center">
+            <SettingOutlined className="mr-2 h-4 w-4" />
             Cài đặt
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} disabled={isLoading}>
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoading} className="flex items-center">
+          <LogoutOutlined className="mr-2 h-4 w-4" />
           Đăng xuất
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>

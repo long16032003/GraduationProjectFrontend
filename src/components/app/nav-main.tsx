@@ -17,6 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar.tsx"
+import { Link } from "react-router"
 
 export function NavMain({
   items,
@@ -34,7 +35,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Main</SidebarGroupLabel>
+      <SidebarGroupLabel>QUẢN LÝ</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
@@ -45,6 +46,7 @@ export function NavMain({
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
+                <Link to={item.url}>
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
@@ -52,6 +54,7 @@ export function NavMain({
                     <ChevronRight className="ml-auto transition-transform duration-50 group-data-[state=open]/collapsible:rotate-90" />
                   )}
                 </SidebarMenuButton>
+                </Link>
               </CollapsibleTrigger>
               {/* Nếu có phần tử con thì hiển thị */}
               {item.items && item.items.length > 0 && (

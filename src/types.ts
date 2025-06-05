@@ -36,7 +36,7 @@ export interface PermissionResource {
   actions: {
     [key: string]: PermissionAction;
   };
-  children: any[]; // This is an empty array in the example
+  children: PermissionResource[]; // This is an empty array in the example
 }
 
 // Define the group interface
@@ -44,7 +44,7 @@ export interface PermissionGroup {
   type: 'group';
   name: string;
   description: string;
-  actions: any[]; // This is an empty array in the example
+  actions: PermissionAction[]; // This is an empty array in the example
   children: {
     [key: string]: PermissionResource;
   };
@@ -84,7 +84,7 @@ export interface Dish {
   name: string;
   description: string | null;
   image_id: number | null;
-  price: string;
+  price: number;
   category_id: number;
   is_active: boolean;
   created_at: string;
@@ -106,9 +106,40 @@ export interface Media {
 
 export interface Post {
   id: string;
+  creator_id: number;
   title: string;
   summary: string;
   content: string;
   created_at: string;
+  creator: User;
 }
 
+export interface TableModel {
+  id: number;
+  creator_id: number;
+  name: string;
+  capacity: number;
+  status: 'available' | 'occupied' | 'reserved' | 'maintenance';
+  area: '1st floor' | '2nd floor' | '3rd floor' | 'rooftop';
+  created_at: string;
+  updated_at: string;
+  creator?: User;
+}
+
+export interface Reservation {
+  id: number;
+  table_id: number;
+  customer_id: number;
+  phone: string;
+  name: string;
+  reservation_date: number;
+  number_of_guests: number;
+  status?: 'pending' | 'confirmed' | 'cancelled' | null;
+  notes?: string;
+  creator_id: number;
+  creator_type: 'staff' | 'customer';
+  created_at: string;
+  updated_at: string;
+  customer?: User;
+  table?: TableModel;
+}

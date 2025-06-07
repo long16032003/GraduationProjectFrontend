@@ -13,8 +13,10 @@
     "switch": "refine swizzle"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.3.0",
     "@ant-design/cssinjs": "^1.23.0",
     "@ant-design/icons": "^5.6.1",
+    "@ant-design/plots": "^2.4.0",
     "@formily/antd-v5": "^1.2.4",
     "@formily/core": "^2.3.7",
     "@formily/react": "^2.3.7",

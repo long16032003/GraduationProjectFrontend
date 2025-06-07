@@ -16,10 +16,25 @@ import {
   Table,
   Space
 } from 'antd';
-import { UserOutlined, PhoneOutlined } from '@ant-design/icons';
+import { 
+  UserOutlined, 
+  PhoneOutlined, 
+  CalendarOutlined, 
+  ClockCircleOutlined, 
+  TeamOutlined, 
+  CommentOutlined, 
+  HomeOutlined, 
+  EnvironmentOutlined, 
+  CheckCircleOutlined,
+  SearchOutlined,
+  RollbackOutlined,
+  SaveOutlined,
+  TableOutlined
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
-import type { TableModel } from '@/types';
-import { useList, useCreate, useCustom, useCustomMutation } from '@refinedev/core';
+import type { Reservation, TableModel } from '@/types';
+import { useCreate, useList } from '@refinedev/core';
+import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -40,30 +55,6 @@ interface SearchValues {
   number_of_guests: number;
 }
 
-// Dữ liệu mẫu cho các bàn
-const mockTables: TableModel[] = [
-  {
-    id: 1,
-    creator_id: 1,
-    name: 'Bàn VIP 1',
-    capacity: 8,
-    status: 'available',
-    area: '1st floor',
-    created_at: '2023-01-01',
-    updated_at: '2023-01-01'
-  },
-  {
-    id: 2,
-    creator_id: 1,
-    name: 'Bàn gia đình 3',
-    capacity: 6,
-    status: 'available',
-    area: '2nd floor',
-    created_at: '2023-01-01',
-    updated_at: '2023-01-01'
-  }
-];
-
 const ReservationPage: React.FC = () => {
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
@@ -71,36 +62,75 @@ const ReservationPage: React.FC = () => {
   const [availableTables, setAvailableTables] = useState<TableModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
+  
+  // Function to get default time rounded to nearest half hour
+  const getDefaultTime = () => {
+    const now = dayjs();
+    const minutes = now.minute();
+    const roundedTime = now.clone();
+    
+    if (minutes < 30) {
+      // Round to next :30
+      return roundedTime.minute(30).second(0);
+    } else {
+      // Round to next hour :00
+      return roundedTime.add(1, 'hour').minute(0).second(0);
+    }
+  };
+  
   const [searchParams, setSearchParams] = useState({
     date: dayjs(),
-    time: dayjs(),
+    time: getDefaultTime(),
     guests: 1
   });
 
-  const { data: listTables, isLoading: isLoadingTables } = useList<TableModel>({
-    resource: 'tables',
-  });
+  // API hooks
+  const { mutate: createReservation } = useCreate<Reservation>();
 
   // Step 1: Nhập thông tin cơ bản
   const handleSearchTables = async (values: SearchValues) => {
     try {
       setLoading(true);
+      // Combine date and time for comparison
+      const selectedDateTime = values.date.clone().hour(values.time.hour()).minute(values.time.minute());
+      const currentDateTime = dayjs();
+      
+      if(selectedDateTime.isBefore(currentDateTime)) {
+        message.error('Thời gian đặt bàn phải lớn hơn thời gian hiện tại');
+        setLoading(false);
+        return;
+      }
+      
       setSearchParams({
         date: values.date,
         time: values.time,
         guests: values.number_of_guests
       });
-
-      // Mô phỏng API call để lấy bàn trống
-      setTimeout(() => {
-        // Lọc bàn theo số người
-        const filteredTables = listTables?.data.filter(
-          (table) => table.capacity >= values.number_of_guests
-        );
-        setAvailableTables(filteredTables || []);
-        setCurrentStep(1);
-        setLoading(false);
-      }, 1000);
+      
+      // Manually fetch tables with capacity >= number of guests
+      try {
+        const data = {
+          date: values.date.format('YYYY-MM-DD'),
+          time: values.time.format('HH:mm'),
+          guests: values.number_of_guests
+        }
+        // Use the REST API directly
+        const response = await fetch(`/api/available-tables?date=${values.date.format('YYYY-MM-DD')}&time=${values.time.format('HH:mm')}&guests=${values.number_of_guests}`);
+        const result = await response.json();
+        
+        if (result && result.data) {
+          setAvailableTables(result.data);
+          setCurrentStep(1);
+        } else {
+          setAvailableTables([]);
+          setCurrentStep(1);
+        }
+      } catch (error) {
+        console.error("Error fetching tables:", error);
+        message.error('Không thể tải danh sách bàn. Vui lòng thử lại.');
+      }
+      
+      setLoading(false);
     } catch (error) {
       message.error('Có lỗi xảy ra khi tìm bàn trống');
       setLoading(false);
@@ -117,21 +147,53 @@ const ReservationPage: React.FC = () => {
   const handleSubmitReservation = async (values: ReservationFormData) => {
     try {
       setLoading(true);
+      console.log("Submit reservation", values);
       
-      // Kết hợp ngày và giờ thành một timestamp
-      const combinedDateTime = values.date
-        .hour(values.time.hour())
-        .minute(values.time.minute())
+      // Cách tạo timestamp đúng cách với múi giờ +7
+      const selectedDate = searchParams.date.clone();
+      const selectedTime = searchParams.time;
+      
+      // Đặt giờ và phút từ selectedTime vào selectedDate
+      const combinedDate = selectedDate
+        .hour(selectedTime.hour())
+        .minute(selectedTime.minute())
         .second(0);
       
-      // Mô phỏng API call để đặt bàn
+      console.log("Combined local datetime:", combinedDate.format('YYYY-MM-DD HH:mm:ss'));
+      
+      // Chuyển đổi thành timestamp (tính bằng giây)
+      // Sử dụng unix() của dayjs để tránh vấn đề múi giờ
+      const timestamp = combinedDate.unix();
+      
+      console.log("Timestamp created (seconds):", timestamp);
+      console.log("Converted back to datetime:", dayjs.unix(timestamp).format('YYYY-MM-DD HH:mm:ss'));
+      
+      // Tạo đối tượng dữ liệu để gửi
+      const reservationData = {
+        name: values.name,
+        phone: values.phone,
+        table_id: selectedTable?.id,
+        number_of_guests: searchParams.guests,
+        notes: values.notes,
+        reservation_date: timestamp,
+        status: 'confirmed',
+      };
+      
+      console.log("Data to be sent:", reservationData);
+      
+      // Gọi API đặt bàn
+      await createReservation({
+        resource: "reservations",
+        values: reservationData
+      });
+      
       setTimeout(() => {
         setReservationSuccess(true);
         setCurrentStep(3);
-        message.success('Đặt bàn thành công!');
         setLoading(false);
       }, 1500);
     } catch (error) {
+      console.error("Reservation error:", error);
       message.error('Có lỗi xảy ra khi đặt bàn');
       setLoading(false);
     }
@@ -186,223 +248,329 @@ const ReservationPage: React.FC = () => {
   ];
 
   return (
-    <div className="py-10 px-4 min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <Card 
-          title={
-            <div className="text-center">
-              <Title level={2} className="!text-orange-700 mb-2">Đặt bàn</Title>
-              <Text className="text-gray-500">Hãy để chúng tôi phục vụ bạn một bữa ăn tuyệt vời</Text>
-            </div>
-          }
-          className="shadow-lg"
-        >
-          <Steps current={currentStep} className="mb-8">
-            <Step title="Thông tin đặt bàn" description="Nhập thông tin cơ bản" />
-            <Step title="Chọn bàn" description="Chọn bàn phù hợp" />
-            <Step title="Xác nhận" description="Xác nhận thông tin đặt bàn" />
-            <Step title="Hoàn tất" description="Đặt bàn thành công" />
-          </Steps>
-
-          {currentStep === 0 && (
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSearchTables}
-              initialValues={{
-                date: dayjs(),
-                time: dayjs(),
-                number_of_guests: 1
-              }}
-            >
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="date"
-                    label="Ngày đặt bàn"
-                    rules={[{ required: true, message: 'Vui lòng chọn ngày đặt bàn' }]}
-                  >
-                    <DatePicker 
-                      className="w-full" 
-                      format="DD/MM/YYYY"
-                      disabledDate={(current) => {
-                        return current && current < dayjs().startOf('day');
-                      }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="time"
-                    label="Giờ đặt bàn"
-                    rules={[{ required: true, message: 'Vui lòng chọn giờ đặt bàn' }]}
-                  >
-                    <TimePicker 
-                      className="w-full" 
-                      format="HH:mm"
-                      minuteStep={30}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                name="number_of_guests"
-                label="Số người"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập số người' },
-                  { type: 'number', min: 1, message: 'Số người phải lớn hơn 0' }
-                ]}
-              >
-                <InputNumber min={1} className="w-full" />
-              </Form.Item>
-
-              <Form.Item className="text-center">
-                <Button 
-                  type="primary" 
-                  htmlType="submit" 
-                  size="large"
-                  loading={loading}
+    <MainLayout>
+      <div className='py-10 px-4 min-h-screen'>
+        <div className='max-w-4xl mx-auto'>
+          <Card
+            title={
+              <div className='text-center p-3'>
+                <Title
+                  level={2}
+                  className='!text-orange-700 mb-2'
                 >
-                  Tìm bàn trống
-                </Button>
-              </Form.Item>
-            </Form>
-          )}
-
-          {currentStep === 1 && (
-            <div>
-              <div className="mb-4 bg-blue-50 p-4 rounded-lg">
-                <Title level={5}>Thông tin tìm kiếm:</Title>
-                <Text className="block">Ngày: {searchParams.date.format('DD/MM/YYYY')}</Text>
-                <Text className="block">Giờ: {searchParams.time.format('HH:mm')}</Text>
-                <Text className="block">Số người: {searchParams.guests}</Text>
+                  Đặt bàn
+                </Title>
+                <Text className='text-gray-500'>
+                  Hãy để chúng tôi phục vụ bạn một bữa ăn tuyệt vời
+                </Text>
               </div>
-
-              {availableTables.length > 0 ? (
-                <Table 
-                  dataSource={availableTables} 
-                  columns={columns} 
-                  rowKey="id"
-                  pagination={false}
-                />
-              ) : (
-                <Result
-                  status="warning"
-                  title="Không tìm thấy bàn trống"
-                  subTitle="Vui lòng thử lại với thời gian khác hoặc số người khác"
-                  extra={
-                    <Button type="primary" onClick={handleReset}>
-                      Thử lại
-                    </Button>
-                  }
-                />
-              )}
-
-              <div className="mt-4 text-center">
-                <Button onClick={() => setCurrentStep(0)}>
-                  Quay lại
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && selectedTable && (
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmitReservation}
-              initialValues={{
-                date: searchParams.date,
-                time: searchParams.time,
-                number_of_guests: searchParams.guests
-              }}
+            }
+            className='shadow-lg p-0'
+          >
+            <Steps
+              current={currentStep}
+              className='mb-8'
             >
-              <div className="mb-6 bg-blue-50 p-4 rounded-lg">
-                <Title level={5}>Thông tin bàn đã chọn:</Title>
-                <Text className="block">Bàn: {selectedTable.name}</Text>
-                <Text className="block">Khu vực: {areas[selectedTable.area as keyof typeof areas]}</Text>
-                <Text className="block">Sức chứa: {selectedTable.capacity} người</Text>
-              </div>
+              <Step
+                icon={<CalendarOutlined />}
+                title='Thông tin đặt bàn'
+                description='Nhập thông tin cơ bản'
+              />
+              <Step
+                icon={<TableOutlined />}
+                title='Chọn bàn'
+                description='Chọn bàn phù hợp'
+              />
+              <Step
+                icon={<UserOutlined />}
+                title='Xác nhận'
+                description='Xác nhận thông tin đặt bàn'
+              />
+              <Step
+                icon={<CheckCircleOutlined />}
+                title='Hoàn tất'
+                description='Đặt bàn thành công'
+              />
+            </Steps>
 
-              <Form.Item
-                name="name"
-                label="Họ tên"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập họ tên' },
-                  { max: 100, message: 'Tên không được quá 100 ký tự' }
-                ]}
+            {currentStep === 0 && (
+              <Form
+                form={form}
+                layout='vertical'
+                onFinish={handleSearchTables}
+                initialValues={{
+                  date: dayjs(),
+                  time: getDefaultTime(),
+                }}
               >
-                <Input prefix={<UserOutlined />} placeholder="Nhập họ tên của bạn" />
-              </Form.Item>
+                <Row gutter={16}>
+                  <Col
+                    xs={24}
+                    md={12}
+                  >
+                    <Form.Item
+                      name='date'
+                      label={
+                        <span>
+                          <CalendarOutlined className='mr-1' /> Ngày đặt bàn
+                        </span>
+                      }
+                      rules={[{ required: true, message: 'Vui lòng chọn ngày đặt bàn' }]}
+                    >
+                      <DatePicker
+                        className='w-full'
+                        format='DD/MM/YYYY'
+                        disabledDate={(current) => {
+                          return current && current < dayjs().startOf('day');
+                        }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col
+                    xs={24}
+                    md={12}
+                  >
+                    <Form.Item
+                      name='time'
+                      label={
+                        <span>
+                          <ClockCircleOutlined className='mr-1' /> Giờ đặt bàn
+                        </span>
+                      }
+                      rules={[{ required: true, message: 'Vui lòng chọn giờ đặt bàn' }]}
+                    >
+                                              <TimePicker
+                         className='w-full'
+                         format='HH:mm'
+                          minuteStep={30}
+                          hideDisabledOptions={true}
+                          allowClear={false}
+                          autoFocus={false}
+                          onSelect={(time) => {
+                            form.setFieldsValue({ time });
+                            // Close the picker after selection
+                            const timePickerInput = document.querySelector('.ant-picker-input input');
+                            if (timePickerInput) {
+                              (timePickerInput as HTMLElement).blur();
+                            }
+                          }}
+                          disabledTime={() => ({
+                           disabledMinutes: () =>
+                             Array.from({ length: 60 })
+                               .map((_, i) => i)
+                               .filter((min) => min % 30 !== 0),
+                          })}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
 
-              <Form.Item
-                name="phone"
-                label="Số điện thoại"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập số điện thoại' },
-                  { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' }
-                ]}
-              >
-                <Input prefix={<PhoneOutlined />} placeholder="Nhập số điện thoại của bạn" />
-              </Form.Item>
+                <Form.Item
+                  name='number_of_guests'
+                  label={
+                    <span>
+                      <TeamOutlined className='mr-1' /> Số người
+                    </span>
+                  }
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập số người' },
+                    { type: 'number', min: 1, message: 'Số người phải lớn hơn 0' },
+                  ]}
+                >
+                  <InputNumber
+                    min={1}
+                    className='w-full'
+                  />
+                </Form.Item>
 
-              <Form.Item
-                name="notes"
-                label="Ghi chú"
-                rules={[
-                  { max: 500, message: 'Ghi chú không được quá 500 ký tự' }
-                ]}
-              >
-                <Input.TextArea 
-                  placeholder="Nhập yêu cầu đặc biệt nếu có (món ăn yêu thích, vị trí bàn,...)" 
-                  rows={4} 
-                />
-              </Form.Item>
+                <Form.Item className='text-center'>
+                  <Button
+                    type='primary'
+                    htmlType='submit'
+                    size='large'
+                    loading={loading}
+                    icon={<SearchOutlined />}
+                  >
+                    Tìm bàn trống
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
 
-              <Form.Item className="text-center">
-                <Space>
-                  <Button onClick={() => setCurrentStep(1)}>
+            {currentStep === 1 && (
+              <div>
+                <div className='mb-4 bg-blue-50 p-4 rounded-lg'>
+                  <Title level={5}>Thông tin tìm kiếm:</Title>
+                  <Text className='block'>
+                    <CalendarOutlined className='mr-2' /> Ngày:{' '}
+                    {searchParams.date.format('DD/MM/YYYY')}
+                  </Text>
+                  <Text className='block'>
+                    <ClockCircleOutlined className='mr-2' /> Giờ:{' '}
+                    {searchParams.time.format('HH:mm')}
+                  </Text>
+                  <Text className='block'>
+                    <TeamOutlined className='mr-2' /> Số người: {searchParams.guests}
+                  </Text>
+                </div>
+
+                {availableTables.length > 0 ? (
+                  <Table
+                    dataSource={availableTables}
+                    columns={columns}
+                    rowKey='id'
+                    pagination={false}
+                  />
+                ) : (
+                  <Result
+                    status='warning'
+                    title='Không tìm thấy bàn trống'
+                    subTitle='Vui lòng thử lại với thời gian khác hoặc số người khác'
+                    extra={
+                      <Button
+                        type='primary'
+                        onClick={handleReset}
+                        icon={<RollbackOutlined />}
+                      >
+                        Thử lại
+                      </Button>
+                    }
+                  />
+                )}
+
+                <div className='mt-4 text-center'>
+                  <Button
+                    onClick={() => setCurrentStep(0)}
+                    icon={<RollbackOutlined />}
+                  >
                     Quay lại
                   </Button>
-                  <Button 
-                    type="primary" 
-                    htmlType="submit" 
-                    size="large"
-                    loading={loading}
-                  >
-                    Xác nhận đặt bàn
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          )}
+                </div>
+              </div>
+            )}
 
-          {currentStep === 3 && (
-            <Result
-              status="success"
-              title="Đặt bàn thành công!"
-              subTitle="Chúng tôi sẽ liên hệ với bạn để xác nhận đặt bàn trong thời gian sớm nhất"
-              extra={[
-                <Button 
-                  type="primary" 
-                  key="home" 
-                  onClick={() => window.location.href = '/'}
+            {currentStep === 2 && selectedTable && (
+              <Form
+                form={form}
+                layout='vertical'
+                onFinish={handleSubmitReservation}
+                initialValues={searchParams}
+              >
+                <div className='mb-6 bg-blue-50 p-4 rounded-lg'>
+                  <Title level={5}>Thông tin bàn đã chọn:</Title>
+                  <Text className='block'>
+                    <CheckCircleOutlined className='mr-2' /> Bàn: {selectedTable.name}
+                  </Text>
+                  <Text className='block'>
+                    <EnvironmentOutlined className='mr-2' /> Khu vực:{' '}
+                    {areas[selectedTable.area as keyof typeof areas]}
+                  </Text>
+                  <Text className='block'>
+                    <CalendarOutlined className='mr-2' /> Ngày:{' '}
+                    {searchParams.date.format('DD/MM/YYYY')}
+                  </Text>
+                  <Text className='block'>
+                    <ClockCircleOutlined className='mr-2' /> Giờ:{' '}
+                    {searchParams.time.format('HH:mm')}
+                  </Text>
+                  <Text className='block'>
+                    <TeamOutlined className='mr-2' /> Số người: {searchParams.guests}
+                  </Text>
+                </div>
+
+                <Form.Item
+                  name='name'
+                  label='Họ tên'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập họ tên' },
+                    { max: 100, message: 'Tên không được quá 100 ký tự' },
+                  ]}
                 >
-                  Về trang chủ
-                </Button>,
-                <Button 
-                  key="again" 
-                  onClick={handleReset}
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder='Nhập họ tên của bạn'
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name='phone'
+                  label='Số điện thoại'
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập số điện thoại' },
+                    { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' },
+                  ]}
                 >
-                  Đặt bàn khác
-                </Button>,
-              ]}
-            />
-          )}
-        </Card>
+                  <Input
+                    prefix={<PhoneOutlined />}
+                    placeholder='Nhập số điện thoại của bạn'
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name='notes'
+                  label={
+                    <span>
+                      <CommentOutlined className='mr-1' /> Ghi chú
+                    </span>
+                  }
+                  rules={[{ max: 500, message: 'Ghi chú không được quá 500 ký tự' }]}
+                >
+                  <Input.TextArea
+                    placeholder='Nhập yêu cầu đặc biệt nếu có (món ăn yêu thích, vị trí bàn,...)'
+                    rows={4}
+                  />
+                </Form.Item>
+
+                <Form.Item className='text-center'>
+                  <Space>
+                    <Button
+                      onClick={() => setCurrentStep(1)}
+                      icon={<RollbackOutlined />}
+                    >
+                      Quay lại
+                    </Button>
+                    <Button
+                      type='primary'
+                      htmlType='submit'
+                      size='large'
+                      loading={loading}
+                      icon={<SaveOutlined />}
+                    >
+                      Xác nhận đặt bàn
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </Form>
+            )}
+
+            {currentStep === 3 && (
+              <Result
+                status='success'
+                title='Đặt bàn thành công!'
+                subTitle='Chúng tôi sẽ liên hệ với bạn để xác nhận đặt bàn trong thời gian sớm nhất'
+                extra={[
+                  <Button
+                    type='primary'
+                    key='home'
+                    onClick={() => (window.location.href = '/')}
+                    icon={<HomeOutlined />}
+                  >
+                    Về trang chủ
+                  </Button>,
+                  <Button
+                    key='again'
+                    onClick={handleReset}
+                    icon={<CalendarOutlined />}
+                  >
+                    Đặt bàn khác
+                  </Button>,
+                ]}
+              />
+            )}
+          </Card>
+        </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 

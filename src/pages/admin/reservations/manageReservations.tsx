@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Card, Input, Modal, Form, DatePicker, TimePicker, InputNumber, Select, message, Tag } from 'antd';
-import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import React, { useState, useRef } from 'react';
+import { Table, Button, Space, Card, Input, Modal, Form, DatePicker, TimePicker, InputNumber, Select, message, Tag, Tooltip, Popover } from 'antd';
+import { PlusOutlined, ExclamationCircleOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import type { Key } from 'react';
 import dayjs from 'dayjs';
-import { useCreate, useDelete, useUpdate } from '@refinedev/core';
+import { Link, useCreate, useDelete, useUpdate } from '@refinedev/core';
 import type { Reservation, TableModel } from '@/types';
 import { useList } from '@refinedev/core';
 
@@ -31,6 +31,8 @@ const ManageReservations: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [dateFilter, setDateFilter] = useState<dayjs.Dayjs | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Mock data - sẽ được thay thế bằng API call
   const { data: listReservations, isLoading: isLoadingList } = useList<Reservation>({
@@ -56,11 +58,58 @@ const ManageReservations: React.FC = () => {
     cancelled: 'Đã hủy',
   };
 
+  // Thêm hàm lọc theo ngày
+  const filterByDate = (data: Reservation[] | undefined): Reservation[] => {
+    if (!data) return [];
+    if (!dateFilter) return data;
+
+    return data.filter(record => {
+      const recordDate = dayjs(record.reservation_date);
+      return recordDate.format('YYYY-MM-DD') === dateFilter.format('YYYY-MM-DD');
+    });
+  };
+
+  // Tạo DatePicker cho bộ lọc ngày
+  const renderDateFilterDropdown = () => (
+    <div style={{ padding: 8 }}>
+      <Space direction="vertical" size={12}>
+        <DatePicker 
+          value={dateFilter}
+          onChange={value => {
+            setDateFilter(value);
+            // Tự động áp dụng bộ lọc khi chọn ngày
+            if (value) {
+              message.info(`Đã lọc theo ngày: ${value.format('DD/MM/YYYY')}`);
+            }
+            // Đóng popup sau khi chọn
+            setDatePickerOpen(false);
+          }}
+          allowClear
+          placeholder="Chọn ngày"
+          format="DD/MM/YYYY"
+          style={{ width: '100%' }}
+          open={datePickerOpen}
+          onOpenChange={(open) => setDatePickerOpen(open)}
+          autoFocus={datePickerOpen}
+        />
+      </Space>
+    </div>
+  );
+
   const columns: ColumnType<Reservation>[] = [
     {
-      title: 'Khách hàng',
+      title: 'Mã KH',
       dataIndex: 'customer_id',
       key: 'customer_id',
+      render: (text: string) => {
+        // return <Link to={`/customers/${text}`}>{text}</Link>;
+        return text ? text : '------';
+      },
+    },
+    {
+      title: 'Khách hàng',
+      dataIndex: 'name',
+      key: 'name',
       sorter: (a: Reservation, b: Reservation) => {
         if (a.customer?.name && b.customer?.name) {
           return a.customer.name.localeCompare(b.customer.name);
@@ -85,14 +134,29 @@ const ManageReservations: React.FC = () => {
       title: 'Ngày',
       dataIndex: 'reservation_date',
       key: 'reservation_date',
-      sorter: (a: Reservation, b: Reservation) => 
-        dayjs(a.reservation_date).unix() - dayjs(b.reservation_date).unix(),
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      filterDropdown: renderDateFilterDropdown,
+      filterIcon: (filtered: boolean) => (
+        <FilterOutlined 
+          style={{ color: filtered ? '#1890ff' : undefined }} 
+          onClick={() => {
+            setDatePickerOpen(true);
+          }}
+        />
+      ),
+      onFilterDropdownOpenChange: (visible) => {
+        if (visible) {
+          setDatePickerOpen(true);
+        }
+      },
     },
     {
       title: 'Giờ',
-      dataIndex: 'time',
-      key: 'time',
+      dataIndex: 'reservation_date',
+      key: 'reservation_date',
+      sorter: (a: Reservation, b: Reservation) => 
+        dayjs(a.reservation_date).unix() - dayjs(b.reservation_date).unix(),
+      render: (date: string) => dayjs(date).format('HH:mm'),
     },
     {
       title: 'Trạng thái',
@@ -240,12 +304,24 @@ const ManageReservations: React.FC = () => {
       </div>
     } className="m-4">
       <div className="mb-4 flex justify-between items-center">
-        <Input.Search
-          placeholder="Tìm kiếm theo tên khách hàng hoặc số điện thoại..."
-          allowClear
-          onSearch={value => setSearchText(value)}
-          style={{ width: 300 }}
-        />
+        <Space>
+          <Input.Search
+            placeholder="Tìm kiếm theo tên khách hàng hoặc số điện thoại..."
+            allowClear
+            onSearch={value => setSearchText(value)}
+            style={{ width: 300 }}
+            prefix={<SearchOutlined />}
+          />
+          {dateFilter && (
+            <Tag 
+              color="blue" 
+              closable 
+              onClose={() => setDateFilter(null)}
+            >
+              Ngày: {dateFilter.format('DD/MM/YYYY')}
+            </Tag>
+          )}
+        </Space>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -257,9 +333,9 @@ const ManageReservations: React.FC = () => {
 
       <Table<Reservation>
         columns={columns}
-        dataSource={listReservations?.data}
+        dataSource={filterByDate(listReservations?.data)}
         loading={loading || isLoadingList}
-        rowKey="id"
+        rowKey="name"
         pagination={{
           showSizeChanger: true,
           showQuickJumper: true,

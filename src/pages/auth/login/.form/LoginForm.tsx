@@ -27,6 +27,13 @@ const LoginForm = () => {
     onSuccess: async ({ success }) => {
       if (success) {
         form.setValues(defaultValues);
+        // open?.(
+        //   buildNotification({
+        //     type: 'success',
+        //     name: 'Đăng nhập thành công',
+        //     message: 'Chào mừng bạn đến với trang quản lý',
+        //   }),
+        // );
       }
     },
     onError: async (error) => {

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { Bell } from 'lucide-react';
+import { Bell, History } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover.tsx';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card.tsx';
@@ -20,47 +20,124 @@ import {
   BreadcrumbList, BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb.tsx';
+import { useBreadcrumb, useLogout } from '@refinedev/core';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
+import type { User } from '@/types.ts';
+import { Link, useLocation } from 'react-router';
+import { theme } from '@/config/theme';
+import { UserOutlined, DashboardOutlined, HistoryOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 
-export function UserNav() {
+interface UserNavProps {
+  user: User
+}
+
+const {
+  colorPrimary,
+  colorBgContainer,
+  colorTextBase,
+  colorTextSecondary,
+  colorBorderSecondary,
+  borderRadius,
+  boxShadow,
+  fontFamily,
+} = theme.token || {};
+
+const getInitials = (name?: string): string => {
+  if (!name) return '';
+  
+  // Tách tên thành các từ
+  const words = name.trim().split(' ');
+  
+  if (words.length === 1) {
+    // Nếu chỉ có một từ, lấy chữ cái đầu
+    return words[0].charAt(0).toUpperCase();
+  } else {
+    // Lấy chữ cái đầu của từ đầu tiên và từ cuối cùng
+    const firstInitial = words[0].charAt(0);
+    const lastInitial = words[words.length - 1].charAt(0);
+    return (firstInitial + lastInitial).toUpperCase();
+  }
+};
+
+export function UserNav({user, ...rest}: UserNavProps) {
+  const { mutate, isLoading } = useLogout();
+
+  const handleLogout = () => {
+    mutate()
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button 
+          variant="ghost" 
+          className="relative h-8 w-8 rounded-full"
+          style={{ borderRadius }}
+        >
           <Avatar className="h-9 w-9">
-            <AvatarImage src="/avatars/03.png" alt="@shadcn" />
-            <AvatarFallback>AD</AvatarFallback>
+            <AvatarImage src="/avatars/03.png" alt={user?.name} />
+            <AvatarFallback style={{ 
+              fontFamily,
+              backgroundColor: colorPrimary,
+              color: 'white' 
+            }}>
+              {getInitials(user?.name)}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent 
+        className="w-56" 
+        align="end" 
+        forceMount
+        style={{
+          backgroundColor: colorBgContainer,
+          borderColor: colorBorderSecondary,
+          boxShadow,
+          fontFamily,
+        }}
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+            <p className="text-sm font-medium leading-none" style={{ color: colorTextBase }}>
+              {user?.name}
+            </p>
+            <p className="text-xs leading-none" style={{ color: colorTextSecondary }}>
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator style={{ backgroundColor: colorBorderSecondary }} />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+          <DropdownMenuItem 
+            className="hover:bg-primary/10"
+            style={{ color: colorTextBase }}
+          >
+            <UserOutlined className="mr-2 h-4 w-4" />
+            Thông tin cá nhân
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Bell />
-            Billing
-            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+          <DropdownMenuItem asChild>
+            <Link to="/admin" className="flex items-center">
+              <DashboardOutlined className="mr-2 h-4 w-4" />
+              Trang quản trị
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+          <DropdownMenuItem asChild>
+            <Link to="/orders" className="flex items-center">
+              <HistoryOutlined className="mr-2 h-4 w-4" />
+              Lịch sử đặt bàn
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem>New Team</DropdownMenuItem>
+          <DropdownMenuItem className="flex items-center">
+            <SettingOutlined className="mr-2 h-4 w-4" />
+            Cài đặt
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Log out
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoading} className="flex items-center">
+          <LogoutOutlined className="mr-2 h-4 w-4" />
+          Đăng xuất
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -72,12 +149,32 @@ export function NotificationNav() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative hover:bg-primary/10"
+          style={{ color: colorTextBase }}
+        >
           <Bell className="h-5 w-5" />
-          <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
+          <span 
+            className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full ring-2" 
+            style={{ 
+              backgroundColor: colorPrimary,
+              ringColor: colorBgContainer 
+            }} 
+          />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent 
+        className="w-80 p-0" 
+        align="end"
+        style={{
+          backgroundColor: colorBgContainer,
+          borderColor: colorBorderSecondary,
+          boxShadow,
+          fontFamily,
+        }}
+      >
         <Card className="border-0 shadow-none">
           <CardHeader className="border-b px-3 py-2">
             <div className="flex items-center justify-between">
@@ -161,33 +258,73 @@ export function NotificationNav() {
   )
 }
 
+const AppBreadcrumb = () => {
+  const { breadcrumbs } = useBreadcrumb();
+  const location = useLocation();
+
+  // Nếu ở trang chủ thì không hiển thị breadcrumb
+  if (location.pathname === '/') {
+    return (
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>Home</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/admin">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        {breadcrumbs.map((breadcrumb, index) => (
+          <React.Fragment key={`${breadcrumb.label}-${index}`}>
+            {index < breadcrumbs.length - 1 ? (
+              <>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={breadcrumb.href || '#'}>
+                    {/* Capitalize first letter */}
+                    {breadcrumb.label.charAt(0).toUpperCase() + breadcrumb.label.slice(1)}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+              </>
+            ) : (
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  {breadcrumb.label.charAt(0).toUpperCase() + breadcrumb.label.slice(1)}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            )}
+          </React.Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+};
+
 
 export function DefaultHeaderContent() {
+  const user = use$(auth$.user)
+
   return (
     <Fragment>
       <div className="flex items-center gap-2 lg:w-1/3 justify-start" data-element="header-start">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="#">
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator className="hidden md:block" />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Products</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <AppBreadcrumb />
       </div>
       <div className="flex items-center flex-1" data-element="header-center">
         <SearchForm className="w-full" />
       </div>
       <div className="flex items-center gap-3 lg:w-1/3 justify-end" data-element="header-end">
         <NotificationNav />
-        <UserNav />
+        {!!user && <UserNav user={user}/>}
       </div>
     </Fragment>
   );
@@ -196,8 +333,32 @@ export function DefaultHeaderContent() {
 export function AppHeader(props: React.ComponentProps<'header'>) {
   return (
     <header
-      className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background z-10 h-12 overflow-hidden flex-wrap justify-between px-3">
+      style={{
+        fontFamily,
+        backgroundColor: colorBgContainer,
+        borderColor: colorBorderSecondary,
+        boxShadow,
+      }}
+      className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background/70 backdrop-blur-sm z-10 h-12 overflow-hidden flex-wrap justify-between px-3"
+    >
       {props.children ?? <DefaultHeaderContent />}
     </header>
   );
 }
+
+// Tạo một custom hook để sử dụng theme tokens
+const useThemeTokens = () => {
+  return {
+    colorPrimary,
+    colorBgContainer,
+    colorTextBase,
+    colorTextSecondary,
+    colorBorderSecondary,
+    borderRadius,
+    boxShadow,
+    fontFamily,
+  };
+};
+
+// Export hook để các components khác có thể sử dụng
+export { useThemeTokens };

@@ -1,15 +1,10 @@
 import { observable } from '@legendapp/state';
 import { syncObservable } from '@legendapp/state/sync';
 import { ObservablePersistLocalStorage } from '@legendapp/state/persist-plugins/local-storage';
-import app$ from '@/stores/app.ts';
-
-export interface User {
-  uuid: string;
-  email: string;
-}
+import type { Customer, User } from '@/types.ts';
 
 interface AuthStore {
-  user: User | null;
+  user: User | Customer | null;
   isAuthenticated: boolean;
 }
 
@@ -23,7 +18,7 @@ const auth$ = observable<AuthStore>({
 // https://legendapp.com/open-source/state/v3/sync/persist-sync/
 // https://legendapp.com/open-source/state/v3/sync/persist-sync/#indexeddb-react
 // https://legendapp.com/open-source/state/v3/sync/persist-sync/#transform-data
-syncObservable(app$, {
+syncObservable(auth$, {
   persist: {
     name: 'auth',
     plugin: ObservablePersistLocalStorage,

@@ -1,4 +1,4 @@
-import { GenerateStyle } from '@formily/antd-v5/lib/__builtins__';
+import type { GenerateStyle } from '@formily/antd-v5/esm/__builtins__';
 
 export const getGridStyle: GenerateStyle = (token) => {
   const { componentCls } = token

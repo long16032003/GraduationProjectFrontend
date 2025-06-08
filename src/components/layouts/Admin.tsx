@@ -11,13 +11,12 @@ import { PageHeader } from '@/components/app/page-header.tsx';
 export function Admin() {
   return (
     <div className="admin-layout">
-      <Authenticated key={'admin-auth'} fallback={<CatchAllNavigate to="/auth/login" />}>
+      <Authenticated key={'admin-auth'} fallback={<CatchAllNavigate to="/login" />}>
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
             <div id="page-wraper" className="flex flex-col flex-1 relative px-5">
-              <PageHeader />
               <Outlet />
             </div>
           </SidebarInset>

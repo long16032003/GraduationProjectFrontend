@@ -1,0 +1,50 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card.tsx';
+import { GalleryVerticalEnd } from 'lucide-react';
+import { Link } from '@refinedev/core';
+import RegisterForm from './.form/RegisterForm.tsx';
+
+export function RegisterPage() {
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-6">
+      <div className='flex justify-center'>
+        <Link to='/'>
+          <div className='flex items-center gap-4 group'>
+            <img
+              src='/logo_restaurant.jpg'
+              alt='Logo'
+              className='h-12 w-12 rounded-full object-cover border-2 border-orange-600 p-0.5 bg-white shadow-sm group-hover:border-orange-700 transition-colors'
+            />
+            <span className='text-2xl font-semibold text-orange-700 group-hover:text-orange-800 transition-colors'>
+              BamBoo Sông Chanh
+            </span>
+          </div>
+        </Link>
+      </div>
+      <div className="flex flex-col gap-6">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">Đăng ký</CardTitle>
+            <CardDescription>
+              Nhập thông tin để tạo tài khoản
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6">
+              <RegisterForm />
+              <div className="text-center text-sm">
+                Đã có tài khoản?{' '}
+                <Link className="underline underline-offset-4" to="/login">Đăng nhập</Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

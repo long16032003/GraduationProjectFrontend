@@ -1,9 +1,10 @@
-import { RouteObject } from 'react-router';
+import type { RouteObject } from 'react-router';
 import { Auth } from '@/components/layouts/Auth.tsx';
-import { LoginPage } from '@/pages/auth/login.tsx';
-import { RegisterPage } from '@/pages/auth/register.tsx';
-import { ForgotPassword } from '@/pages/auth/forgot-password.tsx';
-import { UpdatePassword } from '@/pages/auth/update-password.tsx';
+import LoginPage from '@/pages/auth/login';
+import { RegisterPage } from '@/pages/auth/register';
+import { ForgotPassword } from '@/pages/auth/forgot-password';
+import { UpdatePassword } from '@/pages/auth/update-password';
+import LoginCustomerPage from '@/pages/auth/login/loginCustomerPage';
 
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
@@ -15,6 +16,7 @@ export const routes: RouteObject[] = [
     Component: Auth,
     children: [
       { path: 'login', Component: LoginPage },
+      { path: 'login-customer', Component: LoginCustomerPage },
       { path: 'register', Component: RegisterPage },
       { path: 'forgot-password', Component: ForgotPassword },
       { path: 'update-password', Component: UpdatePassword },

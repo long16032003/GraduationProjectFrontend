@@ -1,20 +1,32 @@
+import { httpClient } from '@/utils/http';
 import type { DataProvider } from '@refinedev/core';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const dataProvider: DataProvider = {
-  getOne: async ({ resource, id }) => {
-    const response = await fetch(`${API_URL}/${resource}/${id}`);
+  create: async ({ resource, variables, meta }) => {
+    const response = await httpClient(`${API_URL}/${resource}`, {
+      method: 'POST',
+      body: variables as Record<string, unknown>,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
+    return response;
+  },
+  getOne: async ({ resource, id }) => {
+    const response = await httpClient(`${API_URL}/${resource}/${id}`);
 
-    return { data };
+    if (response.status < 200 || response.status > 299) throw response;
+
+    return response;
   },
   update: async ({ resource, id, variables }) => {
-    const response = await fetch(`${API_URL}/${resource}/${id}`, {
-      method: "PATCH",
+    const response = await httpClient(`${API_URL}/${resource}/${id}`, {
+      method: "PUT",
       body: JSON.stringify(variables),
       headers: {
         "Content-Type": "application/json",
@@ -23,39 +35,30 @@ export const dataProvider: DataProvider = {
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return { data };
+    return response;
   },
-  getList: async ({ resource }) => {
-    const response = await fetch(`${API_URL}/${resource}`);
-
-    if (response.status < 200 || response.status > 299) throw response;
-
-    const data = await response.json();
-
-    return {
-      data,
-      total: 0, // We'll cover this in the next steps.
-    };
-  },
-  create: async ({ resource, variables }) => {
-    const response = await fetch(`${API_URL}/${resource}`, {
-      method: 'POST',
-      body: JSON.stringify(variables),
-      headers: {
-        'Content-Type': 'application/json',
+  getList: async ({ resource, filters, meta }) => {
+    const response = await httpClient(`${API_URL}/${resource}`, {
+      method: 'GET',
+      params: {
+        filters,
+        ...(meta || {}),
       },
     });
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return { data };
+    return response;
   },
-  deleteOne: () => {
-    throw new Error('Not implemented');
+  
+  deleteOne: async ({ resource, id }) => {
+    const response = await httpClient(`${API_URL}/${resource}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.status < 200 || response.status > 299) throw response;
+
+    return response;
   },
   getApiUrl: () => API_URL,
   // Optional methods:
@@ -63,5 +66,14 @@ export const dataProvider: DataProvider = {
   // createMany: () => { /* ... */ },
   // deleteMany: () => { /* ... */ },
   // updateMany: () => { /* ... */ },
-  // custom: () => { /* ... */ },
+  // upload: async () => {
+  //   const response = await httpClient(`${API_URL}/${resource}`, {
+  //     method: 'POST',
+  //     body: variables as Record<string, unknown>,
+  //   });
+
+  //   if (response.status < 200 || response.status > 299) throw response;
+
+  //   return response;
+  // },
 };

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { promises as fs, readFileSync, statSync } from 'fs';
 import { load as loadHtml } from 'cheerio';
 import { Plugin, Manifest, ManifestChunk } from 'vite';
-import { collect } from 'ts-collect';
+import { collect, Collection } from 'collect.js';
 
 export type Algorithm = 'sha256' | 'sha384' | 'sha512'
 
@@ -94,7 +94,7 @@ export default function sri(options: Options = {}): Plugin {
                 return;
             }
 
-            const entries = collect(Object.values(manifest).filter(chunk => chunk.isEntry))
+            const entries: Collection<ManifestChunk> = collect(Object.values(manifest).filter(chunk => chunk.isEntry))
               .keyBy('file')
 
             const elements = $(selectors.join()).get();
@@ -104,7 +104,7 @@ export default function sri(options: Options = {}): Plugin {
 
                 if (!url || filesToIgnore.includes(url)) continue;
 
-                const entry: ManifestChunk | undefined = entries.get(url);
+                const entry: ManifestChunk | null = entries.get(url);
 
                 if (!entry) continue;
 

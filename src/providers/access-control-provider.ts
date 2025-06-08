@@ -1,4 +1,4 @@
-import { AccessControlProvider } from "@refinedev/core";
+import type { AccessControlProvider } from '@refinedev/core';
 
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ resource, action, params }) => {

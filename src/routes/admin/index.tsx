@@ -17,6 +17,10 @@ export const routes: RouteObject[] = [
   {
     path: 'admin',
     Component: Admin,
+    // loader: async () => {
+    //   const response = await httpClient('/api/admin/dashboard');
+    //   return response;
+    // },
     children: [
       {
         index: true,

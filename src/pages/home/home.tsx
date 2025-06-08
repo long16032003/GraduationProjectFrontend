@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button, Card, Carousel, Row, Col, Typography, Space, Divider } from 'antd';
 import { PhoneOutlined, EnvironmentOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { router } from '@/router';
+import { Link } from 'react-router';
 
 const { Title, Text } = Typography;
 
@@ -54,6 +56,7 @@ const HomePage: React.FC = () => {
                   <Button 
                     type="primary" 
                     size="large"
+                    onClick={() => window.location.href = '/reservation'}
                   >
                     Đặt bàn ngay
                   </Button>
@@ -173,6 +176,7 @@ const HomePage: React.FC = () => {
             <Button 
               type="primary" 
               size="large"
+              onClick={() => window.location.href = '/reservation'}
             >
               Đặt bàn
             </Button>

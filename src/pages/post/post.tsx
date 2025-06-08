@@ -1,16 +1,16 @@
 import React from 'react';
-import { Typography, Spin, Empty, Avatar, Button, Tooltip } from 'antd';
-import { CalendarOutlined, UserOutlined, EditOutlined, HomeOutlined } from '@ant-design/icons';
+import { Typography, Spin, Empty, Avatar, Button, Tooltip, Divider, Tag } from 'antd';
+import { CalendarOutlined, UserOutlined, EditOutlined, HomeOutlined, ReadOutlined, FieldTimeOutlined, FireOutlined } from '@ant-design/icons';
 import { useList } from '@refinedev/core';
 import dayjs from 'dayjs';
-import type { Post } from '@/types';
+import type { Post, Staff } from '@/types';
 import { Link } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { Breadcrumb } from 'antd/lib';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 // Utility function để lấy ảnh đầu tiên từ HTML content (không phải icon)
 const getFirstImageFromContent = (content: string): string | null => {
@@ -38,6 +38,9 @@ const getFirstImageFromContent = (content: string): string | null => {
   return null;
 };
 
+// Placeholder image nếu không tìm thấy ảnh trong nội dung
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80';
+
 const PostPage: React.FC = () => {
   const user = use$(auth$.user);
   const { data, isLoading } = useList<Post>({
@@ -49,7 +52,7 @@ const PostPage: React.FC = () => {
 
   // Kiểm tra quyền edit của user với post
   const canEdit = (post: Post) => {
-    return user?.id === post.creator_id || user?.role === 'admin';
+    return user?.id === post.creator_id || (user as Staff)?.role === 'admin';
   };
 
   if (isLoading) {
@@ -65,181 +68,283 @@ const PostPage: React.FC = () => {
   if (!posts.length) {
     return (
       <MainLayout>
-        <Empty description="Chưa có bài viết nào" />
+        <div className="min-h-[60vh] flex flex-col items-center justify-center py-12">
+          <Empty 
+            description={
+              <span className="text-gray-500 text-lg">Chưa có bài viết nào</span>
+            }
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            className="mb-6"
+          />
+          {user && (
+            <Link to="/posts/create">
+              <Button type="primary" size="large" className="font-medium">
+                Tạo bài viết mới
+              </Button>
+            </Link>
+          )}
+        </div>
       </MainLayout>
     );
   }
 
-  const featuredPost = posts[0];
-  const otherPosts = posts.slice(1);
+  const featuredPosts = posts.slice(0, 3);
+  const otherPosts = posts.slice(3);
   
-  const featuredImage = getFirstImageFromContent(featuredPost.content);
-
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8">
-      <Breadcrumb 
-          className="mb-6"
-          items={[
-            {
-              title: (
-                <Link to="/" className="flex items-center">
-                  <HomeOutlined className="mr-1" />
-                  Trang chủ
-                </Link>
-              ),
-            },
-            {
-              title: <Link to="/posts">Bài viết</Link>,
-            },
-          ]}
-        />
+      <div className="bg-gradient-to-br from-orange-50 to-white">
+        <div className="container mx-auto px-4 py-8">
+          <Breadcrumb 
+            className="mb-6"
+            items={[
+              {
+                title: (
+                  <Link to="/" className="flex items-center">
+                    <HomeOutlined className="mr-1" />
+                    Trang chủ
+                  </Link>
+                ),
+              },
+              {
+                title: <span className="text-orange-500 font-medium">Bài viết</span>,
+              },
+            ]}
+          />
 
-        {/* Featured Post */}
-        <div className="relative mb-12">
-          <Link to={`/posts/${featuredPost.id}`} className="block group">
-            <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-              {featuredImage && (
-                <div className="aspect-[16/9] overflow-hidden">
-                  <img 
-                    src={featuredImage} 
-                    alt={featuredPost.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              )}
-              <div className="p-6 md:p-8">
-                <div className="flex items-center gap-4 mb-4">
-                  <Avatar 
-                    size="large"
-                    icon={<UserOutlined />}
-                    src={featuredPost.creator?.avatar}
-                    className="bg-orange-500"
-                  />
-                  <div>
-                    <div className="font-medium text-gray-800">
-                      {featuredPost.creator?.name}
-                    </div>
-                    <div className="text-gray-500 text-sm flex items-center gap-2">
-                      <CalendarOutlined />
-                      {dayjs(featuredPost.created_at).format('DD/MM/YYYY')}
-                    </div>
-                  </div>
-                </div>
-                
-                <Title level={2} className="!text-2xl md:!text-3xl !mb-4 group-hover:text-orange-600 transition-colors">
-                  {featuredPost.title}
+          {/* Hero Section with Top 3 Posts */}
+          <div className="mb-12">
+            <div className="flex items-center mb-8">
+              <div className="flex-grow">
+                <Title level={2} className="!mb-0 flex items-center !text-gray-800">
+                  <ReadOutlined className="mr-3 text-orange-500" />
+                  Bài viết nổi bật
                 </Title>
-                
-                <p className="text-gray-600 text-lg mb-4 line-clamp-3">
-                  {featuredPost.summary}
-                </p>
-
-                <span className="text-orange-600 font-medium inline-flex items-center group-hover:text-orange-700">
-                  Đọc tiếp
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
+                <div className="h-1 w-20 bg-orange-500 mt-2 rounded-full"></div>
               </div>
+              
+              {user && (
+                <Link to="/posts/create">
+                  <Button type="primary" className="bg-orange-500 hover:bg-orange-600 border-orange-500">
+                    Tạo bài viết mới
+                  </Button>
+                </Link>
+              )}
             </div>
-          </Link>
-          
-          {/* Edit Button for Featured Post */}
-          {canEdit(featuredPost) && (
-            <Tooltip title="Chỉnh sửa bài viết">
-              <Link 
-                to={`/posts/edit/${featuredPost.id}`}
-                className="absolute top-4 right-4 z-10"
-              >
-                <Button 
-                  type="primary"
-                  icon={<EditOutlined />}
-                  className="!bg-white !text-orange-600 hover:!bg-orange-50"
-                >
-                  Chỉnh sửa
-                </Button>
-              </Link>
-            </Tooltip>
-          )}
-        </div>
 
-        {/* Other Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {otherPosts.map(post => {
-            const thumbnailImage = getFirstImageFromContent(post.content);
-            return (
-              <div key={post.id} className="relative">
-                <Link 
-                  to={`/posts/${post.id}`}
-                  className="group"
-                >
-                  <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden">
-                    {thumbnailImage && (
-                      <div className="aspect-[16/9] overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Main Featured Post */}
+              {featuredPosts.length > 0 && (
+                <div className="lg:col-span-7 xl:col-span-8 relative">
+                  <Link to={`/posts/${featuredPosts[0].id}`} className="block group">
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg h-full">
+                      <div className="aspect-[16/9] lg:aspect-[16/10] relative">
                         <img 
-                          src={thumbnailImage} 
-                          alt={post.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={getFirstImageFromContent(featuredPosts[0].content) || DEFAULT_IMAGE} 
+                          alt={featuredPosts[0].title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
                       </div>
-                    )}
-                    <div className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Avatar 
-                          size="small"
-                          icon={<UserOutlined />}
-                          src={post.creator?.avatar}
-                          className="bg-orange-500"
-                        />
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <CalendarOutlined />
-                          {dayjs(post.created_at).format('DD/MM/YYYY')}
+                      
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <Tag color="orange" className="mb-3">Nổi bật</Tag>
+                        <Title level={2} className="!text-white !mb-2 group-hover:text-orange-300 transition-colors duration-300 line-clamp-2">
+                          {featuredPosts[0].title}
+                        </Title>
+                        <p className="text-gray-200 mb-4 line-clamp-2">
+                          {featuredPosts[0].summary}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Avatar 
+                              size="small"
+                              icon={<UserOutlined />}
+                              className="mr-2 border border-white"
+                            />
+                            <span className="text-sm text-gray-200 mr-4">{featuredPosts[0].creator?.name}</span>
+                            <CalendarOutlined className="text-gray-300 mr-1" />
+                            <span className="text-sm text-gray-300">
+                              {dayjs(featuredPosts[0].created_at).format('DD/MM/YYYY')}
+                            </span>
+                          </div>
+                          <span className="text-orange-300 text-sm font-medium hidden sm:inline-flex items-center group-hover:text-orange-200">
+                            Đọc tiếp
+                            <svg className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </span>
                         </div>
                       </div>
-
-                      <Title 
-                        level={4} 
-                        className="!mb-3 !text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors"
-                      >
-                        {post.title}
-                      </Title>
-
-                      <p className="text-gray-600 line-clamp-2 mb-4">
-                        {post.summary}
-                      </p>
-
-                      <span className="text-orange-600 text-sm font-medium inline-flex items-center group-hover:text-orange-700">
-                        Đọc tiếp
-                        <svg className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </span>
                     </div>
-                  </div>
-                </Link>
-
-                {/* Edit Button for Other Posts */}
-                {canEdit(post) && (
-                  <Tooltip title="Chỉnh sửa bài viết">
-                    <Link 
-                      to={`/posts/edit/${post.id}`}
-                      className="absolute top-4 right-4 z-10"
-                    >
-                      <Button 
-                        type="primary"
-                        icon={<EditOutlined />}
-                        size="small"
-                        className="!bg-white !text-orange-600 hover:!bg-orange-50"
+                  </Link>
+                  
+                  {canEdit(featuredPosts[0]) && (
+                    <Tooltip title="Chỉnh sửa bài viết">
+                      <Link 
+                        to={`/posts/edit/${featuredPosts[0].id}`}
+                        className="absolute top-4 right-4 z-10"
                       >
-                        Chỉnh sửa
-                      </Button>
-                    </Link>
-                  </Tooltip>
-                )}
+                        <Button 
+                          type="primary"
+                          icon={<EditOutlined />}
+                          className="!bg-white/80 backdrop-blur-sm !text-orange-600 hover:!bg-white"
+                        >
+                          Sửa
+                        </Button>
+                      </Link>
+                    </Tooltip>
+                  )}
+                </div>
+              )}
+
+              {/* Secondary Featured Posts */}
+              <div className="lg:col-span-5 xl:col-span-4">
+                <div className="grid grid-cols-1 gap-6 h-full">
+                  {featuredPosts.slice(1, 3).map((post, index) => (
+                    <div key={post.id} className="relative h-full">
+                      <Link to={`/posts/${post.id}`} className="block group h-full">
+                        <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow h-full overflow-hidden flex flex-col">
+                          <div className="aspect-[16/9] overflow-hidden relative">
+                            <img 
+                              src={getFirstImageFromContent(post.content) || DEFAULT_IMAGE} 
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute top-0 right-0 m-3">
+                              <Tag color="orange" className="bg-orange-500/90 backdrop-blur-sm">
+                                <FireOutlined className="mr-1" />
+                                Đề xuất
+                              </Tag>
+                            </div>
+                          </div>
+                          <div className="p-4 flex-grow flex flex-col">
+                            <Title 
+                              level={4} 
+                              className="!mt-0 !mb-2 !text-gray-800 line-clamp-2 group-hover:text-orange-600 transition-colors"
+                            >
+                              {post.title}
+                            </Title>
+                            <p className="text-gray-600 text-sm line-clamp-2 mb-3 flex-grow">
+                              {post.summary}
+                            </p>
+                            <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
+                              <div className="flex items-center">
+                                <Avatar 
+                                  size="small"
+                                  icon={<UserOutlined />}
+                                  className="mr-1"
+                                />
+                                <span className="mr-3">{post.creator?.name}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <FieldTimeOutlined className="mr-1" />
+                                {dayjs(post.created_at).format('DD/MM/YYYY')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+
+                      {canEdit(post) && (
+                        <Tooltip title="Chỉnh sửa bài viết">
+                          <Link 
+                            to={`/posts/edit/${post.id}`}
+                            className="absolute top-4 left-4 z-10"
+                          >
+                            <Button 
+                              type="primary"
+                              icon={<EditOutlined />}
+                              size="small"
+                              className="!bg-white/80 backdrop-blur-sm !text-orange-600 hover:!bg-white"
+                            />
+                          </Link>
+                        </Tooltip>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            );
-          })}
+            </div>
+          </div>
+
+          {/* Other Posts Section */}
+          {otherPosts.length > 0 && (
+            <div className="mt-16">
+              <div className="flex items-center mb-8">
+                <Title level={3} className="!mb-0 flex items-center">
+                  <ReadOutlined className="mr-2 text-orange-500" />
+                  Bài viết mới nhất
+                </Title>
+                <div className="h-1 w-16 bg-orange-500 ml-4 rounded-full"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {otherPosts.map(post => {
+                  const thumbnailImage = getFirstImageFromContent(post.content) || DEFAULT_IMAGE;
+                  return (
+                    <div key={post.id} className="relative group">
+                      <Link 
+                        to={`/posts/${post.id}`}
+                        className="block h-full"
+                      >
+                        <div className="bg-white rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 h-full flex flex-col transform group-hover:-translate-y-1">
+                          <div className="aspect-[16/10] overflow-hidden rounded-t-lg">
+                            <img 
+                              src={thumbnailImage} 
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                          <div className="p-4 flex-grow flex flex-col">
+                            <Title 
+                              level={5} 
+                              className="!mt-0 !mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors"
+                            >
+                              {post.title}
+                            </Title>
+                            <p className="text-gray-600 text-sm line-clamp-3 mb-4 flex-grow">
+                              {post.summary}
+                            </p>
+                            <div className="flex items-center justify-between text-xs text-gray-500 mt-auto pt-3 border-t border-gray-100">
+                              <div className="flex items-center">
+                                <Avatar 
+                                  size="small"
+                                  icon={<UserOutlined />}
+                                  className="mr-1"
+                                />
+                                <span>{post.creator?.name}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <CalendarOutlined className="mr-1" />
+                                {dayjs(post.created_at).format('DD/MM/YYYY')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+
+                      {canEdit(post) && (
+                        <Tooltip title="Chỉnh sửa bài viết">
+                          <Link 
+                            to={`/posts/edit/${post.id}`}
+                            className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Button 
+                              type="primary"
+                              icon={<EditOutlined />}
+                              size="small"
+                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white"
+                            />
+                          </Link>
+                        </Tooltip>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </MainLayout>

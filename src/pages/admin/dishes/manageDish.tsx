@@ -14,7 +14,7 @@ import {
   Upload,
 } from 'antd';
 import { PlusOutlined, ExclamationCircleOutlined, LoadingOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import type { TableProps } from 'antd';
+import type { TableProps, ColumnsType } from 'antd/es/table';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
@@ -47,9 +47,19 @@ const ManageDish: React.FC = () => {
   const { mutate: updateDish, isLoading: isUpdating } = useUpdate();
   const { mutate: deleteDish, isLoading: isDeleting } = useDelete();
 
+  // Define response type for uploads with proper structure matching backend
+  interface UploadResponse {
+    success: boolean;
+    message: string;
+    data: Media;
+  }
+  
   const { mutate: uploadImage, isLoading: isUploading } = useCreate();
 
-  const columns = [
+  // Sử dụng biến môi trường VITE_APP_URL
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const columns: ColumnsType<Dish> = [
     {
       title: 'Tên món',
       dataIndex: 'name',
@@ -68,7 +78,7 @@ const ManageDish: React.FC = () => {
         <div className="w-20 h-20">
           {image ? (
             <img
-              src={image.path}
+              src={`${API_URL}/storage/${image.path}`}
               alt="Món ăn"
               className="w-full h-full object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
             />
@@ -86,7 +96,11 @@ const ManageDish: React.FC = () => {
       key: 'category',
       width: '15%',
       filters: categoriesData?.map((category: DishCategory) => ({ text: category.name, value: category.id })),
-      onFilter: (value: number, record: Dish) => record.category_id === value,  
+      onFilter: (value, record: Dish) => {
+        // Convert value to number for comparison
+        const numValue = typeof value === 'string' ? parseInt(value) : Number(value);
+        return record.category_id === numValue;
+      },
       render: (text: string) => (
         <Tag color="blue" className="px-3 py-1">
           {text}
@@ -138,7 +152,7 @@ const ManageDish: React.FC = () => {
       title: 'Hành động',
       key: 'action',
       width: '15%',
-      render: (_: any, record: Dish) => (
+      render: (_: unknown, record: Dish) => (
         <Space>
           <Button
             type="text"
@@ -160,12 +174,29 @@ const ManageDish: React.FC = () => {
   const handleAdd = () => {
     setEditingDish(null);
     form.resetFields();
+    setImageFile(null);
+    setFileList([]);
     setIsModalVisible(true);
   };
 
   const handleEdit = (record: Dish) => {
     setEditingDish(record);
     setImageFile(record.image || null);
+    
+    // Set fileList if we have an image
+    if (record.image) {
+      setFileList([
+        {
+          uid: '-1',
+          name: record.image.title || 'image.png',
+          status: 'done',
+          url: `${API_URL}/storage/${record.image.path}`,
+        }
+      ]);
+    } else {
+      setFileList([]);
+    }
+    
     form.setFieldsValue({
       name: record.name,
       category_id: record.category_id,
@@ -213,21 +244,41 @@ const ManageDish: React.FC = () => {
   
     try {
       setUploadLoading(true);
-      console.log("file: ", file);
-      const fileData = {
-        file: file,
-      }
-      console.log("fileData: ", fileData);
-      const response = await uploadImage({
-        resource: 'upload-image',
-        values: fileData,
-      });
-      setImageFile(response.data);
-      form.setFieldValue('image', response.data);
-      message.success('Tải ảnh thành công');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'dishes');
+      
+      // Sử dụng callback thay vì await
+      uploadImage(
+        {
+          resource: 'upload-image',
+          values: formData
+        },
+        {
+          onSuccess: (response) => {
+            console.log("Upload success:", response);
+            if (response?.data) {
+              // Truy cập trực tiếp vào data từ response
+              const imageData = response.data;
+              console.log("Image data:", imageData);
+              setImageFile(imageData as unknown as Media);
+              form.setFieldValue('image', imageData);
+              message.success('Tải ảnh thành công');
+            } else {
+              console.error("Invalid response structure:", response);
+              message.error('Lỗi định dạng dữ liệu từ server');
+            }
+            setUploadLoading(false);
+          },
+          onError: (error) => {
+            console.error("Upload error:", error);
+            message.error('Lỗi khi upload: ' + error.message);
+            setUploadLoading(false);
+          }
+        }
+      );
     } catch (error) {
       message.error('Lỗi khi upload: ' + (error as Error).message);
-    } finally {
       setUploadLoading(false);
     }
   
@@ -260,6 +311,7 @@ const ManageDish: React.FC = () => {
         image_id: imageFile?.id || null,
         created_at: values.created_at,
         updated_at: values.updated_at,
+        image: imageFile ? imageFile : undefined,
       };
 
       if (editingDish) {
@@ -277,8 +329,10 @@ const ManageDish: React.FC = () => {
         message.success('Thêm món ăn thành công');
       }
 
+      // Close modal and reset state
       setIsModalVisible(false);
       form.resetFields();
+      setEditingDish(null);
       setImageFile(null);
       setFileList([]);
     } catch (error) {
@@ -443,10 +497,10 @@ const ManageDish: React.FC = () => {
               onChange={handleChange}
               fileList={fileList}
             >
-              {dishes?.image ? (
+              {imageFile ? (
                 <img
-                  src={dishes?.image?.path}
-                  alt='avatar'
+                  src={`${API_URL}/storage/${imageFile.path}`}
+                  alt='Món ăn'
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (

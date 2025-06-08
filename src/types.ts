@@ -107,6 +107,8 @@ export interface Dish {
   dish_categories?: DishCategory;
   creator?: User;
   image?: Media;
+  // rating?: number;
+  // is_featured?: boolean;
 }
 
 export interface Media {

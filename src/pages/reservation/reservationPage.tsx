@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Form, 
@@ -86,6 +86,53 @@ const ReservationPage: React.FC = () => {
 
   // API hooks
   const { mutate: createReservation } = useCreate<Reservation>();
+  
+  // Tạo useState để lưu các tham số filter
+  const [tableFilters, setTableFilters] = useState({
+    capacity: searchParams.guests,
+    capacity_operator: 'gte',
+    available: true,
+    date: searchParams.date.format('YYYY-MM-DD'),
+    time: searchParams.time.format('HH:mm:00')
+  });
+  
+  // Hook useList với tham số meta
+  const { data: listTables, isLoading: isLoadingList, refetch: refetchListTables } = useList<TableModel>({
+    resource: 'tables',
+    meta: tableFilters,
+    queryOptions: {
+      enabled: false,
+    }
+  });
+
+  // Dùng useEffect để tự động gọi refetchListTables khi tableFilters thay đổi
+  const [shouldRefetch, setShouldRefetch] = useState(false);
+  
+  useEffect(() => {
+    if (shouldRefetch) {
+      const fetchData = async () => {
+        try {
+          const result = await refetchListTables();
+          
+          // Sử dụng kết quả trực tiếp từ refetch thay vì listTables
+          if (result && result.data && result.data.data) {
+            setAvailableTables(result.data.data);
+          } else {
+            setAvailableTables([]);
+          }
+          setCurrentStep(1);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching tables:", error);
+          message.error('Không thể tải danh sách bàn. Vui lòng thử lại.');
+          setLoading(false);
+        }
+      };
+      
+      fetchData();
+      setShouldRefetch(false);
+    }
+  }, [refetchListTables, shouldRefetch]); // Chỉ phụ thuộc vào shouldRefetch, không phụ thuộc vào tableFilters
 
   // Step 1: Nhập thông tin cơ bản
   const handleSearchTables = async (values: SearchValues) => {
@@ -101,36 +148,22 @@ const ReservationPage: React.FC = () => {
         return;
       }
       
+      // Cập nhật searchParams
       setSearchParams({
         date: values.date,
         time: values.time,
         guests: values.number_of_guests
       });
       
-      // Manually fetch tables with capacity >= number of guests
-      try {
-        const data = {
-          date: values.date.format('YYYY-MM-DD'),
-          time: values.time.format('HH:mm'),
-          guests: values.number_of_guests
-        }
-        // Use the REST API directly
-        const response = await fetch(`/api/available-tables?date=${values.date.format('YYYY-MM-DD')}&time=${values.time.format('HH:mm')}&guests=${values.number_of_guests}`);
-        const result = await response.json();
-        
-        if (result && result.data) {
-          setAvailableTables(result.data);
-          setCurrentStep(1);
-        } else {
-          setAvailableTables([]);
-          setCurrentStep(1);
-        }
-      } catch (error) {
-        console.error("Error fetching tables:", error);
-        message.error('Không thể tải danh sách bàn. Vui lòng thử lại.');
-      }
-      
-      setLoading(false);
+      // Cập nhật tableFilters và trigger refetch
+      setTableFilters({
+        capacity: values.number_of_guests,
+        capacity_operator: 'gte',
+        available: true,
+        date: values.date.format('YYYY-MM-DD'),
+        time: values.time.format('HH:mm:00')
+      });
+      setShouldRefetch(true);
     } catch (error) {
       message.error('Có lỗi xảy ra khi tìm bàn trống');
       setLoading(false);
@@ -178,6 +211,8 @@ const ReservationPage: React.FC = () => {
         reservation_date: timestamp,
         status: 'confirmed',
       };
+
+      console.log("Reservation data:", reservationData);
       
       console.log("Data to be sent:", reservationData);
       

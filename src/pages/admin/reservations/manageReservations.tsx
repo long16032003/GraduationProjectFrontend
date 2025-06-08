@@ -224,7 +224,7 @@ const ManageReservations: React.FC = () => {
     Modal.confirm({
       title: 'Xác nhận hủy đặt bàn',
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc muốn hủy đặt bàn của ${record.customer?.name}?`,
+      content: `Bạn có chắc muốn hủy đặt bàn này?`,
       okText: 'Xác nhận',
       cancelText: 'Đóng',
       onOk: async () => {

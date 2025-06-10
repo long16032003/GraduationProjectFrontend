@@ -14,7 +14,8 @@ export const authProvider: AuthProvider = {
   },
   logout: async (): Promise<AuthActionResponse> => {
     auth$.user.set(null)
-    httpClient('logout', { method: 'post' })
+    const guard = auth$.guard.peek()
+    httpClient(guard === 'user' ? 'logout' : 'logout-customer', { method: 'post' })
       .catch((error: FetchError) => {
         // Handle the error if needed
         if (error instanceof FetchError) {

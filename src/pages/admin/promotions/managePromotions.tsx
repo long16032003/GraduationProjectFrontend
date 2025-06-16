@@ -278,7 +278,7 @@ const ManagePromotions: React.FC = () => {
               min={0}
               max={100}
               formatter={value => value ? `${value}%` : ''}
-              parser={value => value!.replace('%', '')}
+              // parser={value => value!.replace('%', '')}
               style={{ width: '100%' }}
             />
           </Form.Item>

@@ -25,6 +25,7 @@ export interface User {
   uuid?: string;
   email: string;
   name: string;
+  role: string;
 }
 
 export interface Customer {
@@ -33,6 +34,7 @@ export interface Customer {
   email?: string;
   phone: string;
   name: string;
+  point: number;
 }
 
 // Define the action interface
@@ -160,3 +162,58 @@ export interface Reservation {
   customer?: User;
   table?: TableModel;
 }
+
+export interface BillItem {
+  dish_id: number;
+  dish_name: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface Bill {
+  id: number;
+  creator_id: number;
+  customer_id: number;
+  customer_name?: string;
+  customer_phone?: string;
+  table_id: number;
+  table_number?: number;
+  total_amount: number;
+  discount_amount?: number;
+  created_at: string;
+  payment_method: 'cash' | 'credit_card' | 'momo' | 'vnpay' | 'bank_transfer' | null;
+  status: 'paid' | 'unpaid' | 'cancelled';
+  items?: BillItem[];
+  tax_amount?: number;
+  service_charge?: number;
+  notes?: string;
+  has_new_orders?: boolean;
+  // Relations
+  table?: TableModel;
+  orders?: Order[];
+}
+
+export interface Order {
+  id: number;
+  bill_id: number;
+  creator_id: number;
+  order_time: string;
+  note?: string;
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  // Relations
+  bill?: Bill;
+  creator?: User;
+  order_dishes?: OrderDish[];
+}
+
+export interface OrderDish {
+  dish_id: number;
+  order_id: number;
+  quantity: number;
+  price_at_order_time: number;
+  // Relations
+  dish?: Dish;
+  order?: Order;
+}
+
+export const tax_percentage = 0.08

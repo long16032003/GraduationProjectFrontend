@@ -201,7 +201,7 @@ export function DashboardPage() {
       <Title level={2} className="mb-6">Bảng điều khiển nhà hàng</Title>
       
       {/* Summary Overview */}
-      <Card bordered={false} className="shadow-sm mb-6">
+      <Card className="shadow-sm mb-6">
         <Row gutter={[16, 16]}>
           <Col xs={24} md={12}>
             <div className="flex items-center">
@@ -238,7 +238,7 @@ export function DashboardPage() {
       {/* Overview Statistics */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card className="shadow-sm h-full">
             <Statistic
               title="Tổng doanh thu"
               value={totalRevenue.toLocaleString('vi-VN')}
@@ -250,7 +250,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Lợi nhuận"
               value={totalProfit.toLocaleString('vi-VN')}
@@ -262,7 +262,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Khách hàng"
               value={totalCustomers}
@@ -273,7 +273,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Đơn hàng"
               value={totalOrders}
@@ -284,7 +284,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Trung bình hóa đơn"
               value={averageCheck.toLocaleString('vi-VN')}
@@ -296,7 +296,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Công suất bàn"
               value={tableUtilization}
@@ -308,7 +308,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Lượt đặt bàn"
               value={reservationsCount}
@@ -319,7 +319,7 @@ export function DashboardPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8} lg={6}>
-          <Card bordered={false} className="shadow-sm h-full">
+          <Card  className="shadow-sm h-full">
             <Statistic
               title="Thời gian phục vụ TB"
               value={24}
@@ -335,12 +335,12 @@ export function DashboardPage() {
       {/* Charts Row 1 */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} lg={16}>
-          <Card title="Doanh thu - Chi phí - Lợi nhuận" bordered={false} className="shadow-sm">
+          <Card title="Doanh thu - Chi phí - Lợi nhuận"  className="shadow-sm">
             <Column {...columnConfig} height={350} />
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Phân bổ doanh số theo danh mục" bordered={false} className="shadow-sm">
+          <Card title="Phân bổ doanh số theo danh mục"  className="shadow-sm">
             <Pie {...pieConfig} height={350} />
           </Card>
         </Col>
@@ -349,12 +349,12 @@ export function DashboardPage() {
       {/* Charts Row 2 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title="Phân bổ khách hàng theo khung giờ" bordered={false} className="shadow-sm">
+          <Card title="Phân bổ khách hàng theo khung giờ"  className="shadow-sm">
             <Line {...lineConfig} height={350} />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title="Hoạt động theo ngày trong tuần" bordered={false} className="shadow-sm">
+          <Card title="Hoạt động theo ngày trong tuần"  className="shadow-sm">
             <Area {...areaConfig} height={350} />
           </Card>
         </Col>

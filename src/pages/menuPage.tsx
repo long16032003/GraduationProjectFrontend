@@ -283,7 +283,7 @@ const MenuPage: React.FC = () => {
           {/* Nội dung khác có thể thêm vào đây */}
           <Divider />
           <div className="text-center py-4">
-            <Text type="secondary">© {new Date().getFullYear()} Restaurant Name. All rights reserved.</Text>
+            <Text type="secondary">© {new Date().getFullYear()} Nhà hàng Bamboo Sông Chanh. Rất hân hạnh được đón tiếp.</Text>
           </div>
         </div>
       </div>

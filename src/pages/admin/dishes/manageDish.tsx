@@ -38,7 +38,7 @@ const ManageDish: React.FC = () => {
   });
 
   // Lấy danh sách danh mục
-  const { data: categoriesData } = useList<DishCategory[]>({
+  const { data: categoriesData } = useList<DishCategory>({
     resource: 'dish-categories',
   });
 
@@ -95,7 +95,7 @@ const ManageDish: React.FC = () => {
       dataIndex: ['dish_categories', 'name'],
       key: 'category',
       width: '15%',
-      filters: categoriesData?.map((category: DishCategory) => ({ text: category.name, value: category.id })),
+      filters: categoriesData?.data.map((category: DishCategory) => ({ text: category.name, value: category.id })),
       onFilter: (value, record: Dish) => {
         // Convert value to number for comparison
         const numValue = typeof value === 'string' ? parseInt(value) : Number(value);
@@ -433,7 +433,7 @@ const ManageDish: React.FC = () => {
             rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
           >
             <Select>
-              {categoriesData?.map((category: DishCategory) => (
+              {categoriesData?.data.map((category: DishCategory) => (
                 <Select.Option
                   key={category.id}
                   value={category.id}

@@ -115,3 +115,32 @@
         scrollbar-color: hsl(var(--border)) transparent
     }
 }
+
+/* Loader animations */
+@keyframes loader-dots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes loader-wave {
+  0%, 100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.animate-loader-dots {
+  animation: loader-dots 1.4s infinite ease-in-out both;
+}
+
+.animate-loader-wave {
+  animation: loader-wave 1.2s infinite ease-in-out;
+}

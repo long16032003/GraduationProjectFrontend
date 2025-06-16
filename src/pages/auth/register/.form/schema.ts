@@ -47,6 +47,13 @@ export const schema: ISchema = {
             asterisk: false,
           },
         }),
+        phone: createInputSchema({
+          required: true,
+          title: 'Số điện thoại',
+          'x-decorator-props': {
+            asterisk: false,
+          },
+        }),
         email: createEmailSchema({
           required: true,
           title: 'Email',

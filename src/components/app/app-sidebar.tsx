@@ -28,6 +28,7 @@ import {
   Tag,
   PackageSearch,
   Settings,
+  ChefHat,
 } from "lucide-react"
 
 import { NavMain } from "@/components/app/nav-main.tsx"
@@ -100,8 +101,14 @@ const data = {
     },
     {
       title: "Gọi món",
-      url: "/admin/orders",
+      url: "/admin/order",
       icon: ClipboardList,
+      isActive: true,
+    },
+    {
+      title: "Bếp",
+      url: "/admin/kitchen",
+      icon: ChefHat,
       isActive: true,
     },
     {
@@ -132,19 +139,23 @@ const data = {
       title: "Kho",
       url: "#",
       icon: PackageSearch,
-      isActive: false,
+      isActive: true,
       items: [
         {
+          title: "Quản lý nguyên liệu",
+          url: "/admin/warehouse/ingredient",
+        },
+        {
           title: "Nhập kho",
-          url: "/admin/import-inventory",
+          url: "/admin/warehouse/import",
         },
         {
           title: "Xuất kho",
-          url: "/admin/export-inventory",
+          url: "/admin/warehouse/export",
         },
         {
           title: "Kiểm kho",
-          url: "/admin/inventory",
+          url: "/admin/warehouse/inventory",
         },
       ],
     },
@@ -156,7 +167,7 @@ const data = {
       items: [
         {
           title: "Thống kê doanh thu",
-          url: "#",
+          url: "/admin/statistic/statistic-bill",
         },
         {
           title: "Thống kê món ăn được gọi nhiều nhất",
@@ -172,7 +183,7 @@ const data = {
   navSecondary: [
     {
       title: "Cài đặt website",
-      url: "#",
+      url: "/admin/site-settings",
       icon: Settings,
     },
   ],

@@ -58,7 +58,7 @@ export function MainNav() {
       <NavigationMenuList className="gap-2">
         {mainMenuItems.map((item) => (
           <NavigationMenuItem key={item.title}>
-            {item.items ? (
+            {/* {item.items ? (
               <>
                 <NavigationMenuTrigger className="bg-white/80 backdrop-blur-sm">
                   <span className="flex items-center gap-2">
@@ -80,7 +80,7 @@ export function MainNav() {
                   </ul>
                 </NavigationMenuContent>
               </>
-            ) : (
+            ) : ( */}
               <Link to={item.href}>
                 <NavigationMenuLink className={cn(
                   navigationMenuTriggerStyle(),
@@ -92,7 +92,7 @@ export function MainNav() {
                   </span>
                 </NavigationMenuLink>
               </Link>
-            )}
+            {/* )} */}
           </NavigationMenuItem>
         ))}
       </NavigationMenuList>

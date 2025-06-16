@@ -23,13 +23,13 @@ import {
 import { useBreadcrumb, useLogout } from '@refinedev/core';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
-import type { User } from '@/types.ts';
+import type { Customer, User } from '@/types.ts';
 import { Link, useLocation } from 'react-router';
 import { theme } from '@/config/theme';
 import { UserOutlined, DashboardOutlined, HistoryOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 
 interface UserNavProps {
-  user: User
+  user: User | Customer
 }
 
 const {
@@ -124,7 +124,7 @@ export function UserNav({user, ...rest}: UserNavProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link to="/orders" className="flex items-center">
+            <Link to="/history-reservation" className="flex items-center">
               <HistoryOutlined className="mr-2 h-4 w-4" />
               Lịch sử đặt bàn
             </Link>
@@ -160,7 +160,7 @@ export function NotificationNav() {
             className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full ring-2" 
             style={{ 
               backgroundColor: colorPrimary,
-              ringColor: colorBgContainer 
+              // ringColor: colorBgContainer 
             }} 
           />
         </Button>

@@ -165,7 +165,7 @@ const ManageDishCategories: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={data?.data}
         loading={isLoadingList}
         rowKey='id'
         pagination={{

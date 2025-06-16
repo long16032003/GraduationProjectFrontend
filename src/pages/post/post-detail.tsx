@@ -13,7 +13,7 @@ import { theme } from '@/config/theme';
 import dayjs from 'dayjs';
 import { Link, useParams } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
-import type { Post } from '@/types';
+import type { Customer, Post, User } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { Result } from 'antd/lib';
@@ -39,7 +39,7 @@ const PostDetail: React.FC = () => {
   const post = data?.data;
   const relatedPosts = relatedData?.data || [];
 
-  const user = use$(auth$.user);
+  const user = use$(auth$.user) as User;
 
   // Kiểm tra quyền edit của user với post
   const canEdit = user?.id === post?.creator_id || user?.role === 'admin';
@@ -76,7 +76,7 @@ const PostDetail: React.FC = () => {
               title: <Link to="/posts">Tin tức</Link>,
             },
             {
-              title: post.title,
+              title: post?.title,
             },
           ]}
         />
@@ -85,14 +85,14 @@ const PostDetail: React.FC = () => {
           {/* Post Header with Edit Button */}
           <div className="mb-8 relative">
             <Title level={1} className="!mb-4 text-gray-800 pr-32">
-              {post.title}
+              {post?.title}
             </Title>
 
             {/* Edit Button */}
             {canEdit && (
               <div className="absolute top-0 right-0">
                 <Tooltip title="Chỉnh sửa bài viết">
-                  <Link to={`/posts/edit/${post.id}`}>
+                  <Link to={`/posts/edit/${post?.id}`}>
                     <Button 
                       type="primary"
                       icon={<EditOutlined />}
@@ -109,16 +109,16 @@ const PostDetail: React.FC = () => {
             <div className="flex flex-wrap items-center gap-6 text-gray-500">
               <Space>
                 <CalendarOutlined />
-                <span>{dayjs(post.created_at).format('DD/MM/YYYY')}</span>
+                <span>{dayjs(post?.created_at).format('DD/MM/YYYY')}</span>
               </Space>
               <Space>
-                <Avatar 
+                {/* <Avatar 
                   size="small"
                   icon={<UserOutlined />}
                   src={post.creator?.avatar}
                   className="bg-orange-500"
-                />
-                <span>{post.creator?.name}</span>
+                /> */}
+                <span>{post?.creator?.name}</span>
               </Space>
             </div>
           </div>
@@ -126,7 +126,7 @@ const PostDetail: React.FC = () => {
           {/* Summary */}
           <Card className="mb-8 bg-orange-50/50 border-orange-100">
             <Paragraph className="text-lg text-gray-600 italic m-0">
-              {post.summary}
+              {post?.summary}
             </Paragraph>
           </Card>
 
@@ -134,7 +134,7 @@ const PostDetail: React.FC = () => {
           <Card className="!border-none shadow-sm">
             <div className="prose prose-lg max-w-none">
               <div 
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: post?.content || '' }}
                 className="prose prose-headings:text-gray-800 
                   prose-p:text-gray-600 
                   prose-a:text-orange-600 prose-a:no-underline hover:prose-a:text-orange-700
@@ -147,15 +147,15 @@ const PostDetail: React.FC = () => {
           {/* Author Card */}
           <Card className="mt-8 bg-gray-50 border-none shadow-sm">
             <div className="flex items-center gap-4">
-              <Avatar 
+              {/* <Avatar 
                 size={64}
                 icon={<UserOutlined />}
-                src={post.creator?.avatar}
+                src={post?.creator?}
                 className="bg-orange-500"
-              />
+              /> */}
               <div>
                 <div className="text-lg font-medium">
-                  {post.creator?.name}
+                  {post?.creator?.name}
                 </div>
                 <div className="text-gray-500">
                   Tác giả

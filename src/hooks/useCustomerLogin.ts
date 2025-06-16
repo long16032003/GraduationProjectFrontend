@@ -93,6 +93,7 @@ export function useCustomerLogin<TVariables = object>(
       
       // Set user data in auth store
       auth$.user.set(user);
+      auth$.guard.set('customer');
       
       // Return success response with redirection to home page
       return {

@@ -3,7 +3,7 @@ import { Table, Button, Space, Card, Input, Modal, Form, message } from 'antd';
 import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
-import type { DishCategory } from './type';
+import type { DishCategory } from '@/types';
 
 const ManageDishCategories: React.FC = () => {
   const [form] = Form.useForm();
@@ -165,7 +165,7 @@ const ManageDishCategories: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={data}
+        dataSource={data?.data}
         loading={isLoadingList}
         rowKey='id'
         pagination={{

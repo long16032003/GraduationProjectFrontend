@@ -6,42 +6,49 @@ import {
   CardTitle,
 } from '@/components/ui/card.tsx';
 import { GalleryVerticalEnd } from 'lucide-react';
-import { Link } from "@refinedev/core";
+import { Link } from '@refinedev/core';
 import LoginForm from './.form/LoginForm.tsx';
 
 // https://github.com/shadcn-ui/ui/tree/main/apps/www/registry/default/blocks/login-03
 export default function LoginPage() {
   return (
-    <div className="flex w-full max-w-sm flex-col gap-6">
-      <Link className="flex items-center gap-2 self-center font-medium" to="/">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-          <GalleryVerticalEnd className="size-4" />
-        </div>
-        Acme Inc.
-      </Link>
-      <div className="flex flex-col gap-6">
+    <div className='flex w-full max-w-sm flex-col gap-6'>
+      <div className='flex justify-center'>
+        <Link to='/'>
+          <div className='flex items-center gap-4 group'>
+            <img
+              src='/logo_restaurant.jpg'
+              alt='Logo'
+              className='h-12 w-12 rounded-full object-cover border-2 border-orange-600 p-0.5 bg-white shadow-sm group-hover:border-orange-700 transition-colors'
+            />
+            <span className='text-2xl font-semibold text-orange-700 group-hover:text-orange-800 transition-colors'>
+              BamBoo Sông Chanh
+            </span>
+          </div>
+        </Link>
+      </div>
+      <div className='flex flex-col gap-6'>
         <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
-            <CardDescription>
-              Login with your account
-            </CardDescription>
+          <CardHeader className='text-center'>
+            <CardTitle className='text-xl'>Nơi đăng nhập dành cho nhân viên</CardTitle>
+            <CardDescription>Đăng nhập với tài khoản của bạn để quản lý hệ thống</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6">
+            <div className='grid gap-6'>
               <LoginForm />
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{' '}
-                <Link className="underline underline-offset-4" to="/register"> Sign up</Link>
+              <div className='text-center text-sm'>
+                Không có tài khoản?{' '}
+                <Link
+                  className='underline underline-offset-4'
+                  to='/register'
+                >
+                  {' '}
+                  Đăng ký
+                </Link>
               </div>
             </div>
           </CardContent>
         </Card>
-        <div
-          className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-          By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-          and <a href="#">Privacy Policy</a>.
-        </div>
       </div>
     </div>
   );

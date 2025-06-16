@@ -5,7 +5,7 @@ export default function PasswordLabel () {
     <div className='b-formily-item-label'>
       <div className='b-formily-item-label-content flex justify-between w-full'>
         <div className='flex items-center flex-row'>
-          <label>Password</label>
+          <label>Mật khẩu</label>
           {/*<span className={`b-formily-item-label-tooltip-icon`}>*/}
           {/*  <Tooltip placement="top" title={'Password must be at least 8 characters'}>*/}
           {/*    <QuestionCircleOutlined />*/}
@@ -16,7 +16,7 @@ export default function PasswordLabel () {
           className='ml-auto text-sm underline-offset-4 hover:underline'
           to='/forgot-password'
         >
-          Forgot your password?
+          Quên mật khẩu?
         </Link>
       </div>
     </div>

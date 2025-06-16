@@ -15,6 +15,20 @@ import {
   SquareTerminal,
   SquareUserRound,
   Table,
+  LayoutDashboard,
+  TableProperties,
+  CalendarCheck,
+  ListOrdered,
+  UtensilsCrossed,
+  Receipt,
+  ClipboardList,
+  Users,
+  UserCircle,
+  FileText,
+  Tag,
+  PackageSearch,
+  Settings,
+  ChefHat,
 } from "lucide-react"
 
 import { NavMain } from "@/components/app/nav-main.tsx"
@@ -56,63 +70,111 @@ const data = {
   ],
   navMain: [
     {
-      title: "Thống kê",
+      title: "Bàn ăn",
+      url: "/admin/tables",
+      icon: TableProperties,
+      isActive: true,
+    },
+    {
+      title: "Đặt bàn",
+      url: "/admin/reservations",
+      icon: CalendarCheck,
+      isActive: true,
+    },
+    {
+      title: "Danh mục thực đơn",
+      url: "/admin/dishcategories",
+      icon: ListOrdered,
+      isActive: true,
+    },
+    {
+      title: "Thực đơn",
+      url: "/admin/dish",
+      icon: UtensilsCrossed,
+      isActive: true,
+    },
+    {
+      title: "Hóa đơn",
+      url: "/admin/bills",
+      icon: Receipt,
+      isActive: true,
+    },
+    {
+      title: "Gọi món",
+      url: "/admin/order",
+      icon: ClipboardList,
+      isActive: true,
+    },
+    {
+      title: "Bếp",
+      url: "/admin/kitchen",
+      icon: ChefHat,
+      isActive: true,
+    },
+    {
+      title: "Nhân viên",
+      url: "/admin/staffs",
+      icon: Users,
+      isActive: true,
+    },
+    {
+      title: "Khách hàng",
+      url: "/admin/customers",
+      icon: UserCircle,
+      isActive: true,
+    },
+    {
+      title: "Bài viết",
+      url: "/admin/posts",
+      icon: FileText,
+      isActive: true,
+    },
+    {
+      title: "Ưu đãi",
+      url: "/admin/promotions",
+      icon: Tag,
+      isActive: true,
+    },
+    {
+      title: "Kho",
       url: "#",
-      icon: SquareTerminal,
+      icon: PackageSearch,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Quản lý nguyên liệu",
+          url: "/admin/warehouse/ingredient",
         },
         {
-          title: "Starred",
-          url: "#",
+          title: "Nhập kho",
+          url: "/admin/warehouse/import",
         },
         {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Quản lý hóa đơn",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
+          title: "Xuất kho",
+          url: "/admin/warehouse/export",
         },
         {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
+          title: "Kiểm kho",
+          url: "/admin/warehouse/inventory",
         },
       ],
     },
     {
-      title: "Quản lý thực đơn",
+      title: "Thống kê",
       url: "#",
-      icon: Settings2,
+      icon: LayoutDashboard,
+      isActive: false,
       items: [
         {
-          title: "General",
+          title: "Thống kê doanh thu",
+          url: "/admin/statistic/statistic-bill",
+        },
+        {
+          title: "Thống kê món ăn được gọi nhiều nhất",
           url: "#",
         },
         {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Thống kê nguyên liệu",
           url: "#",
         },
       ],
@@ -120,72 +182,17 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
+      title: "Cài đặt website",
+      url: "/admin/site-settings",
+      icon: Settings,
     },
   ],
   projects: [
-    {
-      name: "Quản lý bàn",
-      url: "/admin/tables",
-      icon: Frame,
-    },
-    {
-      name: "Quản lý đặt bàn",
-      url: "/admin/reservations",
-      icon: PieChart,
-    },
-    {
-      name: "Quản lý danh mục thực đơn",
-      url: "/admin/dishcategories",
-      icon: Map,
-    },
-    {
-      name: "Quản lý thực đơn",
-      url: "/admin/dish",
-      icon: Map,
-    },
-    {
-      name: "Quản lý hóa đơn",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý gọi món",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý nhân viên",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý khách hàng",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý bài viết",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý ưu đãi",
-      url: "#",
-      icon: Map,
-    },
-    {
-      name: "Quản lý kho",
-      url: "#",
-      icon: Map,
-    },
+    // {
+    //   name: "Bàn ăn",
+    //   url: "/admin/tables",
+    //   icon: TableProperties,
+    // },
   ],
 }
 
@@ -197,9 +204,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+              <a href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                  <img src="/logo_restaurant.jpg" alt="logo" className="w-full h-full object-cover" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">BamBoo Sông Chanh</span>
@@ -212,8 +219,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/*<TeamSwitcher teams={data.teams} />*/}
       </SidebarHeader>
       <SidebarContent>
-        <NavProjects projects={data.projects} />
-        {/* <NavMain items={data.navMain} /> */}
+        {/* <NavProjects projects={data.projects} /> */}
+        <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavSecondary items={data.navSecondary} className="mt-auto p-0" />

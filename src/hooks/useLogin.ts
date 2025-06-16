@@ -143,8 +143,8 @@ export const buildSuccessNotification = (
   successNotification: SuccessNotificationResponse,
 ): OpenNotificationParams => {
   return {
-    message: successNotification.message,
-    description: successNotification.description,
+    message: successNotification.message || "Đăng nhập thành công",
+    description: successNotification.description || "Bạn đã đăng nhập thành công",
     key: "login-success",
     type: "success",
   };

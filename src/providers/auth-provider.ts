@@ -4,6 +4,8 @@ import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
 import type { LoginFormValues, PermissionsResponse, RegisterFormValues, User } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
+import { message } from 'antd';
+import { DEFAULT_ERROR_MESSAGES } from '@/utils/error-handler';
 
 export const authProvider: AuthProvider = {
   check: async (): Promise<CheckResponse> => {
@@ -12,13 +14,15 @@ export const authProvider: AuthProvider = {
   },
   logout: async (): Promise<AuthActionResponse> => {
     auth$.user.set(null)
-    httpClient('logout', { method: 'post' })
+    const guard = auth$.guard.peek()
+    httpClient(guard === 'user' ? 'logout' : 'logout-customer', { method: 'post' })
       .catch((error: FetchError) => {
         // Handle the error if needed
         if (error instanceof FetchError) {
           if (error.statusCode === HttpStatusCode.UNAUTHORIZED) {
             // 401: Already logged out
             auth$.user.set(null)
+            message.success('Bạn đã bị đăng xuất');
           }
         } else {
           console.error('Logout error:', error);
@@ -62,7 +66,7 @@ export const authProvider: AuthProvider = {
       success: true,
       redirectTo: redirectPath,
       successNotification: {
-        message: "Login Successful",
+        message: "Đăng nhập thành công",
         // description: "You have successfully logged in.",
       },
     };
@@ -79,8 +83,8 @@ export const authProvider: AuthProvider = {
           redirectTo: '/login',
           logout: true,
           error: {
-            name: 'Session Expired',
-            message: 'Your session has expired. Please log in again.',
+            name: 'Phiên đăng nhập hết hạn',
+            message: DEFAULT_ERROR_MESSAGES.UNAUTHORIZED,
           },
         };
       }

@@ -36,7 +36,11 @@ export const defaultOptions = {
   headers: {
     Accept: 'application/json',
   },
-  async onRequest({ options }) {
+  async onRequest({ request, options }) {
+    console.log("request: ", request);
+    if((request as string).includes('upload')) {
+      options.headers.delete('Content-Type') // remove content type header
+    }
     // automatically set x-xsrf-token header for post request
     // https://laravel.com/docs/12.x/sanctum#csrf-protection
     const csrfToken = parse(document.cookie)['XSRF-TOKEN']

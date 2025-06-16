@@ -1,15 +1,17 @@
 import { observable } from '@legendapp/state';
 import { syncObservable } from '@legendapp/state/sync';
 import { ObservablePersistLocalStorage } from '@legendapp/state/persist-plugins/local-storage';
-import type { User } from '@/types.ts';
+import type { Customer, User } from '@/types.ts';
 
 interface AuthStore {
-  user: User | null;
+  user: User | Customer | null;
+  guard: 'user' | 'customer';
   isAuthenticated: boolean;
 }
 
 const auth$ = observable<AuthStore>({
   user: null,
+  guard: 'user',
   // Computeds
   isAuthenticated: (): boolean => !!auth$.user.get(),
 })

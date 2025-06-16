@@ -2,19 +2,14 @@ import React, { useState } from 'react';
 import { Table, Button, Space, Card, Input, Tag, Modal, Form, InputNumber, Select, message } from 'antd';
 import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
-
-interface TableData {
-  id: string;
-  name: string;
-  capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
-  area: string;
-}
+import type { Post, TableModel, User } from '@/types';
+import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 
 interface TableFormData {
   name: string;
   capacity: number;
-  area: string;
+  area: '1st floor' | '2nd floor' | '3rd floor' | 'rooftop';
+  status: 'occupied' | 'maintenance';
 }
 
 const TableManagement: React.FC = () => {
@@ -22,21 +17,28 @@ const TableManagement: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editingTable, setEditingTable] = useState<TableData | null>(null);
+  const [editingTable, setEditingTable] = useState<TableModel | null>(null);
 
   // Mock data - sẽ được thay thế bằng API call
-  const data: TableData[] = [
-    {
-      id: '1',
-      name: 'Bàn 1',
-      capacity: 4,
-      status: 'available',
-      area: 'Tầng 1',
-    },
-    // ... thêm data mẫu
-  ];
+  const { data: listTables, isLoading: isLoadingList } = useList<TableModel>({
+    resource: 'tables',
+  });
 
-  const areas = ['Tầng 1', 'Tầng 2', 'Khu VIP', 'Sân thượng'];
+  const { mutate: createTable, isLoading: isCreating } = useCreate<TableModel>();
+  const { mutate: deleteTable, isLoading: isDeleting } = useDelete<TableModel>();
+  const { mutate: updateTable, isLoading: isUpdating } = useUpdate<TableModel>();
+
+  const areas = {
+    '1st floor' : 'Tầng 1',
+    '2nd floor' : 'Tầng 2', 
+    '3rd floor' : 'Tầng 3', 
+    'rooftop' : 'Sân thượng'
+  };
+
+  const statuses = {
+    'occupied' : 'Đang sử dụng',
+    'maintenance' : 'Bảo trì'
+  };
 
   const columns = [
     {
@@ -48,30 +50,31 @@ const TableManagement: React.FC = () => {
       title: 'Tên bàn',
       dataIndex: 'name',
       key: 'name',
-      sorter: (a: TableData, b: TableData) => a.name.localeCompare(b.name),
+      sorter: (a: TableModel, b: TableModel) => a.name.localeCompare(b.name),
     },
     {
       title: 'Sức chứa',
       dataIndex: 'capacity',
       key: 'capacity',
-      sorter: (a: TableData, b: TableData) => a.capacity - b.capacity,
+      sorter: (a: TableModel, b: TableModel) => a.capacity - b.capacity,
     },
     {
       title: 'Khu vực',
       dataIndex: 'area',
       key: 'area',
-      filters: areas.map(area => ({ text: area, value: area })),
-      onFilter: (value: string, record: TableData) => record.area === value,
+      filters: Object.entries(areas).map(([key, value]) => ({ text: value, value: key })),
+      onFilter: (value: string, record: TableModel) => record.area === value,
+      render: (area: string) => areas[area as keyof typeof areas],
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      onFilter: (value: string, record: TableModel) => record.status === value,
       render: (status: string) => {
         const statusConfig = {
-          available: { color: 'green', text: 'Trống' },
-          occupied: { color: 'red', text: 'Đang sử dụng' },
-          reserved: { color: 'orange', text: 'Đã đặt trước' },
+          occupied: { color: 'green', text: 'Đang sử dụng' },
+          maintenance: { color: 'red', text: 'Bảo trì' },
         };
         const config = statusConfig[status as keyof typeof statusConfig];
         return <Tag color={config.color}>{config.text}</Tag>;
@@ -80,7 +83,7 @@ const TableManagement: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, record: TableData) => (
+      render: (_: any, record: TableModel) => (
         <Space size="middle">
           <Button type="primary" onClick={() => handleEdit(record)}>
             Sửa
@@ -101,14 +104,14 @@ const TableManagement: React.FC = () => {
   };
 
   // Xử lý sửa bàn
-  const handleEdit = (record: TableData) => {
+  const handleEdit = (record: TableModel) => {
     setEditingTable(record);
     form.setFieldsValue(record);
     setIsModalVisible(true);
   };
 
   // Xử lý xóa bàn
-  const showDeleteConfirm = (record: TableData) => {
+  const showDeleteConfirm = (record: TableModel) => {
     if (record.status !== 'available') {
       message.error('Không thể xóa bàn vì đang được sử dụng hoặc đã đặt trước');
       return;
@@ -141,11 +144,18 @@ const TableManagement: React.FC = () => {
       setLoading(true);
       if (editingTable) {
         // API call để cập nhật bàn
-        // await updateTable(editingTable.id, values);
+        await updateTable({
+          resource: 'tables',
+          id: editingTable.id,
+          values: values,
+        });
         message.success('Cập nhật thành công');
       } else {
         // API call để thêm bàn mới
-        // await createTable(values);
+        await createTable({
+          resource: 'tables',
+          values: values,
+        });
         message.success('Thêm bàn thành công');
       }
       setIsModalVisible(false);
@@ -157,8 +167,21 @@ const TableManagement: React.FC = () => {
     }
   };
 
+  // Lọc dữ liệu dựa trên searchText
+  const filteredData = listTables?.data?.filter((table) => {
+    if (!searchText) return true;
+    return (
+      table.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      table.capacity.toString().includes(searchText)
+    );
+  });
+
   return (
-    <Card title="Quản lý bàn" className="m-4">
+    <Card title={
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-semibold">Quản lý bàn</span>
+      </div>
+    } className="m-4">
       <div className="mb-4 flex justify-between items-center">
         <Input.Search
           placeholder="Tìm kiếm bàn..."
@@ -177,8 +200,8 @@ const TableManagement: React.FC = () => {
 
       <Table
         columns={columns as any}
-        dataSource={data}
-        loading={loading}
+        dataSource={filteredData}
+        loading={loading || isLoadingList}
         rowKey="id"
         pagination={{
           showSizeChanger: true,
@@ -229,9 +252,24 @@ const TableManagement: React.FC = () => {
             rules={[{ required: true, message: 'Vui lòng chọn khu vực' }]}
           >
             <Select>
-              {areas.map(area => (
-                <Select.Option key={area} value={area}>
-                  {area}
+              {Object.entries(areas).map(([key, value]) => (
+                <Select.Option key={key} value={key}>
+                  {value}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="status"
+            label="Trạng thái"
+            initialValue="occupied"
+            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+          >
+            <Select>
+              {Object.entries(statuses).map(([key, value]) => (
+                <Select.Option key={key} value={key}>
+                  {value}
                 </Select.Option>
               ))}
             </Select>

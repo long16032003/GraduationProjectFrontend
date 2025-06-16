@@ -22,9 +22,7 @@ export const dataProvider: DataProvider = {
 
     if (response.status < 200 || response.status > 299) throw response;
 
-    const data = await response.json();
-
-    return { data };
+    return response;
   },
   update: async ({ resource, id, variables }) => {
     const response = await httpClient(`${API_URL}/${resource}/${id}`, {
@@ -39,8 +37,14 @@ export const dataProvider: DataProvider = {
 
     return response;
   },
-  getList: async ({ resource }) => {
-    const response = await httpClient(`${API_URL}/${resource}`);
+  getList: async ({ resource, filters, meta }) => {
+    const response = await httpClient(`${API_URL}/${resource}`, {
+      method: 'GET',
+      params: {
+        filters,
+        ...(meta || {}),
+      },
+    });
 
     if (response.status < 200 || response.status > 299) throw response;
 
@@ -62,5 +66,14 @@ export const dataProvider: DataProvider = {
   // createMany: () => { /* ... */ },
   // deleteMany: () => { /* ... */ },
   // updateMany: () => { /* ... */ },
-  // custom: () => { /* ... */ },
+  // upload: async () => {
+  //   const response = await httpClient(`${API_URL}/${resource}`, {
+  //     method: 'POST',
+  //     body: variables as Record<string, unknown>,
+  //   });
+
+  //   if (response.status < 200 || response.status > 299) throw response;
+
+  //   return response;
+  // },
 };

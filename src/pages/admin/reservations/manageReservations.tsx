@@ -1,30 +1,28 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Card, Input, Modal, Form, DatePicker, TimePicker, InputNumber, Select, message, Tag } from 'antd';
-import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import React, { useState, useRef } from 'react';
+import { Table, Button, Space, Card, Input, Modal, Form, DatePicker, TimePicker, InputNumber, Select, message, Tag, Tooltip, Popover } from 'antd';
+import { PlusOutlined, ExclamationCircleOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
+import type { ColumnType } from 'antd/es/table';
+import type { Key } from 'react';
 import dayjs from 'dayjs';
+import { Link, useCreate, useDelete, useUpdate } from '@refinedev/core';
+import type { Reservation, TableModel } from '@/types';
+import { useList } from '@refinedev/core';
 
-interface Reservation {
-  id: string;
-  customerName: string;
-  phoneNumber: string;
-  tableId: string;
-  tableName: string;
-  date: string;
-  time: string;
-  numberOfGuests: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+interface ReservationFormData {
+  name: string;
+  phone: string;
+  table_id: number;
+  date: dayjs.Dayjs;
+  time: dayjs.Dayjs;
+  number_of_guests: number;
+  status?: 'pending' | 'confirmed' | 'cancelled' | null;
   notes?: string;
 }
 
-interface ReservationFormData {
-  customerName: string;
-  phoneNumber: string;
-  tableId: string;
+interface TableAvailabilityParams {
+  tableId: number;
   date: dayjs.Dayjs;
-  time: dayjs.Dayjs;
-  numberOfGuests: number;
-  notes?: string;
 }
 
 const ManageReservations: React.FC = () => {
@@ -33,90 +31,132 @@ const ManageReservations: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [dateFilter, setDateFilter] = useState<dayjs.Dayjs | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Mock data - sẽ được thay thế bằng API call
-  const tables = [
-    { id: '1', name: 'Bàn 1' },
-    { id: '2', name: 'Bàn 2' },
-    { id: '3', name: 'Bàn VIP 1' },
-  ];
+  const { data: listReservations, isLoading: isLoadingList } = useList<Reservation>({
+    resource: 'reservations',
+  });
+  const { data: listTables, isLoading: isLoadingTables } = useList<TableModel>({
+    resource: 'tables',
+  });
 
-  const data: Reservation[] = [
-    {
-      id: '1',
-      customerName: 'Nguyễn Văn A',
-      phoneNumber: '0901234567',
-      tableId: '1',
-      tableName: 'Bàn 1',
-      date: '2024-03-20',
-      time: '18:30',
-      numberOfGuests: 4,
-      status: 'confirmed',
-      notes: 'Khách VIP',
-    },
-    {
-      id: '2',
-      customerName: 'Trần Thị B',
-      phoneNumber: '0909876543',
-      tableId: '2',
-      tableName: 'Bàn 2',
-      date: '2024-03-21',
-      time: '19:00',
-      numberOfGuests: 6,
-      status: 'pending',
-    },
-  ];
+  const { mutate: createReservation, isLoading: isCreating } = useCreate<Reservation>();
+  const { mutate: deleteReservation, isLoading: isDeleting } = useDelete<Reservation>();
+  const { mutate: updateReservation, isLoading: isUpdating } = useUpdate<Reservation>();
 
   const statusColors = {
     pending: 'orange',
     confirmed: 'green',
     cancelled: 'red',
-    completed: 'blue',
   };
 
   const statusTexts = {
     pending: 'Chờ xác nhận',
     confirmed: 'Đã xác nhận',
     cancelled: 'Đã hủy',
-    completed: 'Hoàn thành',
   };
 
-  const columns = [
+  // Thêm hàm lọc theo ngày
+  const filterByDate = (data: Reservation[] | undefined): Reservation[] => {
+    if (!data) return [];
+    if (!dateFilter) return data;
+
+    return data.filter(record => {
+      const recordDate = dayjs(record.reservation_date);
+      return recordDate.format('YYYY-MM-DD') === dateFilter.format('YYYY-MM-DD');
+    });
+  };
+
+  // Tạo DatePicker cho bộ lọc ngày
+  const renderDateFilterDropdown = () => (
+    <div style={{ padding: 8 }}>
+      <Space direction="vertical" size={12}>
+        <DatePicker 
+          value={dateFilter}
+          onChange={value => {
+            setDateFilter(value);
+            // Tự động áp dụng bộ lọc khi chọn ngày
+            if (value) {
+              message.info(`Đã lọc theo ngày: ${value.format('DD/MM/YYYY')}`);
+            }
+            // Đóng popup sau khi chọn
+            setDatePickerOpen(false);
+          }}
+          allowClear
+          placeholder="Chọn ngày"
+          format="DD/MM/YYYY"
+          style={{ width: '100%' }}
+          open={datePickerOpen}
+          onOpenChange={(open) => setDatePickerOpen(open)}
+          autoFocus={datePickerOpen}
+        />
+      </Space>
+    </div>
+  );
+
+  const columns: ColumnType<Reservation>[] = [
+    {
+      title: 'Mã KH',
+      dataIndex: 'customer_id',
+      key: 'customer_id',
+      render: (text: string) => {
+        // return <Link to={`/customers/${text}`}>{text}</Link>;
+        return text ? text : '------';
+      },
+    },
     {
       title: 'Khách hàng',
-      dataIndex: 'customerName',
-      key: 'customerName',
-      sorter: (a: Reservation, b: Reservation) => a.customerName.localeCompare(b.customerName),
+      dataIndex: 'name',
+      key: 'name',
+      sorter: (a: Reservation, b: Reservation) => {
+        if (a.customer?.name && b.customer?.name) {
+          return a.customer.name.localeCompare(b.customer.name);
+        }
+        return 0;
+      },
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'phoneNumber',
-      key: 'phoneNumber',
+      dataIndex: 'phone',
+      key: 'phone',
     },
     {
       title: 'Bàn',
-      dataIndex: 'tableName',
-      key: 'tableName',
-      filters: tables.map(table => ({ text: table.name, value: table.id })),
-      onFilter: (value: string, record: Reservation) => record.tableId === value,
+      dataIndex: 'table_id',
+      key: 'table_id',
+      filters: listTables?.data?.map((table: TableModel) => ({ text: table.name, value: table.id })),
+      onFilter: (value: boolean | Key, record: Reservation) => 
+        record.table?.id === value,
     },
     {
       title: 'Ngày',
-      dataIndex: 'date',
-      key: 'date',
-      sorter: (a: Reservation, b: Reservation) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+      dataIndex: 'reservation_date',
+      key: 'reservation_date',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      filterDropdown: renderDateFilterDropdown,
+      filterIcon: (filtered: boolean) => (
+        <FilterOutlined 
+          style={{ color: filtered ? '#1890ff' : undefined }} 
+          onClick={() => {
+            setDatePickerOpen(true);
+          }}
+        />
+      ),
+      onFilterDropdownOpenChange: (visible) => {
+        if (visible) {
+          setDatePickerOpen(true);
+        }
+      },
     },
     {
       title: 'Giờ',
-      dataIndex: 'time',
-      key: 'time',
-    },
-    {
-      title: 'Số khách',
-      dataIndex: 'numberOfGuests',
-      key: 'numberOfGuests',
-      sorter: (a: Reservation, b: Reservation) => a.numberOfGuests - b.numberOfGuests,
+      dataIndex: 'reservation_date',
+      key: 'reservation_date',
+      sorter: (a: Reservation, b: Reservation) => 
+        dayjs(a.reservation_date).unix() - dayjs(b.reservation_date).unix(),
+      render: (date: string) => dayjs(date).format('HH:mm'),
     },
     {
       title: 'Trạng thái',
@@ -126,7 +166,8 @@ const ManageReservations: React.FC = () => {
         <Tag color={statusColors[status]}>{statusTexts[status]}</Tag>
       ),
       filters: Object.entries(statusTexts).map(([value, text]) => ({ text, value })),
-      onFilter: (value: string, record: Reservation) => record.status === value,
+      onFilter: (value: boolean | Key, record: Reservation) => 
+        record.status === value,
     },
     {
       title: 'Ghi chú',
@@ -137,19 +178,19 @@ const ManageReservations: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, record: Reservation) => (
+      render: (_: unknown, record: Reservation) => (
         <Space size="middle">
           <Button 
             type="primary" 
             onClick={() => handleEdit(record)}
-            disabled={record.status === 'completed' || record.status === 'cancelled'}
+            disabled={record.status === 'cancelled'}
           >
             Sửa
           </Button>
           <Button 
             danger 
             onClick={() => showCancelConfirm(record)}
-            disabled={record.status === 'completed' || record.status === 'cancelled'}
+            disabled={record.status === 'cancelled'}
           >
             Hủy
           </Button>
@@ -166,13 +207,14 @@ const ManageReservations: React.FC = () => {
 
   const handleEdit = (record: Reservation) => {
     setEditingReservation(record);
+    const reservationDate = dayjs(record.reservation_date);
+    
     form.setFieldsValue({
-      customerName: record.customerName,
-      phoneNumber: record.phoneNumber,
-      tableId: record.tableId,
-      date: dayjs(record.date),
-      time: dayjs(record.time, 'HH:mm'),
-      numberOfGuests: record.numberOfGuests,
+      name: record.name,
+      phone: record.phone,
+      table_id: record.table_id,
+      date: reservationDate,
+      time: reservationDate,
       notes: record.notes,
     });
     setIsModalVisible(true);
@@ -182,7 +224,7 @@ const ManageReservations: React.FC = () => {
     Modal.confirm({
       title: 'Xác nhận hủy đặt bàn',
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc muốn hủy đặt bàn của ${record.customerName}?`,
+      content: `Bạn có chắc muốn hủy đặt bàn này?`,
       okText: 'Xác nhận',
       cancelText: 'Đóng',
       onOk: async () => {
@@ -200,7 +242,7 @@ const ManageReservations: React.FC = () => {
     });
   };
 
-  const checkTableAvailability = async (values: any) => {
+  const checkTableAvailability = async (values: TableAvailabilityParams) => {
     // API call để kiểm tra bàn trống
     // const isAvailable = await checkAvailability(values.tableId, values.date, values.time);
     // return isAvailable;
@@ -211,8 +253,19 @@ const ManageReservations: React.FC = () => {
     try {
       setLoading(true);
       
+      // Kết hợp ngày và giờ thành một timestamp
+      const combinedDateTime = values.date
+        .hour(values.time.hour())
+        .minute(values.time.minute())
+        .second(0);
+      
       // Kiểm tra bàn trống
-      const isAvailable = await checkTableAvailability(values);
+      const availabilityParams: TableAvailabilityParams = {
+        tableId: values.table_id,
+        date: combinedDateTime,
+      };
+      
+      const isAvailable = await checkTableAvailability(availabilityParams);
       if (!isAvailable) {
         message.error('Bàn đã được đặt trong thời gian này. Vui lòng chọn bàn khác hoặc thời gian khác.');
         return;
@@ -220,8 +273,10 @@ const ManageReservations: React.FC = () => {
 
       const formattedData = {
         ...values,
-        date: values.date.format('YYYY-MM-DD'),
-        time: values.time.format('HH:mm'),
+        reservation_date: combinedDateTime.format('YYYY-MM-DD HH:mm:ss'),
+        // Loại bỏ các trường không cần thiết
+        date: undefined,
+        time: undefined,
       };
 
       if (editingReservation) {
@@ -243,14 +298,30 @@ const ManageReservations: React.FC = () => {
   };
 
   return (
-    <Card title="Quản lý đặt bàn" className="m-4">
+    <Card title={
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-semibold">Quản lý đặt bàn</span>
+      </div>
+    } className="m-4">
       <div className="mb-4 flex justify-between items-center">
-        <Input.Search
-          placeholder="Tìm kiếm theo tên khách hàng hoặc số điện thoại..."
-          allowClear
-          onSearch={value => setSearchText(value)}
-          style={{ width: 300 }}
-        />
+        <Space>
+          <Input.Search
+            placeholder="Tìm kiếm theo tên khách hàng hoặc số điện thoại..."
+            allowClear
+            onSearch={value => setSearchText(value)}
+            style={{ width: 300 }}
+            prefix={<SearchOutlined />}
+          />
+          {dateFilter && (
+            <Tag 
+              color="blue" 
+              closable 
+              onClose={() => setDateFilter(null)}
+            >
+              Ngày: {dateFilter.format('DD/MM/YYYY')}
+            </Tag>
+          )}
+        </Space>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -260,11 +331,11 @@ const ManageReservations: React.FC = () => {
         </Button>
       </div>
 
-      <Table
+      <Table<Reservation>
         columns={columns}
-        dataSource={data}
-        loading={loading}
-        rowKey="id"
+        dataSource={filterByDate(listReservations?.data)}
+        loading={loading || isLoadingList}
+        rowKey="name"
         pagination={{
           showSizeChanger: true,
           showQuickJumper: true,
@@ -288,7 +359,7 @@ const ManageReservations: React.FC = () => {
           onFinish={handleSubmit}
         >
           <Form.Item
-            name="customerName"
+            name="name"
             label="Tên khách hàng"
             rules={[
               { required: true, message: 'Vui lòng nhập tên khách hàng' },
@@ -299,7 +370,7 @@ const ManageReservations: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="phoneNumber"
+            name="phone"
             label="Số điện thoại"
             rules={[
               { required: true, message: 'Vui lòng nhập số điện thoại' },
@@ -310,12 +381,12 @@ const ManageReservations: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="tableId"
+            name="table_id"
             label="Chọn bàn"
             rules={[{ required: true, message: 'Vui lòng chọn bàn' }]}
           >
             <Select>
-              {tables.map(table => (
+              {listTables?.data?.map((table: TableModel) => (
                 <Select.Option key={table.id} value={table.id}>
                   {table.name}
                 </Select.Option>
@@ -354,7 +425,7 @@ const ManageReservations: React.FC = () => {
           </Space>
 
           <Form.Item
-            name="numberOfGuests"
+            name="number_of_guests"
             label="Số khách"
             rules={[
               { required: true, message: 'Vui lòng nhập số khách' },
@@ -373,6 +444,7 @@ const ManageReservations: React.FC = () => {
           >
             <Input.TextArea rows={4} />
           </Form.Item>
+        </Form>
 
           <Form.Item className="flex justify-end">
             <Space>
@@ -384,7 +456,6 @@ const ManageReservations: React.FC = () => {
               </Button>
             </Space>
           </Form.Item>
-        </Form>
       </Modal>
     </Card>
   );

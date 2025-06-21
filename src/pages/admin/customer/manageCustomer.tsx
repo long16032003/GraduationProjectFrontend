@@ -34,139 +34,138 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { PageLoader } from '@/components/ui/loader';
+import type { Customer } from '@/types';
+import { useList } from '@refinedev/core';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
-// Interface definitions
-interface Customer {
-  id: number;
-  uuid: string;
-  name: string;
-  phone: string;
-  email: string;
-  point: number;
-  created_at: string;
-  updated_at: string;
-}
-
 // Mock data for demonstration
-const generateMockCustomers = (): Customer[] => {
-  return [
-    {
-      id: 1,
-      uuid: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      point: 150,
-      created_at: '2023-01-15T08:30:00',
-      updated_at: '2023-05-20T14:20:00'
-    },
-    {
-      id: 2,
-      uuid: '550e8400-e29b-41d4-a716-446655440001',
-      name: 'Trần Thị B',
-      phone: '0912345678',
-      email: 'tranthib@example.com',
-      point: 320,
-      created_at: '2023-02-10T10:15:00',
-      updated_at: '2023-06-05T09:45:00'
-    },
-    {
-      id: 3,
-      uuid: '550e8400-e29b-41d4-a716-446655440002',
-      name: 'Lê Văn C',
-      phone: '0923456789',
-      email: 'levanc@example.com',
-      point: 80,
-      created_at: '2023-03-05T14:20:00',
-      updated_at: '2023-03-05T14:20:00'
-    },
-    {
-      id: 4,
-      uuid: '550e8400-e29b-41d4-a716-446655440003',
-      name: 'Phạm Thị D',
-      phone: '0934567890',
-      email: 'phamthid@example.com',
-      point: 450,
-      created_at: '2023-01-20T11:30:00',
-      updated_at: '2023-06-10T16:40:00'
-    },
-    {
-      id: 5,
-      uuid: '550e8400-e29b-41d4-a716-446655440004',
-      name: 'Hoàng Văn E',
-      phone: '0945678901',
-      email: 'hoangvane@example.com',
-      point: 200,
-      created_at: '2023-04-12T09:10:00',
-      updated_at: '2023-05-22T13:15:00'
-    },
-    {
-      id: 6,
-      uuid: '550e8400-e29b-41d4-a716-446655440005',
-      name: 'Võ Thị F',
-      phone: '0956789012',
-      email: 'vothif@example.com',
-      point: 120,
-      created_at: '2023-02-28T15:45:00',
-      updated_at: '2023-04-18T10:30:00'
-    },
-    {
-      id: 7,
-      uuid: '550e8400-e29b-41d4-a716-446655440006',
-      name: 'Đặng Văn G',
-      phone: '0967890123',
-      email: 'dangvang@example.com',
-      point: 280,
-      created_at: '2023-03-15T13:20:00',
-      updated_at: '2023-06-01T09:50:00'
-    },
-    {
-      id: 8,
-      uuid: '550e8400-e29b-41d4-a716-446655440007',
-      name: 'Bùi Thị H',
-      phone: '0978901234',
-      email: 'buithih@example.com',
-      point: 180,
-      created_at: '2023-05-05T10:10:00',
-      updated_at: '2023-06-12T14:25:00'
-    },
-    {
-      id: 9,
-      uuid: '550e8400-e29b-41d4-a716-446655440008',
-      name: 'Lý Văn I',
-      phone: '0989012345',
-      email: 'lyvani@example.com',
-      point: 90,
-      created_at: '2023-04-20T16:30:00',
-      updated_at: '2023-04-20T16:30:00'
-    },
-    {
-      id: 10,
-      uuid: '550e8400-e29b-41d4-a716-446655440009',
-      name: 'Ngô Thị K',
-      phone: '0990123456',
-      email: 'ngothik@example.com',
-      point: 350,
-      created_at: '2023-01-30T12:40:00',
-      updated_at: '2023-05-28T11:15:00'
-    }
-  ];
-};
+// const generateMockCustomers = (): Customer[] => {
+//   return [
+//     {
+//       id: 1,
+//       uuid: '550e8400-e29b-41d4-a716-446655440000',
+//       name: 'Nguyễn Văn A',
+//       phone: '0901234567',
+//       email: 'nguyenvana@example.com',
+//       point: 150,
+//       created_at: '2023-01-15T08:30:00',
+//       updated_at: '2023-05-20T14:20:00'
+//     },
+//     {
+//       id: 2,
+//       uuid: '550e8400-e29b-41d4-a716-446655440001',
+//       name: 'Trần Thị B',
+//       phone: '0912345678',
+//       email: 'tranthib@example.com',
+//       point: 320,
+//       created_at: '2023-02-10T10:15:00',
+//       updated_at: '2023-06-05T09:45:00'
+//     },
+//     {
+//       id: 3,
+//       uuid: '550e8400-e29b-41d4-a716-446655440002',
+//       name: 'Lê Văn C',
+//       phone: '0923456789',
+//       email: 'levanc@example.com',
+//       point: 80,
+//       created_at: '2023-03-05T14:20:00',
+//       updated_at: '2023-03-05T14:20:00'
+//     },
+//     {
+//       id: 4,
+//       uuid: '550e8400-e29b-41d4-a716-446655440003',
+//       name: 'Phạm Thị D',
+//       phone: '0934567890',
+//       email: 'phamthid@example.com',
+//       point: 450,
+//       created_at: '2023-01-20T11:30:00',
+//       updated_at: '2023-06-10T16:40:00'
+//     },
+//     {
+//       id: 5,
+//       uuid: '550e8400-e29b-41d4-a716-446655440004',
+//       name: 'Hoàng Văn E',
+//       phone: '0945678901',
+//       email: 'hoangvane@example.com',
+//       point: 200,
+//       created_at: '2023-04-12T09:10:00',
+//       updated_at: '2023-05-22T13:15:00'
+//     },
+//     {
+//       id: 6,
+//       uuid: '550e8400-e29b-41d4-a716-446655440005',
+//       name: 'Võ Thị F',
+//       phone: '0956789012',
+//       email: 'vothif@example.com',
+//       point: 120,
+//       created_at: '2023-02-28T15:45:00',
+//       updated_at: '2023-04-18T10:30:00'
+//     },
+//     {
+//       id: 7,
+//       uuid: '550e8400-e29b-41d4-a716-446655440006',
+//       name: 'Đặng Văn G',
+//       phone: '0967890123',
+//       email: 'dangvang@example.com',
+//       point: 280,
+//       created_at: '2023-03-15T13:20:00',
+//       updated_at: '2023-06-01T09:50:00'
+//     },
+//     {
+//       id: 8,
+//       uuid: '550e8400-e29b-41d4-a716-446655440007',
+//       name: 'Bùi Thị H',
+//       phone: '0978901234',
+//       email: 'buithih@example.com',
+//       point: 180,
+//       created_at: '2023-05-05T10:10:00',
+//       updated_at: '2023-06-12T14:25:00'
+//     },
+//     {
+//       id: 9,
+//       uuid: '550e8400-e29b-41d4-a716-446655440008',
+//       name: 'Lý Văn I',
+//       phone: '0989012345',
+//       email: 'lyvani@example.com',
+//       point: 90,
+//       created_at: '2023-04-20T16:30:00',
+//       updated_at: '2023-04-20T16:30:00'
+//     },
+//     {
+//       id: 10,
+//       uuid: '550e8400-e29b-41d4-a716-446655440009',
+//       name: 'Ngô Thị K',
+//       phone: '0990123456',
+//       email: 'ngothik@example.com',
+//       point: 350,
+//       created_at: '2023-01-30T12:40:00',
+//       updated_at: '2023-05-28T11:15:00'
+//     }
+//   ];
+// };
 
 const ManageCustomer: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [customers] = useState<Customer[]>(generateMockCustomers());
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'edit' | 'add'>('view');
   const [form] = Form.useForm();
 
+  const { data: customers, isLoading: isLoadingCustomers } = useList<Customer>({
+    resource: 'customers',
+    sorters: [
+      {
+        field: 'point',
+        order: 'desc'
+      }
+    ]
+  });
+
   // Filter customers based on search text
-  const filteredCustomers = customers.filter(customer => {
+  const filteredCustomers = customers?.data.filter(customer => {
     const searchLower = searchText.toLowerCase();
     return (
       customer.name.toLowerCase().includes(searchLower) ||
@@ -296,7 +295,7 @@ const ManageCustomer: React.FC = () => {
       sorter: (a, b) => a.point - b.point,
       render: (point) => (
         <Space>
-          <Badge count={point} showZero overflowCount={999} style={{ backgroundColor: '#52c41a' }} />
+          <Badge count={point} showZero overflowCount={1000} style={{ backgroundColor: '#52c41a' }} />
           <Tag color={getPointLevelColor(point)}>
             {getPointLevelText(point)}
           </Tag>
@@ -308,7 +307,7 @@ const ManageCustomer: React.FC = () => {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 150,
-      render: (date) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date) => dayjs(date).format('HH:mm DD/MM/YYYY'),
       sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
     {
@@ -317,7 +316,7 @@ const ManageCustomer: React.FC = () => {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="Xem chi tiết" placement="top">
             <Button
               type="text"
               icon={<EyeOutlined />}
@@ -325,7 +324,7 @@ const ManageCustomer: React.FC = () => {
               className="text-blue-500 hover:text-blue-600"
             />
           </Tooltip>
-          <Tooltip title="Chỉnh sửa">
+          <Tooltip title="Chỉnh sửa" placement="top">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -367,17 +366,13 @@ const ManageCustomer: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingCustomers) {
     return <PageLoader text="Đang tải dữ liệu..." />;
   }
 
   return (
     <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item>Quản lý khách hàng</Breadcrumb.Item>
-        </Breadcrumb>
         
         <div className="flex justify-between items-center mb-4">
           <Title level={4} className="m-0">

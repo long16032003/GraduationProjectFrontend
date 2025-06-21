@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select } from 'antd';
+import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select, Image } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ArrowLeftOutlined, PlusOutlined, MinusOutlined, ShoppingCartOutlined, CheckOutlined, SearchOutlined, MenuOutlined, HistoryOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMediaQuery } from 'react-responsive';
-import { type Dish, type OrderDish, type Bill } from '@/types';
+import { type Dish, type OrderDish, type Bill, type DishCategory, type Order } from '@/types';
+import { useCreate, useList, useOne } from '@refinedev/core';
+import { caculateTotalAmount } from '@/utils/caculateTotalAmountBill';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -40,23 +44,6 @@ const generateFakeCategories = () => {
   ];
 };
 
-// Fake bill data
-const generateFakeBill = (billId: number): Bill => {
-  return {
-    id: billId,
-    creator_id: 1,
-    customer_id: 1,
-    customer_name: `Khách bàn ${billId}`,
-    customer_phone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
-    table_id: billId,
-    table_number: billId,
-    total_amount: 150000,
-    created_at: dayjs().subtract(1, 'hour').format(),
-    payment_method: null,
-    status: 'unpaid',
-  };
-};
-
 interface OrderItem extends OrderDish {
   temp_id: string;
   dish?: Dish;
@@ -72,19 +59,34 @@ const AddOrder: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('menu');
   const [isCartDrawerVisible, setIsCartDrawerVisible] = useState(false);
 
+  //API call
+  const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
+    resource: 'dish-categories',
+  });
+  const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
+    resource: 'dishes',
+  });
+
+  const { data: billData, isLoading: isLoadingBill } = useOne<Bill>({
+    resource: 'bills',
+    id: billId,
+  });
+
+  const { mutate: createOrder, isLoading: isCreatingOrder } = useCreate<Order>();
+  
   // Responsive breakpoints
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   // Mock data
-  const dishes = useMemo(() => generateFakeDishes(), []);
-  const categories = useMemo(() => generateFakeCategories(), []);
-  const bill = useMemo(() => billId ? generateFakeBill(parseInt(billId)) : null, [billId]);
+  const dishes = listDishes?.data;
+  const categories = listDishCategories?.data;
+  const bill = billData?.data;
   
   // Filter dishes
   const filteredDishes = useMemo(() => {
-    let result = [...dishes];
+    let result = [...dishes || []];
     
     if (selectedCategory !== 'all') {
       result = result.filter(dish => dish.category_id === selectedCategory);
@@ -153,16 +155,28 @@ const AddOrder: React.FC = () => {
     }
 
     const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
-    
-    console.log('Đơn gọi món mới cho hóa đơn', billId, ':', {
-      bill_id: billId,
-      items: cart,
-      total_amount: totalAmount,
+    const orderData = {
+      bill_id: bill?.id || 0,
+      table_id: bill?.table_id || 0,
+      order_dishes: cart,
       note: values.note
+    }
+
+    createOrder({
+      resource: 'orders',
+      values: orderData,
+    }, {
+      onSuccess: () => {
+        message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
+        // navigate('/admin/order');
+      },
+      onError: () => {
+        message.error('Đã xảy ra lỗi khi thêm đơn gọi món!');
+      }
     });
 
-    message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
-    navigate('/admin/order');
+    // message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
+    // navigate('/admin/order');
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
@@ -196,11 +210,11 @@ const AddOrder: React.FC = () => {
             >
               Tất cả
             </Button>
-            {categories.map(category => (
+            {categories?.map(category => (
               <Button
                 key={category.id}
                 type={selectedCategory === category.id ? 'primary' : 'default'}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(category.id as unknown as number)}
                 size={isMobile ? 'small' : 'middle'}
                 style={{ 
                   borderRadius: '20px',
@@ -224,21 +238,23 @@ const AddOrder: React.FC = () => {
             xxl: 3
           }}
           dataSource={filteredDishes}
-          renderItem={dish => (
+          renderItem={(dish: Dish) => (
             <List.Item>
               <Card
                 hoverable
-                cover={
-                  <div style={{ 
-                    height: isMobile ? 100 : 200, 
-                    background: `linear-gradient(45deg, #f0f0f0, #e0e0e0)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '24px' : '32px'
-                  }}>
-                    🍽️
-                  </div>
+                cover={ 
+                    <div className='relative h-60 overflow-hidden'>
+                        {dish.image?.path ? <Image
+                        src={`${API_URL}/storage/${dish.image?.path}`}
+                        alt={dish.name}
+                        className='w-full h-full object-cover'
+                        preview={false} /> : <Image
+                            src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200" 
+                            alt={dish.name}
+                            className="w-full h-full object-cover"
+                            preview={false}
+                        />}
+                    </div>
                 }
                 onClick={() => handleAddToCart(dish)}
                 style={{ height: '100%' }}
@@ -511,17 +527,17 @@ const AddOrder: React.FC = () => {
             <Col span={8}>
               <Text strong>Hóa đơn:</Text> #{bill.id}
               <br />
-              <Text strong>Bàn:</Text> {bill.table_number}
+              <Text strong>Bàn:</Text> {bill.table?.name}
             </Col>
             <Col span={8}>
-              <Text strong>Khách hàng:</Text> {bill.customer_name}
+              <Text strong>Khách hàng:</Text> {bill.customer_name || bill.customer_by_phone?.name}
               <br />
-              <Text strong>SĐT:</Text> {bill.customer_phone}
+              <Text strong>SĐT:</Text> {bill.customer_phone || bill.customer_by_phone?.phone}
             </Col>
             <Col span={8}>
               <Text strong>Tổng hiện tại:</Text> 
               <Text strong style={{ color: '#f5222d', marginLeft: 8 }}>
-                {bill.total_amount.toLocaleString('vi-VN')} VNĐ
+                {caculateTotalAmount(bill).toLocaleString('vi-VN')} {cartTotal ? `+ ${Number(cartTotal).toLocaleString('vi-VN')} = ${Number(caculateTotalAmount(bill) + cartTotal).toLocaleString('vi-VN')} VNĐ` : ''}
               </Text>
               <br />
               <Text strong>Thời gian:</Text> {dayjs().format('HH:mm DD/MM/YYYY')}

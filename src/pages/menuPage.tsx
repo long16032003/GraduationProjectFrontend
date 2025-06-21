@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Typography, Image, Tag, Tabs, Divider, Rate, Button } from 'antd';
 import { ShoppingCartOutlined, FireOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
-import type { Dish } from '@/types';
+import type { Dish, DishCategory } from '@/types';
 import { useList, useUpdate } from '@refinedev/core';
 
 const { Title, Text, Paragraph } = Typography;
@@ -33,14 +33,14 @@ const ItemDish = ({dish}: {dish: Dish}) => {
                 className="w-full h-full object-cover"
                 preview={false}
               />}
-            {/* {dish?.is_featured && (
+            {dish?.is_featured && (
               <Tag
                 color='red'
                 className='absolute top-2 right-2'
               >
                 Nổi bật
               </Tag>
-            )} */}
+            )}
           </div>
         }
         className='h-full'
@@ -95,33 +95,6 @@ const ItemDish = ({dish}: {dish: Dish}) => {
   );
 }
 
-
-// Định nghĩa kiểu dữ liệu cho món ăn
-// interface Dish {
-//   id: number;
-//   creator_id: number;
-//   name: string;
-//   description: string | null;
-//   image_id: number | null;
-//   image_url: string;
-//   price: string;
-//   category_id: number;
-//   category_name: string;
-//   is_active: boolean;
-//   is_featured: boolean;
-//   rating: number;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-// Định nghĩa kiểu dữ liệu cho danh mục món ăn
-interface DishCategory {
-  id: number;
-  name: string;
-  description: string | null;
-  icon: string;
-}
-
 const MenuPage: React.FC = () => {
 //   const [dishes, setDishes] = useState<Dish[]>([]);
 //   const [categories, setCategories] = useState<DishCategory[]>([]);
@@ -137,12 +110,6 @@ const MenuPage: React.FC = () => {
   });
 
   const { mutate: updateDish, isLoading: isUpdating } = useUpdate<Dish>();
-
-//   useEffect(() => {
-//     if (listDishes) {
-//       setDishes(listDishes.data);
-//     }
-//   }, []);
 
   const handleFavoriteClick = (dishId: number) => {
     if (favorites.includes(dishId)) {
@@ -185,21 +152,21 @@ const MenuPage: React.FC = () => {
           </div>
 
           {/* Featured dishes */}
-          {/* <div className="mb-12">
+          <div className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <Title level={2} className="!mb-0">
                 <FireOutlined className="text-red-500 mr-2" /> Món ăn nổi bật
               </Title>
             </div>
             <Row gutter={[16, 16]}>
-              {dishes.filter(dish => dish.is_featured).slice(0, 4).map(dish => (
+              {listDishes?.data?.filter(dish => dish.is_featured).slice(0, 4).map(dish => (
                 <Col xs={24} sm={12} md={8} lg={6} key={dish.id}>
                   <Card
                     hoverable
                     cover={
                       <div className="relative h-48 overflow-hidden">
-                        {dish.image_url ? <Image 
-                          src={dish.image_url} 
+                        {dish.image?.path ? <Image 
+                          src={`${API_URL}/storage/${dish.image?.path}`} 
                           alt={dish.name}
                           className="w-full h-full object-cover"
                           preview={false}
@@ -221,7 +188,7 @@ const MenuPage: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <Title level={5} className="!mb-1">{dish.name}</Title>
-                        <Text type="secondary" className="block mb-2">{dish.category_name}</Text>
+                        <Text type="secondary" className="block mb-2">{dish.dish_categories?.name}</Text>
                       </div>
                       <Button
                         type="text"
@@ -234,15 +201,15 @@ const MenuPage: React.FC = () => {
                     </Paragraph>
                     <div className="flex justify-between items-center">
                       <Text strong className="text-lg text-red-600">
-                        {parseInt(dish.price).toLocaleString('vi-VN')}đ
+                        {dish.price.toLocaleString('vi-VN')}đ
                       </Text>
-                      <Rate disabled defaultValue={dish.rating} className="text-sm" />
+                      {/* <Rate disabled defaultValue={dish.rating} className="text-sm" /> */}
                     </div>
                   </Card>
                 </Col>
               ))}
             </Row>
-          </div> */}
+          </div>
 
           {/* Menu tabs */}
           <Title level={2} className="mb-6">Thực đơn đầy đủ</Title>
@@ -262,7 +229,7 @@ const MenuPage: React.FC = () => {
 
             {/* <TabPane tab="Món nổi bật" key="featured">
               <Row gutter={[16, 16]}>
-                {filteredDishes.map(dish => (
+                {filteredDishes?.map(dish => (
                   <ItemDish dish={dish} key={dish.id} />
                 ))}
               </Row>

@@ -4,6 +4,7 @@ import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined } from '@ant-de
 import type { TableProps } from 'antd';
 import type { Post, TableModel, User } from '@/types';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
+import { areas } from '@/utils/constant';
 
 interface TableFormData {
   name: string;
@@ -19,7 +20,7 @@ const TableManagement: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTable, setEditingTable] = useState<TableModel | null>(null);
 
-  // Mock data - sẽ được thay thế bằng API call
+  //API call
   const { data: listTables, isLoading: isLoadingList } = useList<TableModel>({
     resource: 'tables',
   });
@@ -27,13 +28,6 @@ const TableManagement: React.FC = () => {
   const { mutate: createTable, isLoading: isCreating } = useCreate<TableModel>();
   const { mutate: deleteTable, isLoading: isDeleting } = useDelete<TableModel>();
   const { mutate: updateTable, isLoading: isUpdating } = useUpdate<TableModel>();
-
-  const areas = {
-    '1st floor' : 'Tầng 1',
-    '2nd floor' : 'Tầng 2', 
-    '3rd floor' : 'Tầng 3', 
-    'rooftop' : 'Sân thượng'
-  };
 
   const statuses = {
     'occupied' : 'Đang sử dụng',

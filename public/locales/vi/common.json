@@ -113,6 +113,7 @@
     "clone": "Nhân bản"
   },
   "dashboard": {
+    "dashboard": "Bảng điều khiển",
     "title": "Bảng điều khiển"
   },
   "posts": {
@@ -135,6 +136,150 @@
       "edit": "Chỉnh sửa bài viết",
       "list": "Bài viết",
       "show": "Xem bài viết"
+    }
+  },
+  "dishes": {
+    "dishes": "Món ăn",
+    "titles": {
+      "create": "Tạo món ăn mới",
+      "edit": "Chỉnh sửa món ăn",
+      "list": "Danh sách món ăn",
+      "show": "Xem món ăn"
+    }
+  },
+  "dish-categories": {
+    "dish-categories": "Danh mục món ăn",
+    "titles": {
+      "create": "Tạo danh mục mới",
+      "edit": "Chỉnh sửa danh mục",
+      "list": "Danh sách danh mục",
+      "show": "Xem danh mục"
+    }
+  },
+  "tables": {
+    "tables": "Bàn ăn",
+    "titles": {
+      "create": "Tạo bàn mới",
+      "edit": "Chỉnh sửa bàn",
+      "list": "Danh sách bàn",
+      "show": "Xem bàn"
+    }
+  },
+  "bills": {
+    "bills": "Hóa đơn",
+    "titles": {
+      "create": "Tạo hóa đơn mới",
+      "edit": "Chỉnh sửa hóa đơn",
+      "list": "Danh sách hóa đơn",
+      "show": "Xem hóa đơn"
+    }
+  },
+  "orders": {
+    "orders": "Đơn hàng",
+    "titles": {
+      "create": "Tạo đơn hàng mới",
+      "edit": "Chỉnh sửa đơn hàng",
+      "list": "Danh sách đơn hàng",
+      "show": "Xem đơn hàng"
+    }
+  },
+  "customers": {
+    "customers": "Khách hàng",
+    "titles": {
+      "create": "Tạo khách hàng mới",
+      "edit": "Chỉnh sửa khách hàng",
+      "list": "Danh sách khách hàng",
+      "show": "Xem khách hàng"
+    }
+  },
+  "staffs": {
+    "staffs": "Nhân viên",
+    "titles": {
+      "create": "Tạo nhân viên mới",
+      "edit": "Chỉnh sửa nhân viên",
+      "list": "Danh sách nhân viên",
+      "show": "Xem nhân viên"
+    }
+  },
+  "reservations": {
+    "reservations": "Đặt bàn",
+    "titles": {
+      "create": "Tạo đặt bàn mới",
+      "edit": "Chỉnh sửa đặt bàn",
+      "list": "Danh sách đặt bàn",
+      "show": "Xem đặt bàn"
+    }
+  },
+  "promotions": {
+    "promotions": "Khuyến mãi",
+    "titles": {
+      "create": "Tạo khuyến mãi mới",
+      "edit": "Chỉnh sửa khuyến mãi",
+      "list": "Danh sách khuyến mãi",
+      "show": "Xem khuyến mãi"
+    }
+  },
+  "promotion_codes": {
+    "promotion_codes": "Mã khuyến mãi",
+    "titles": {
+      "create": "Tạo mã khuyến mãi mới",
+      "edit": "Chỉnh sửa mã khuyến mãi",
+      "list": "Danh sách mã khuyến mãi",
+      "show": "Xem mã khuyến mãi"
+    }
+  },
+  "permissions": {
+    "permissions": "Quyền hạn",
+    "titles": {
+      "create": "Tạo quyền hạn mới",
+      "edit": "Chỉnh sửa quyền hạn",
+      "list": "Danh sách quyền hạn",
+      "show": "Xem quyền hạn"
+    }
+  },
+  "role": {
+    "role": "Vai trò",
+    "titles": {
+      "create": "Tạo vai trò mới",
+      "edit": "Chỉnh sửa vai trò",
+      "list": "Danh sách vai trò",
+      "show": "Xem vai trò"
+    }
+  },
+  "upload-image": {
+    "upload-image": "Tải ảnh lên",
+    "titles": {
+      "create": "Tải ảnh lên",
+      "edit": "Chỉnh sửa ảnh",
+      "list": "Danh sách ảnh",
+      "show": "Xem ảnh"
+    }
+  },
+  "users": {
+    "users": "Người dùng",
+    "titles": {
+      "create": "Tạo người dùng mới",
+      "edit": "Chỉnh sửa người dùng",
+      "list": "Danh sách người dùng",
+      "show": "Xem người dùng"
+    }
+  },
+  "products": {
+    "products": "Sản phẩm",
+    "titles": {
+      "create": "Tạo sản phẩm mới",
+      "edit": "Chỉnh sửa sản phẩm",
+      "list": "Danh sách sản phẩm",
+      "show": "Xem sản phẩm"
+    }
+  },
+  "collections": {
+    "collections": "Bộ sưu tập",
+    "titles": {
+      "create": "Tạo bộ sưu tập mới",
+      "edit": "Chỉnh sửa bộ sưu tập",
+      "list": "Danh sách bộ sưu tập",
+      "show": "Xem bộ sưu tập"
     }
   },
   "table": {

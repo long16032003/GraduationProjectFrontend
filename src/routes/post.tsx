@@ -11,6 +11,18 @@ export const routes: RouteObject[] = [
         },
       },
       {
+        path: 'create',
+        lazy: {
+          Component: async () => (await import("@/pages/post/create-post")).default,
+        },
+      },
+      {
+        path: 'edit/:id',
+        lazy: {
+          Component: async () => (await import("@/pages/post/edit-post")).default,
+        },
+      },
+      {
         path: ':id',
         lazy: {
           Component: async () => (await import("@/pages/post/post-detail")).default,

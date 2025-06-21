@@ -35,6 +35,7 @@ import dayjs from 'dayjs';
 import type { Reservation, TableModel } from '@/types';
 import { useCreate, useList } from '@refinedev/core';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
+import { areas } from '@/utils/constant';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -241,13 +242,6 @@ const ReservationPage: React.FC = () => {
     setAvailableTables([]);
     setCurrentStep(0);
     setReservationSuccess(false);
-  };
-
-  const areas = {
-    '1st floor' : 'Tầng 1',
-    '2nd floor' : 'Tầng 2', 
-    '3rd floor' : 'Tầng 3', 
-    'rooftop' : 'Sân thượng'
   };
 
   const columns = [

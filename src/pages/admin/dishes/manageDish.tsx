@@ -320,13 +320,11 @@ const ManageDish: React.FC = () => {
           id: editingDish.id,
           values: data,
         });
-        message.success('Cập nhật món ăn thành công');
       } else {
         await createDish({
           resource: 'dishes',
           values: data,
         });
-        message.success('Thêm món ăn thành công');
       }
 
       // Close modal and reset state

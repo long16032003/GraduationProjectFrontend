@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select } from 'antd';
+import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select, Image } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ArrowLeftOutlined, PlusOutlined, MinusOutlined, ShoppingCartOutlined, CheckOutlined, UserOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMediaQuery } from 'react-responsive';
-import { type Dish, type OrderDish, type TableModel } from '@/types';
+import { type Bill, type Dish, type DishCategory, type Order, type OrderDish, type TableModel } from '@/types';
+import { useCreate, useList } from '@refinedev/core';
+import { areas } from '@/utils/constant';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -60,8 +64,8 @@ interface OrderItem extends OrderDish {
 }
 
 interface CustomerInfo {
-  customer_name: string;
-  customer_phone?: string;
+  customer_name?: string;
+  customer_phone: string;
   number_of_guests: number;
 }
 
@@ -78,19 +82,32 @@ const NewBill: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('menu');
   const [isCartDrawerVisible, setIsCartDrawerVisible] = useState(false);
 
+  const { mutate: createBill, isLoading: isCreatingBill } = useCreate<Bill>();
+  const { mutate: createOrder, isLoading: isCreatingOrder } = useCreate<Order>();
+
+  const { data: listTables, isLoading: isLoadingListTables } = useList<TableModel>({
+    resource: 'tables',
+  });
+
   // Responsive breakpoints
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
-  // Mock data
-  const dishes = useMemo(() => generateFakeDishes(), []);
-  const categories = useMemo(() => generateFakeCategories(), []);
-  const table = useMemo(() => tableId ? generateFakeTable(parseInt(tableId)) : null, [tableId]);
+  // API call
+  const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
+    resource: 'dishes',
+  });
+  const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
+    resource: 'dish-categories',
+  });
+  const dishes = listDishes?.data;
+  const categories = listDishCategories?.data;
+  const table = listTables?.data?.find(table => table.id === parseInt(tableId || '0'));
   
   // Filter dishes
   const filteredDishes = useMemo(() => {
-    let result = [...dishes];
+    let result = [...dishes || []];
     
     if (selectedCategory !== 'all') {
       result = result.filter(dish => dish.category_id === selectedCategory);
@@ -111,7 +128,7 @@ const NewBill: React.FC = () => {
     navigate('/admin/order');
   };
 
-  const handleCustomerSubmit = (values: CustomerInfo) => {
+  const handleCustomerSubmit = async (values: CustomerInfo) => {
     setCustomerInfo(values);
     setStep('order');
   };
@@ -161,7 +178,7 @@ const NewBill: React.FC = () => {
     }
   };
 
-  const handleSubmitOrder = (values: { note?: string }) => {
+  const handleSubmitOrder = async (values: { note?: string }) => {
     if (!customerInfo) {
       message.error('Thông tin khách hàng không hợp lệ!');
       return;
@@ -174,18 +191,93 @@ const NewBill: React.FC = () => {
 
     const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
     
-    console.log('Tạo hóa đơn mới cho bàn', tableId, ':', {
-      table_id: tableId,
-      customer_info: customerInfo,
-      first_order: {
-        items: cart,
-        total_amount: totalAmount,
-        note: values.note
-      }
-    });
+    try {
+      // Bước 1: Tạo Bill trước
+      const billData = {
+        table_id: parseInt(tableId!),
+        customer_name: customerInfo.customer_name,
+        customer_phone: customerInfo.customer_phone || null,
+      };
 
-    message.success(`Đã tạo hóa đơn mới cho ${table?.name} và gửi đơn đầu tiên đến bếp!`);
-    navigate('/admin/order');
+      console.log('Tạo Bill với data:', billData);
+
+      const billResponse = await new Promise<{ data: Bill }>((resolve, reject) => {
+        createBill(
+          {
+            resource: 'bills',
+            values: billData,
+          },
+          {
+            onSuccess: (data) => {
+              console.log('Bill tạo thành công:', data);
+              resolve(data);
+            //   navigate(`/admin/order`);
+            },
+            onError: (error) => {
+              console.error('Lỗi tạo Bill:', error);
+              reject(error);
+            },
+          }
+        );
+      });
+
+      const newBill = billResponse;
+      console.log('newBill', newBill);
+      
+      // Bước 2: Tạo Order đầu tiên
+      const orderData = {
+        table_id: parseInt(tableId!),
+        bill_id: newBill?.id,
+        note: values.note || null,
+        order_dishes: cart.map(item => ({
+          dish_id: item.dish_id,
+          quantity: item.quantity,
+          price_at_order_time: item.price_at_order_time
+        }))
+      };
+
+      console.log('Tạo Order với data:', orderData);
+
+      await new Promise<{ data: Order }>((resolve, reject) => {
+        createOrder(
+          {
+            resource: 'orders',
+            values: orderData,
+          },
+          {
+            onSuccess: (data) => {
+              console.log('Order tạo thành công:', data);
+              resolve(data);
+            },
+            onError: (error) => {
+              console.error('Lỗi tạo Order:', error);
+              reject(error);
+            },
+          }
+        );
+      });
+
+      // Thành công
+      message.success(`Đã tạo hóa đơn mới cho ${table?.name} và gửi đơn đầu tiên đến bếp!`);
+      navigate('/admin/order');
+
+    } catch (error: unknown) {
+      console.error('Lỗi tạo hóa đơn và order:', error);
+      
+      // Hiển thị lỗi chi tiết nếu có
+      let errorMessage = 'Có lỗi xảy ra khi tạo hóa đơn. Vui lòng thử lại!';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const response = (error as { response?: { data?: { message?: string } } }).response;
+        if (response?.data?.message) {
+          errorMessage = response.data.message;
+        }
+      }
+      
+      message.error(errorMessage);
+    }
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
@@ -219,11 +311,11 @@ const NewBill: React.FC = () => {
             >
               Tất cả
             </Button>
-            {categories.map(category => (
+            {categories?.map(category => (
               <Button
                 key={category.id}
                 type={selectedCategory === category.id ? 'primary' : 'default'}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(category.id as unknown as number)}
                 size={isMobile ? 'small' : 'middle'}
                 style={{ 
                   borderRadius: '20px',
@@ -252,21 +344,22 @@ const NewBill: React.FC = () => {
               <Card
                 hoverable
                 cover={
-                  <div style={{ 
-                    height: isMobile ? 100 : 200, 
-                    background: `linear-gradient(45deg, #f0f0f0, #e0e0e0)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '24px' : '32px'
-                  }}>
-                    🍽️
-                  </div>
+                    <div className='relative h-60 overflow-hidden'>
+                        {dish.image?.path ? <Image
+                        src={`${API_URL}/storage/${dish.image?.path}`}
+                        alt={dish.name}
+                        className='w-full h-full object-cover'
+                        preview={false} /> : <Image
+                            src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200" 
+                            alt={dish.name}
+                            className="w-full h-full object-cover"
+                            preview={false}
+                        />}
+                    </div>
                 }
                 onClick={() => handleAddToCart(dish)}
                 style={{ height: '100%' }}
                 size={isMobile ? "small" : "default"}
-                bodyStyle={isMobile ? { padding: '8px' } : {}}
               >
                 <Card.Meta
                   title={<div style={isMobile ? { fontSize: '14px', marginBottom: '4px' } : {}}>{dish.name}</div>}
@@ -396,8 +489,9 @@ const NewBill: React.FC = () => {
               block={isMobile}
               size="large"
               disabled={cart.length === 0}
+              loading={isCreatingBill || isCreatingOrder}
             >
-              Tạo hóa đơn & Gửi đơn đến bếp
+              {isCreatingBill || isCreatingOrder ? 'Đang tạo...' : 'Tạo hóa đơn & Gửi đơn đến bếp'}
             </Button>
           </Form.Item>
         </Form>
@@ -537,7 +631,7 @@ const NewBill: React.FC = () => {
               <Text strong>Sức chứa:</Text> {table.capacity} người
             </Col>
             <Col span={8}>
-              <Text strong>Khu vực:</Text> {table.area}
+              <Text strong>Khu vực:</Text> {areas[table.area as keyof typeof areas]}
               <br />
               <Text strong>Thời gian:</Text> {dayjs().format('HH:mm DD/MM/YYYY')}
             </Col>

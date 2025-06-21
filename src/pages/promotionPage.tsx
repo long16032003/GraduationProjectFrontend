@@ -1,456 +1,593 @@
 import React, { useState } from 'react';
-import { Card, Row, Col, Typography, Button, Tag, Divider, Modal, Form, Input, DatePicker, message, Image, Upload, Tabs } from 'antd';
-import { GiftOutlined, ClockCircleOutlined, EditOutlined, DeleteOutlined, PlusOutlined, UploadOutlined, TagOutlined } from '@ant-design/icons';
-import type { UploadProps, UploadFile } from 'antd/es/upload/interface';
+import { 
+  Card, 
+  Row, 
+  Col, 
+  Typography, 
+  Button, 
+  Tag, 
+  Modal, 
+  message, 
+  Image, 
+  Tabs,
+  Empty,
+  Spin,
+  Space,
+  Tooltip,
+  Badge
+} from 'antd';
+import { 
+  GiftOutlined, 
+  ClockCircleOutlined, 
+  StarOutlined,
+  TagOutlined,
+  UserOutlined,
+  ShoppingCartOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
+import type { Promotion, Customer, PromotionCode } from '@/types';
+import { useList, useCreate, useGetIdentity, useOne, useUpdate } from '@refinedev/core';
 
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
-const { TabPane } = Tabs;
-
-interface Promotion {
-  id: number;
-  title: string;
-  description: string;
-  discountPercent?: number;
-  discountAmount?: number;
-  code: string;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  poster: string;
-}
 
 const PromotionPage: React.FC = () => {
-  // Dữ liệu giả cho các ưu đãi
-  const [promotions, setPromotions] = useState<Promotion[]>([
-    {
-      id: 1,
-      title: 'Giảm 15% cho đơn hàng đầu tiên',
-      description: 'Áp dụng cho khách hàng mới. Giảm tối đa 50.000đ cho đơn hàng đầu tiên.',
-      discountPercent: 15,
-      code: 'WELCOME15',
-      startDate: '2023-06-01',
-      endDate: '2023-12-31',
-      isActive: true,
-      poster: 'https://img.freepik.com/free-vector/gradient-sale-background_23-2149024132.jpg'
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const [isExchangeModalVisible, setIsExchangeModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState('1');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Get current customer info
+  const { data: identity, refetch: refetchIdentity } = useGetIdentity<Customer>();
+  const currentCustomer = identity;
+
+  // const currentCustomer = auth$.user.get()
+
+  // Fetch promotions
+  const { data: promotionsData, isLoading, refetch: refetchPromotions } = useList<Promotion>({
+    resource: 'promotions',
+    meta: {
+      populate: ['image', 'promotion_codes', 'creator']
     },
-    {
-      id: 2,
-      title: 'Giảm 30.000đ cho đơn từ 200.000đ',
-      description: 'Áp dụng cho tất cả các món ăn. Giảm trực tiếp 30.000đ khi đặt đơn từ 200.000đ.',
-      discountAmount: 30000,
-      code: 'SAVE30K',
-      startDate: '2023-07-01',
-      endDate: '2023-08-31',
-      isActive: true,
-      poster: 'https://img.freepik.com/free-vector/modern-sale-banner-with-text-space_1017-14926.jpg'
+    sorters: [
+      {
+        field: 'created_at',
+        order: 'desc'
+      }
+    ]
+  });
+
+  // const { data: customerData, isLoading: isLoadingCustomer } = useOne<Customer>({
+  //   resource: 'customers',
+  //   id: currentCustomer?.id
+  // });
+
+  // Fetch customer's promotion codes
+  const { data: myCodesData, isLoading: isLoadingMyCodes, refetch: refetchMyCodes } = useList<PromotionCode>({
+    resource: 'promotion_codes',
+    filters: [
+      {
+        field: 'customer_id',
+        operator: 'eq',
+        value: currentCustomer?.id
+      }
+    ],
+    meta: {
+      populate: ['promotion']
     },
-    {
-      id: 3,
-      title: 'Combo tiết kiệm - Giảm 20%',
-      description: 'Áp dụng khi đặt combo 2 người. Giảm 20% tổng hóa đơn.',
-      discountPercent: 20,
-      code: 'COMBO20',
-      startDate: '2023-06-15',
-      endDate: '2023-07-15',
-      isActive: false,
-      poster: 'https://img.freepik.com/free-vector/flat-design-sales-banner-template_23-2149955168.jpg'
-    },
-    {
-      id: 4,
-      title: 'Sinh nhật vui vẻ - Tặng món tráng miệng',
-      description: 'Khách hàng được tặng 1 món tráng miệng bất kỳ trong ngày sinh nhật khi đặt đơn từ 300.000đ.',
-      code: 'BIRTHDAY',
-      startDate: '2023-01-01',
-      endDate: '2023-12-31',
-      isActive: true,
-      poster: 'https://img.freepik.com/free-vector/gradient-birthday-sale-background_52683-66464.jpg'
+    queryOptions: {
+      enabled: !!currentCustomer?.point
     }
-  ]);
+  });
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [currentPromotion, setCurrentPromotion] = useState<Promotion | null>(null);
-  const [form] = Form.useForm();
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [posterUrl, setPosterUrl] = useState('');
+  const { mutate: updateCustomer, isLoading: isLoadingCustomer } = useUpdate();
 
-  // Chỉ hiển thị các ưu đãi đang hoạt động
-  const activePromotions = promotions.filter(promo => promo.isActive);
+  const { mutate: exchangePromotion, isLoading: isExchanging } = useCreate();
 
-  const handleAdd = () => {
-    setCurrentPromotion(null);
-    form.resetFields();
-    setFileList([]);
-    setPosterUrl('');
-    setIsModalVisible(true);
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const promotions = promotionsData?.data || [];
+  const myCodes = myCodesData?.data || [];
+  const customerWithPoints = currentCustomer;
+  console.log(currentCustomer)
+
+  // Filter promotions by status
+  const activePromotions = promotions.filter(promo => {
+    const now = dayjs();
+    const start = dayjs(promo.start_date);
+    const end = dayjs(promo.end_date);
+    
+    // Kiểm tra thời gian hiệu lực
+    const isTimeValid = now.isAfter(start) && now.isBefore(end);
+    
+    // Kiểm tra số lượng còn lại (chỉ nếu có giới hạn)
+    const totalCodes = promo.promotion_codes?.length || 0;
+    const hasLimit = promo.limit && promo.limit > 0;
+    const isQuantityAvailable = hasLimit ? totalCodes < promo.limit : true;
+    
+    return isTimeValid && isQuantityAvailable;
+  });
+
+  const upcomingPromotions = promotions.filter(promo => {
+    const now = dayjs();
+    const start = dayjs(promo.start_date);
+    const end = dayjs(promo.end_date);
+    
+    // Chỉ hiển thị promotion sắp diễn ra và chưa đạt giới hạn
+    const isUpcoming = now.isBefore(start);
+    const totalCodes = promo.promotion_codes?.length || 0;
+    const hasLimit = promo.limit && promo.limit > 0;
+    const isQuantityAvailable = hasLimit ? totalCodes < promo.limit : true;
+    const isNotExpired = now.isBefore(end);
+    
+    return isUpcoming && isQuantityAvailable && isNotExpired;
+  });
+
+     const getPromotionsByTab = (): Promotion[] => {
+     switch (activeTab) {
+       case '1': return activePromotions;
+       case '2': return upcomingPromotions;
+       case '3': return []; // Mã của tôi sẽ được render riêng
+       default: return activePromotions;
+     }
+   };
+
+     const handleExchange = (promotion: Promotion) => {
+     if (!customerWithPoints) {
+       message.warning('Vui lòng đăng nhập để đổi ưu đãi');
+       return;
+     }
+
+     if ((customerWithPoints.point || 0) < promotion.required_points) {
+       message.error(`Bạn cần ${promotion.required_points} điểm để đổi ưu đãi này. Điểm hiện tại: ${customerWithPoints.point || 0}`);
+       return;
+     }
+
+    setSelectedPromotion(promotion);
+    setIsExchangeModalVisible(true);
   };
 
-  const showModal = (promotion?: Promotion) => {
-    if (promotion) {
-      setCurrentPromotion(promotion);
-      form.setFieldsValue({
-        ...promotion,
-        dateRange: [dayjs(promotion.startDate), dayjs(promotion.endDate)]
-      });
-      setPosterUrl(promotion.poster);
-      setFileList([
-        {
-          uid: '-1',
-          name: 'poster.jpg',
-          status: 'done',
-          url: promotion.poster,
+    const confirmExchange = async () => {
+     if (!selectedPromotion || !customerWithPoints?.id) return;
+
+     // Kiểm tra lại số lượng trước khi đổi (chỉ nếu có giới hạn)
+     const totalCodes = selectedPromotion.promotion_codes?.length || 0;
+     const hasLimit = selectedPromotion.limit && selectedPromotion.limit > 0;
+     if (hasLimit && totalCodes >= selectedPromotion.limit) {
+       message.error('Ưu đãi này đã hết số lượng!');
+       setIsExchangeModalVisible(false);
+       return;
+     }
+
+     // Kiểm tra điểm khách hàng
+     if ((customerWithPoints.point || 0) < selectedPromotion.required_points) {
+       message.error(`Không đủ điểm để đổi ưu đãi này!`);
+       setIsExchangeModalVisible(false);
+       return;
+     }
+
+          try {
+       setIsRefreshing(true);
+       
+       // Tạo promotion code mới cho khách hàng
+       await exchangePromotion({
+         resource: 'promotion_codes',
+         values: {
+           promotion_id: selectedPromotion.id,
+           points_used: selectedPromotion.required_points,
+           code: `PROMO${selectedPromotion.id}${Date.now()}`, // Tạo mã ngẫu nhiên
+           // Backend sẽ tự động trừ điểm khách hàng theo required_points
+         }
+       });
+
+       // Refetch data để cập nhật số lượng promotion codes, mã của tôi và điểm khách hàng
+       await Promise.all([
+         refetchPromotions(),
+         refetchMyCodes(),
+         refetchIdentity()
+       ]);
+
+       message.success('Đổi ưu đãi thành công! Mã ưu đãi đã được thêm vào tài khoản của bạn.');
+       setIsExchangeModalVisible(false);
+       setSelectedPromotion(null);
+    } catch (error) {
+      console.error('Exchange error:', error);
+      message.error('Có lỗi xảy ra khi đổi ưu đãi. Vui lòng thử lại.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+     const renderPromotionCard = (promotion: Promotion) => {
+     const isActive = dayjs().isAfter(dayjs(promotion.start_date)) && dayjs().isBefore(dayjs(promotion.end_date));
+     const canExchange = customerWithPoints && (customerWithPoints.point || 0) >= promotion.required_points;
+     
+     // Tính toán số lượng còn lại
+     const totalCodes = promotion.promotion_codes?.length || 0;
+     const limitCodes = promotion.limit || 0;
+     const hasLimit = limitCodes > 0;
+     const remainingCodes = hasLimit ? Math.max(0, limitCodes - totalCodes) : Infinity;
+     const isAvailable = hasLimit ? remainingCodes > 0 : true;
+
+    return (
+      <Card 
+        key={promotion.id}
+        hoverable 
+        className="overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border-0"
+        cover={
+          <div className="h-48 overflow-hidden relative bg-gradient-to-br from-purple-400 to-pink-400">
+            {promotion.image ? (
+              <img 
+                alt={promotion.name}
+                src={`${API_URL}/storage/${promotion.image.path}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <GiftOutlined className="text-6xl text-white opacity-50" />
+              </div>
+            )}
+            <div className="absolute top-3 right-3">
+              <Tag 
+                color={promotion.discount_type === 'percentage' ? 'red' : 'green'} 
+                className="text-sm font-bold px-3 py-1 rounded-full"
+              >
+                {promotion.discount_type === 'percentage' 
+                  ? `${promotion.discount_percentage}%` 
+                  : `${promotion.discount_amount?.toLocaleString()}đ`}
+              </Tag>
+            </div>
+            {!isActive && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <Tag color="orange" className="text-lg px-4 py-2">
+                  Sắp diễn ra
+                </Tag>
+              </div>
+            )}
+          </div>
         }
-      ]);
-    } else {
-      setCurrentPromotion(null);
-      form.resetFields();
-      setFileList([]);
-      setPosterUrl('');
-    }
-    setIsModalVisible(true);
+      >
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <Title level={4} className="mb-0 text-gray-800 line-clamp-2 flex-1">
+              {promotion.name}
+            </Title>
+            <Badge 
+              count={hasLimit ? remainingCodes : '∞'} 
+              showZero 
+              style={{ backgroundColor: isAvailable ? '#52c41a' : '#ff4d4f' }}
+              className="ml-2"
+            />
+          </div>
+          
+          <Paragraph className="text-gray-600 mb-4 line-clamp-2">
+            {promotion.description}
+          </Paragraph>
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Điểm yêu cầu:</span>
+              <div className="flex items-center gap-1">
+                <StarOutlined className="text-yellow-500" />
+                <span className="font-semibold text-orange-600">
+                  {promotion.required_points.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {promotion.min_order_amount && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Đơn tối thiểu:</span>
+                <span className="font-semibold">
+                  {Number(promotion.min_order_amount).toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+            )}
+
+            {promotion.max_discount_amount && promotion.discount_type === 'percentage' && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Giảm tối đa:</span>
+                <span className="font-semibold">
+                  {Number(promotion.max_discount_amount).toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Số lượng:</span>
+              <span className="font-semibold">
+                {hasLimit ? `${remainingCodes}/${limitCodes} còn lại` : 'Không giới hạn'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Hết hạn:</span>
+              <div className="flex items-center gap-1">
+                <ClockCircleOutlined className="text-blue-500" />
+                <span className="font-semibold">
+                  {dayjs(promotion.end_date).format('DD/MM/YYYY')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            {isActive ? (
+              <Button
+                type="primary"
+                size="large"
+                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 border-0 rounded-lg font-semibold"
+                icon={<GiftOutlined />}
+                onClick={() => handleExchange(promotion)}
+                disabled={!canExchange || !isAvailable}
+                loading={isExchanging && selectedPromotion?.id === promotion.id}
+              >
+                                 {!customerWithPoints ? 'Đăng nhập để đổi' : 
+                  !canExchange ? 'Không đủ điểm' : 
+                  !isAvailable ? 'Hết mã' : 'Đổi ngay'}
+              </Button>
+            ) : (
+              <Button
+                size="large"
+                className="flex-1 rounded-lg"
+                disabled
+              >
+                Sắp diễn ra
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    form.resetFields();
-  };
-
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc muốn xóa ưu đãi này?',
-      okText: 'Xác nhận',
-      cancelText: 'Hủy',
-      okButtonProps: { danger: true },
-      onOk: () => {
-        setPromotions(prev => prev.filter(promo => promo.id !== id));
-        message.success('Xóa ưu đãi thành công');
-      }
-    });
-  };
-
-  const handleSubmit = (values: any) => {
-    const [startDate, endDate] = values.dateRange.map((date: any) => date.format('YYYY-MM-DD'));
+  const renderMyCodeCard = (code: PromotionCode) => {
+    const isUsed = !!code.used_at;
+    const promotion = code.promotion;
     
-    if (!posterUrl) {
-      message.error('Vui lòng tải lên ảnh poster cho ưu đãi');
-      return;
-    }
-    
-    const newPromotion: Promotion = {
-      id: currentPromotion?.id || Math.max(...promotions.map(p => p.id), 0) + 1,
-      title: values.title,
-      description: values.description,
-      code: values.code,
-      startDate,
-      endDate,
-      isActive: values.isActive,
-      poster: posterUrl
-    };
+    if (!promotion) return null;
 
-    if (values.discountType === 'percent') {
-      newPromotion.discountPercent = values.discountValue;
-    } else {
-      newPromotion.discountAmount = values.discountValue;
-    }
+    return (
+      <Card 
+        className={`rounded-lg shadow-md border-0 h-full ${isUsed ? 'opacity-60' : ''}`}
+        size="small"
+      >
+        <div className="space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-md flex items-center justify-center flex-shrink-0">
+                {isUsed ? (
+                  <CheckCircleOutlined className="text-sm text-white" />
+                ) : (
+                  <TagOutlined className="text-sm text-white" />
+                )}
+              </div>
+              <Title level={5} className="mb-0 text-gray-800 line-clamp-1">
+                {promotion.name}
+              </Title>
+            </div>
+            <Tag 
+              color={isUsed ? 'default' : 'success'}
+              className="font-semibold text-xs"
+            >
+              {isUsed ? 'Đã dùng' : 'Có thể dùng'}
+            </Tag>
+          </div>
+          
+          {/* Code */}
+          <div className="bg-gray-50 rounded-md p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 text-sm">Mã:</span>
+              <Text 
+                copyable={!isUsed} 
+                className="font-mono text-sm font-bold text-blue-600"
+              >
+                {code.code}
+              </Text>
+            </div>
+          </div>
 
-    if (currentPromotion) {
-      // Update existing promotion
-      setPromotions(prev => 
-        prev.map(promo => promo.id === currentPromotion.id ? newPromotion : promo)
-      );
-      message.success('Cập nhật ưu đãi thành công!');
-    } else {
-      // Add new promotion
-      setPromotions(prev => [...prev, newPromotion]);
-      message.success('Thêm ưu đãi mới thành công!');
-    }
-
-    setIsModalVisible(false);
-    form.resetFields();
+          {/* Info */}
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>
+              {promotion.discount_type === 'percentage' 
+                ? `Giảm ${promotion.discount_percentage}%` 
+                : `Giảm ${promotion.discount_amount?.toLocaleString()}đ`}
+            </span>
+            <span>
+              {isUsed 
+                ? dayjs(code.used_at).format('DD/MM/YY')
+                : `HSD: ${dayjs(promotion.end_date).format('DD/MM/YY')}`
+              }
+            </span>
+          </div>
+        </div>
+      </Card>
+    );
   };
 
-  const handlePosterChange: UploadProps['onChange'] = ({ fileList: newFileList, file }) => {
-    setFileList(newFileList);
-    
-    // Giả lập việc tải ảnh lên và nhận URL
-    if (file.status === 'done' || file.status === 'uploading') {
-      // Trong môi trường thực tế, URL sẽ được trả về từ server
-      // Ở đây, chúng ta giả định một URL demo nếu không có URL thực
-      const demoUrls = [
-        'https://img.freepik.com/free-vector/gradient-sale-background_23-2149024132.jpg',
-        'https://img.freepik.com/free-vector/modern-sale-banner-with-text-space_1017-14926.jpg',
-        'https://img.freepik.com/free-vector/flat-design-sales-banner-template_23-2149955168.jpg',
-        'https://img.freepik.com/free-vector/gradient-birthday-sale-background_52683-66464.jpg'
-      ];
-      
-      if (file.status === 'done') {
-        const randomUrl = demoUrls[Math.floor(Math.random() * demoUrls.length)];
-        setPosterUrl(randomUrl);
-        message.success('Tải ảnh thành công!');
-      }
-    }
-  };
-
-  // Tùy chỉnh cách tải lên
-  const customUploadRequest = ({ onSuccess }: any) => {
-    // Giả lập việc tải lên thành công sau 1 giây
-    setTimeout(() => {
-      onSuccess("ok");
-    }, 1000);
-  };
+  const tabItems = [
+    {
+      key: '1',
+      label: (
+        <span className="flex items-center gap-2">
+          <GiftOutlined />
+          Ưu đãi đang có ({activePromotions.length})
+        </span>
+      ),
+    },
+    {
+      key: '2',
+      label: (
+        <span className="flex items-center gap-2">
+          <ClockCircleOutlined />
+          Sắp diễn ra ({upcomingPromotions.length})
+        </span>
+      ),
+    },
+    {
+      key: '3',
+      label: (
+        <span className="flex items-center gap-2">
+          <TagOutlined />
+          Mã của tôi ({myCodes.length})
+        </span>
+      ),
+    },
+  ];
 
   return (
     <MainLayout>
-      <div className="p-6  from-blue-50 to-white min-h-screen">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <Title level={2} className="mb-0 flex items-center">
-                <GiftOutlined className="mr-3 text-red-500" /> 
-                <span>Quản lý ưu đãi</span>
-              </Title>
-              <Text className="text-gray-500">Quản lý các mã giảm giá và chương trình khuyến mãi</Text>
+      <div className="min-h-screen">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-4">
+              <GiftOutlined className="text-3xl text-white" />
             </div>
-            <Button
-              type="primary"
-              size="large"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-              className="shadow-md"
-            >
-              Thêm ưu đãi mới
-            </Button>
+            <Title level={1} className="mb-2 text-orange-500">
+              Ưu đãi đặc biệt
+            </Title>
+            <Text className="text-lg text-gray-600">
+              Sử dụng điểm tích lũy để đổi lấy các ưu đãi hấp dẫn
+            </Text>
+            
+                         {customerWithPoints && (
+               <div className="mt-4 inline-flex items-center gap-2 bg-white rounded-full px-6 py-3 shadow-lg">
+                 <UserOutlined className="text-blue-500" />
+                 <span className="text-gray-600">Điểm của bạn:</span>
+                 <span className="font-bold text-xl text-orange-600">
+                   {customerWithPoints.point?.toLocaleString() || '0'}
+                 </span>
+                 <StarOutlined className="text-yellow-500" />
+               </div>
+             )}
           </div>
 
-          <Tabs defaultActiveKey="1" className="promotion-tabs">
-            <TabPane tab="Ưu đãi đang áp dụng" key="1">
-              <Row gutter={[24, 24]} className="mt-4">
-                {activePromotions.map(promotion => (
-                  <Col xs={24} md={12} lg={8} key={promotion.id}>
-                    <Card 
-                      hoverable 
-                      className="overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300"
-                      cover={
-                        <div className="h-48 overflow-hidden relative">
-                          <img 
-                            alt={promotion.title}
-                            src={promotion.poster}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg">
-                            {promotion.discountPercent ? `${promotion.discountPercent}%` : 
-                             promotion.discountAmount ? `${new Intl.NumberFormat('vi-VN').format(promotion.discountAmount)}đ` : 
-                             'Đặc biệt'}
-                          </div>
-                        </div>
-                      }
-                      actions={[
-                        <Button type="text" icon={<EditOutlined className="text-blue-500" />} onClick={() => showModal(promotion)}>Sửa</Button>,
-                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(promotion.id)}>Xóa</Button>
-                      ]}
+          {/* Tabs */}
+          <Tabs 
+            activeKey={activeTab} 
+            onChange={setActiveTab}
+            items={tabItems}
+            className="mb-6"
+            size="large"
+          />
+
+          {/* Content */}
+                     <Spin spinning={isLoading || isRefreshing}>
+            {activeTab === '3' && currentCustomer?.point ? (
+              // My Codes Tab
+              <div>
+                {myCodes.length > 0 ? (
+                  <Row gutter={[16, 16]}>
+                    {myCodes.map(code => (
+                      <Col xs={24} sm={12} key={code.id}>
+                        {renderMyCodeCard(code)}
+                      </Col>
+                    ))}
+                  </Row>
+                ) : (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="Bạn chưa có mã ưu đãi nào"
+                  >
+                    <Button 
+                      type="primary" 
+                      onClick={() => setActiveTab('1')}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 border-0"
                     >
-                      <div className="p-2">
-                        <Title level={4} className="mb-2 text-blue-600 line-clamp-1">{promotion.title}</Title>
-                        
-                        <div className="flex items-center mb-3">
-                          <TagOutlined className="mr-2 text-orange-500" />
-                          <Tag color="orange" className="mr-0 px-3 py-1 text-base">
-                            {promotion.code}
-                          </Tag>
-                        </div>
-                        
-                        <Paragraph className="text-gray-600 mb-3" ellipsis={{ rows: 2 }}>
-                          {promotion.description}
-                        </Paragraph>
-                        
-                        <Divider className="my-2" />
-                        
-                        <div className="flex items-center text-gray-500">
-                          <ClockCircleOutlined className="mr-2 text-blue-400" />
-                          <Text>
-                            Đến {dayjs(promotion.endDate).format('DD/MM/YYYY')}
-                          </Text>
-                        </div>
-                      </div>
-                    </Card>
+                      Khám phá ưu đãi
+                    </Button>
+                  </Empty>
+                )}
+              </div>
+            ) : (
+              // Promotions Grid
+              <Row gutter={[24, 24]}>
+                {getPromotionsByTab().map(promotion => (
+                  <Col xs={24} sm={12} lg={8} xl={6} key={promotion.id}>
+                    {renderPromotionCard(promotion)}
                   </Col>
                 ))}
-
-                {activePromotions.length === 0 && (
-                  <Col span={24} className="text-center py-12">
-                    <div className="flex flex-col items-center">
-                      <GiftOutlined style={{ fontSize: '3rem' }} className="text-gray-300 mb-4" />
-                      <Text className="text-gray-500 text-lg">Chưa có ưu đãi nào đang áp dụng</Text>
-                      <Button 
-                        type="primary" 
-                        className="mt-4" 
-                        icon={<PlusOutlined />} 
-                        onClick={handleAdd}
-                      >
-                        Thêm ưu đãi mới
-                      </Button>
-                    </div>
+                
+                {getPromotionsByTab().length === 0 && (
+                  <Col span={24}>
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={
+                        activeTab === '1' 
+                          ? "Hiện tại chưa có ưu đãi nào đang diễn ra"
+                          : "Chưa có ưu đãi sắp diễn ra"
+                      }
+                    />
                   </Col>
                 )}
               </Row>
-            </TabPane>
-          </Tabs>
+            )}
+          </Spin>
         </div>
 
+        {/* Exchange Confirmation Modal */}
         <Modal
           title={
-            <div className="flex items-center">
-              <GiftOutlined className="mr-2 text-red-500 text-xl" />
-              <span>{currentPromotion ? "Chỉnh sửa ưu đãi" : "Thêm ưu đãi mới"}</span>
+            <div className="flex items-center gap-2">
+              <ExclamationCircleOutlined className="text-orange-500 text-xl" />
+              <span>Xác nhận đổi ưu đãi</span>
             </div>
           }
-          open={isModalVisible}
-          onCancel={handleCancel}
-          footer={null}
-          className="promotion-modal"
-          destroyOnClose
-          width={700}
+          open={isExchangeModalVisible}
+          onOk={confirmExchange}
+          onCancel={() => {
+            setIsExchangeModalVisible(false);
+            setSelectedPromotion(null);
+          }}
+          confirmLoading={isExchanging || isRefreshing}
+          okText="Xác nhận đổi"
+          cancelText="Hủy"
+          okButtonProps={{
+            className: "bg-gradient-to-r from-purple-500 to-pink-500 border-0"
+          }}
         >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            initialValues={{
-              discountType: 'percent',
-              isActive: true
-            }}
-            className="mt-4"
-          >
-            <Row gutter={16}>
-              <Col span={16}>
-                <Form.Item
-                  name="title"
-                  label="Tiêu đề"
-                  rules={[{ required: true, message: 'Vui lòng nhập tiêu đề!' }]}
-                >
-                  <Input placeholder="Nhập tiêu đề ưu đãi" />
-                </Form.Item>
-
-                <Form.Item
-                  name="description"
-                  label="Mô tả"
-                  rules={[{ required: true, message: 'Vui lòng nhập mô tả!' }]}
-                >
-                  <TextArea rows={4} placeholder="Mô tả chi tiết về ưu đãi" />
-                </Form.Item>
-
-                <Form.Item
-                  name="code"
-                  label="Mã giảm giá"
-                  rules={[{ required: true, message: 'Vui lòng nhập mã giảm giá!' }]}
-                >
-                  <Input placeholder="Nhập mã giảm giá (VD: SUMMER2023)" />
-                </Form.Item>
-
-                <Form.Item label="Giá trị ưu đãi" required>
-                  <Input.Group compact>
-                    <Form.Item
-                      name="discountType"
-                      noStyle
-                    >
-                      <Input.Group compact>
-                        <Form.Item name="discountType" noStyle>
-                          <select className="border border-gray-300 rounded-l px-3 py-1 outline-none h-[32px]">
-                            <option value="percent">Phần trăm (%)</option>
-                            <option value="amount">Số tiền (VNĐ)</option>
-                          </select>
-                        </Form.Item>
-                        <Form.Item 
-                          name="discountValue" 
-                          noStyle
-                          rules={[{ required: true, message: 'Vui lòng nhập giá trị!' }]}
-                        >
-                          <Input
-                            className="w-32" 
-                            placeholder="Giá trị"
-                            type="number"
-                          />
-                        </Form.Item>
-                      </Input.Group>
-                    </Form.Item>
-                  </Input.Group>
-                </Form.Item>
-
-                <Form.Item
-                  name="dateRange"
-                  label="Thời gian áp dụng"
-                  rules={[{ required: true, message: 'Vui lòng chọn thời gian áp dụng!' }]}
-                >
-                  <DatePicker.RangePicker 
-                    className="w-full"
-                    format="DD/MM/YYYY"
-                    placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="isActive"
-                  valuePropName="checked"
-                >
-                  <div className="flex items-center">
-                    <Input
-                      type="checkbox"
-                      className="mr-2 h-4 w-4"
-                      id="isActiveCheckbox"
-                    />
-                    <label htmlFor="isActiveCheckbox" className="cursor-pointer">Đang áp dụng</label>
-                  </div>
-                </Form.Item>
-              </Col>
-
-              <Col span={8}>
-                <Form.Item
-                  label="Ảnh poster"
-                  required
-                  help="Kích thước đề xuất: 800x400px"
-                >
-                  <div className="text-center">
-                    <Upload
-                      listType="picture-card"
-                      fileList={fileList}
-                      onChange={handlePosterChange}
-                      customRequest={customUploadRequest}
-                      maxCount={1}
-                    >
-                      {fileList.length >= 1 ? null : (
-                        <div>
-                          <UploadOutlined />
-                          <div style={{ marginTop: 8 }}>Tải lên</div>
-                        </div>
-                      )}
-                    </Upload>
-                    
-                    {posterUrl && (
-                      <div className="mt-2">
-                        <Image
-                          src={posterUrl}
-                          alt="Poster preview"
-                          style={{ maxWidth: '100%' }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item className="mb-0 flex justify-end mt-4">
-              <Button onClick={handleCancel} className="mr-2">
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit" className="bg-blue-500">
-                {currentPromotion ? 'Cập nhật' : 'Thêm mới'}
-              </Button>
-            </Form.Item>
-          </Form>
+          {selectedPromotion && (
+            <div className="py-4">
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <Title level={5} className="mb-2">{selectedPromotion.name}</Title>
+                <Text className="text-gray-600">{selectedPromotion.description}</Text>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span>Điểm cần sử dụng:</span>
+                  <span className="font-bold text-orange-600">
+                    {selectedPromotion.required_points.toLocaleString()} điểm
+                  </span>
+                </div>
+                
+                  <div className="flex justify-between items-center">
+                   <span>Điểm hiện tại:</span>
+                   <span className="font-bold">
+                     {customerWithPoints?.point?.toLocaleString() || '0'} điểm
+                   </span>
+                 </div>
+                 
+                 <div className="flex justify-between items-center border-t pt-3">
+                   <span>Điểm còn lại:</span>
+                   <span className="font-bold text-green-600">
+                     {Math.max(0, (customerWithPoints?.point || 0) - selectedPromotion.required_points).toLocaleString()} điểm
+                   </span>
+                 </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <Text className="text-blue-700 text-sm">
+                  💡 Mã ưu đãi sẽ được thêm vào tài khoản của bạn và có thể sử dụng ngay lập tức.
+                </Text>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </MainLayout>

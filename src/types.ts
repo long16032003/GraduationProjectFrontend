@@ -29,12 +29,14 @@ export interface User {
 }
 
 export interface Customer {
-  id?: number;
-  uuid?: string;
-  email?: string;
-  phone: string;
+  id: number;
+  uuid: string;
   name: string;
+  phone: string;
+  email: string;
   point: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Define the action interface
@@ -88,7 +90,7 @@ export interface Staff {
 }
 
 export interface DishCategory {
-  id: string;
+  id: number;
   name: string;
   description?: string;
   created_at?: string;
@@ -110,7 +112,7 @@ export interface Dish {
   creator?: User;
   image?: Media;
   // rating?: number;
-  // is_featured?: boolean;
+  is_featured?: boolean;
 }
 
 export interface Media {
@@ -130,6 +132,7 @@ export interface Post {
   summary: string;
   content: string;
   created_at: string;
+  status?: 'published' | 'locked' | 'draft';
   creator: User;
 }
 
@@ -176,8 +179,9 @@ export interface Bill {
   customer_id: number;
   customer_name?: string;
   customer_phone?: string;
+  customer?: Customer;
+  customer_by_phone?: Customer;
   table_id: number;
-  table_number?: number;
   total_amount: number;
   discount_amount?: number;
   created_at: string;
@@ -199,11 +203,13 @@ export interface Order {
   creator_id: number;
   order_time: string;
   note?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  status: 'init' | 'processing' | 'finished process' | 'not completed' | 'done';
   // Relations
   bill?: Bill;
   creator?: User;
   order_dishes?: OrderDish[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface OrderDish {
@@ -217,3 +223,55 @@ export interface OrderDish {
 }
 
 export const tax_percentage = 0.08
+
+// Promotion interfaces based on database schema
+export interface Promotion {
+  id: number;
+  creator_id: number;
+  name: string;
+  description: string | null;
+  discount_percentage: number | null;
+  discount_amount: number | null;
+  min_order_amount: number | null;
+  max_discount_amount: number | null;
+  discount_type: 'percentage' | 'fixed';
+  required_points: number;
+  limit: number;
+  image_id?: number | null;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  creator?: User;
+  promotion_codes?: PromotionCode[];
+  image?: Media;
+}
+
+export interface PromotionCode {
+  id: number;
+  code: string;
+  promotion_id: number;
+  customer_id: number | null;
+  used_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  promotion?: Promotion;
+  customer?: Customer;
+}
+
+export interface PromotionFormData {
+  name: string;
+  description?: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_percentage?: number;
+  discount_amount?: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  required_points: number;
+  limit: number;
+  start_date: string;
+  end_date: string;
+  image_id?: string;
+}

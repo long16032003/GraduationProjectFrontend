@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Image, Tag, Tabs, Divider, Rate, Button } from 'antd';
+import { Card, Row, Col, Typography, Image, Tag, Tabs, Divider, Rate, Button, Input } from 'antd';
 import { ShoppingCartOutlined, FireOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import type { Dish, DishCategory } from '@/types';
 import { useList, useUpdate } from '@refinedev/core';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -33,13 +32,14 @@ const ItemDish = ({dish}: {dish: Dish}) => {
                 className="w-full h-full object-cover"
                 preview={false}
               />}
-            {dish?.is_featured && (
-              <Tag
-                color='red'
-                className='absolute top-2 right-2'
-              >
-                Nổi bật
-              </Tag>
+            {dish?.is_featured === 1 && (
+              <div className='absolute top-2 right-2'>
+                <Tag
+                  className='bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 shadow-lg font-semibold px-3 py-1 rounded-full'
+                >
+                  ✨ Nổi bật
+                </Tag>
+              </div>
             )}
           </div>
         }
@@ -100,6 +100,7 @@ const MenuPage: React.FC = () => {
 //   const [categories, setCategories] = useState<DishCategory[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [searchText, setSearchText] = useState<string>('');
 
   const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
     resource: 'dish-categories',
@@ -107,6 +108,13 @@ const MenuPage: React.FC = () => {
 
   const { data: listDishes, isLoading: isLoadingList } = useList<Dish>({
     resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
   });
 
   const { mutate: updateDish, isLoading: isUpdating } = useUpdate<Dish>();
@@ -119,17 +127,30 @@ const MenuPage: React.FC = () => {
     }
   };
 
-  const filteredDishes = activeCategory === 'all'
-    ? listDishes?.data
-    : listDishes?.data?.filter(dish => 
-        // activeCategory === 'featured' 
-        //   ? (dish.is_featured || false)
-        //   : 
-          dish.category_id === parseInt(activeCategory));
+  // Filter dishes by category and search text
+  const filteredDishes = listDishes?.data?.filter(dish => {
+    // Filter by search text
+    const matchesSearch = searchText === '' || 
+      dish.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.dish_categories?.name.toLowerCase().includes(searchText.toLowerCase());
+    
+    // Filter by category
+    const matchesCategory = activeCategory === 'all' || dish.category_id === parseInt(activeCategory);
+    
+    return matchesSearch && matchesCategory;
+  });
 
-  // Nhóm món ăn theo danh mục
+  // Nhóm món ăn theo danh mục với tìm kiếm
   const dishesByCategory = listDishCategories?.data?.reduce((acc, category) => {
-    acc[category.id] = listDishes?.data?.filter(dish => dish.category_id === category.id) || [];
+    acc[category.id] = listDishes?.data?.filter(dish => {
+      const matchesSearch = searchText === '' || 
+        dish.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        dish.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        dish.dish_categories?.name.toLowerCase().includes(searchText.toLowerCase());
+      
+      return dish.category_id === category.id && matchesSearch;
+    }) || [];
     return acc;
   }, {} as Record<number, Dish[]>) || {};
 
@@ -177,9 +198,11 @@ const MenuPage: React.FC = () => {
                           preview={false}
                         />}
                         {dish.is_featured && (
-                          <Tag color="red" className="absolute top-2 right-2">
-                            Nổi bật
-                          </Tag>
+                          <div className="absolute top-2 right-2">
+                            <Tag className="bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 shadow-lg font-semibold px-3 py-1 rounded-full">
+                              ✨ Nổi bật
+                            </Tag>
+                          </div>
                         )}
                       </div>
                     }
@@ -211,41 +234,63 @@ const MenuPage: React.FC = () => {
             </Row>
           </div>
 
-          {/* Menu tabs */}
-          <Title level={2} className="mb-6">Thực đơn đầy đủ</Title>
+          {/* Search and Menu tabs */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <Title level={2} className="!mb-0">Thực đơn đầy đủ</Title>
+              <Input.Search
+                placeholder="Tìm kiếm món ăn, danh mục..."
+                allowClear
+                size="large"
+                style={{ width: 300 }}
+                value={searchText}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+                onSearch={(value: string) => setSearchText(value)}
+                className="shadow-sm"
+              />
+            </div>
+          </div>
           <Tabs 
             defaultActiveKey="all" 
             onChange={setActiveCategory}
             tabPosition="top"
             className="menu-tabs"
-          >
-            <TabPane tab="Tất cả" key="all">
-              <Row gutter={[16, 16]}>
-                {filteredDishes?.map(dish => (
-                  <ItemDish dish={dish} key={dish.id} />
-                ))}
-              </Row>
-            </TabPane>
-
-            {/* <TabPane tab="Món nổi bật" key="featured">
-              <Row gutter={[16, 16]}>
-                {filteredDishes?.map(dish => (
-                  <ItemDish dish={dish} key={dish.id} />
-                ))}
-              </Row>
-            </TabPane> */}
-
-            {/* Category tabs */}
-            {listDishCategories?.data.map(category => (
-              <TabPane tab={`${category.name}`} key={category.id.toString()}>
-                <Row gutter={[16, 16]}>
-                  {dishesByCategory?.[category.id]?.map(dish => (
-                    <ItemDish dish={dish} key={dish.id} />
-                  ))}
-                </Row>
-              </TabPane>
-            ))}
-          </Tabs>
+            items={[
+              {
+                label: 'Tất cả',
+                key: 'all',
+                children: (
+                  <Row gutter={[16, 16]}>
+                    {filteredDishes?.map(dish => (
+                      <ItemDish dish={dish} key={dish.id} />
+                    ))}
+                  </Row>
+                ),
+              },
+              // {
+              //   label: 'Món nổi bật',
+              //   key: 'featured',
+              //   children: (
+              //     <Row gutter={[16, 16]}>
+              //       {filteredDishes?.map(dish => (
+              //         <ItemDish dish={dish} key={dish.id} />
+              //       ))}
+              //     </Row>
+              //   ),
+              // },
+              ...listDishCategories?.data.map(category => ({
+                label: category.name,
+                key: category.id.toString(),
+                children: (
+                  <Row gutter={[16, 16]}>
+                    {dishesByCategory?.[category.id]?.map(dish => (
+                      <ItemDish dish={dish} key={dish.id} />
+                    ))}
+                  </Row>
+                ),
+              })) || [],
+            ]}
+          />
           
           {/* Nội dung khác có thể thêm vào đây */}
           <Divider />

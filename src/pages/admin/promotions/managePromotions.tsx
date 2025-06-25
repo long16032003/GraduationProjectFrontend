@@ -41,7 +41,7 @@ import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
-import type { Promotion, PromotionCode, PromotionFormData, Media } from '@/types';
+import type { Promotion, PromotionCode, PromotionFormData, Media, Customer } from '@/types';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -177,7 +177,7 @@ const ManagePromotions: React.FC = () => {
       title: 'Điều kiện',
       key: 'conditions',
       width: '15%',
-      render: (_: any, record: Promotion) => (
+      render: (_: unknown, record: Promotion) => (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1 text-gray-600">
             <UserOutlined className="text-sm" />
@@ -194,7 +194,7 @@ const ManagePromotions: React.FC = () => {
       title: 'Thời gian',
       key: 'dates',
       width: '18%',
-      render: (_: any, record: Promotion) => {
+      render: (_: unknown, record: Promotion) => {
         const now = dayjs();
         const start = dayjs(record.start_date);
         const end = dayjs(record.end_date);
@@ -223,7 +223,7 @@ const ManagePromotions: React.FC = () => {
       title: 'Mã đã tạo',
       key: 'codes_count',
       width: '12%',
-      render: (_: any, record: Promotion) => {
+      render: (_: unknown, record: Promotion) => {
         const totalCodes = record.promotion_codes?.length || 0;
         const usedCodes = record.promotion_codes?.filter(code => code.used_at).length || 0;
         
@@ -251,7 +251,7 @@ const ManagePromotions: React.FC = () => {
       title: 'Thao tác',
       key: 'action',
       width: '15%',
-      render: (_: any, record: Promotion) => (
+      render: (_: unknown, record: Promotion) => (
         <Space>
           <Tooltip title="Sửa ưu đãi">
             <Button
@@ -458,7 +458,7 @@ const ManagePromotions: React.FC = () => {
       title: 'Khách hàng',
       dataIndex: 'customer',
       key: 'customer',
-      render: (customer: any) => customer ? customer.name : 'Chưa sử dụng',
+      render: (customer: Customer) => customer ? customer.name : 'Chưa sử dụng',
     },
     {
       title: 'Ngày sử dụng',
@@ -469,7 +469,7 @@ const ManagePromotions: React.FC = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      render: (_: any, record: PromotionCode) => (
+      render: (_: unknown, record: PromotionCode) => (
         <Tag color={record.used_at ? 'red' : 'green'}>
           {record.used_at ? 'Đã sử dụng' : 'Chưa sử dụng'}
         </Tag>

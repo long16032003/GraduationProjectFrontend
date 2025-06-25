@@ -167,10 +167,17 @@ const SiteSettings: React.FC = () => {
   return (
     <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item>Thiết lập trang web</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: 'Thiết lập trang web',
+            },
+          ]}
+        />
         
         <div className="flex justify-between items-center mb-4">
           <Title level={4} className="m-0">

@@ -20,12 +20,15 @@ export interface RegisterFormValues {
   redirectPath?: string;
 }
 
-export interface User {
+export interface Staff {
   id?: number;
   uuid?: string;
   email: string;
   name: string;
+  phone: string;
   role: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Customer {
@@ -105,14 +108,14 @@ export interface Dish {
   image_id: number | null;
   price: number;
   category_id: number;
-  is_active: boolean;
+  is_active: number;
   created_at: string;
   updated_at: string;
   dish_categories?: DishCategory;
-  creator?: User;
+  creator?: Staff;
   image?: Media;
   // rating?: number;
-  is_featured?: boolean;
+  is_featured?: number;
 }
 
 export interface Media {
@@ -133,7 +136,7 @@ export interface Post {
   content: string;
   created_at: string;
   status?: 'published' | 'locked' | 'draft';
-  creator: User;
+  creator: Staff;
 }
 
 export interface TableModel {
@@ -145,7 +148,7 @@ export interface TableModel {
   area: '1st floor' | '2nd floor' | '3rd floor' | 'rooftop';
   created_at: string;
   updated_at: string;
-  creator?: User;
+  creator?: Staff;
 }
 
 export interface Reservation {
@@ -162,7 +165,7 @@ export interface Reservation {
   creator_type: 'staff' | 'customer';
   created_at: string;
   updated_at: string;
-  customer?: User;
+  customer?: Staff;
   table?: TableModel;
 }
 
@@ -206,7 +209,7 @@ export interface Order {
   status: 'init' | 'processing' | 'finished process' | 'not completed' | 'done';
   // Relations
   bill?: Bill;
-  creator?: User;
+  creator?: Staff;
   order_dishes?: OrderDish[];
   created_at?: string;
   updated_at?: string;
@@ -243,7 +246,7 @@ export interface Promotion {
   created_at: string;
   updated_at: string;
   // Relations
-  creator?: User;
+  creator?: Staff;
   promotion_codes?: PromotionCode[];
   image?: Media;
 }

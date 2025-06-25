@@ -262,24 +262,11 @@ const AppBreadcrumb = () => {
   const { breadcrumbs } = useBreadcrumb();
   const location = useLocation();
 
-  // Nếu ở trang chủ thì không hiển thị breadcrumb
-  if (location.pathname === '/') {
-    return (
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Home</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
   return (
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/admin">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/admin">Trang chủ</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         {breadcrumbs.map((breadcrumb, index) => (

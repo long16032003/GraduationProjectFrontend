@@ -4,7 +4,7 @@ import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined
 import { useList, useOne } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { tax_percentage, type Bill, type BillItem, type TableModel } from '@/types';
+import { tax_percentage, type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
 import { useNavigate } from 'react-router';
 
 const { RangePicker } = DatePicker;
@@ -39,6 +39,10 @@ const ManageBills: React.FC = () => {
     pagination: {
       pageSize: 10,
     },
+  });
+
+  const { data: tablesData, isLoading: isLoadingTables } = useList<TableModel>({
+    resource: 'tables',
   });
   
   // Filter bills based on filter criteria
@@ -288,6 +292,13 @@ const ManageBills: React.FC = () => {
     },
   ];
 
+  const getTotalAmountDish = (bill: Bill) => {
+    return bill.orders?.reduce((total: number, order: Order) => {
+      return total + (order.order_dishes?.reduce((orderSum: number, dish: OrderDish) => 
+        orderSum + ((dish.quantity || 0) * (dish.price_at_order_time || 0)), 0) || 0);
+    }, 0);
+  }
+
   return (
     <Card title='Quản lý hóa đơn' className='m-4'>
       {/* Summary Statistics */}
@@ -517,23 +528,25 @@ const ManageBills: React.FC = () => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-medium">Tổng tiền tất cả món ăn:</span>
                       <span className="font-bold">
-                        {selectedBill.orders.reduce((total: number, order: any) => {
-                          return total + (order.order_dishes?.reduce((orderSum: number, dish: any) => 
-                            orderSum + ((dish.quantity || 0) * (dish.price_at_order_time || 0)), 0) || 0);
-                        }, 0).toLocaleString('vi-VN')} VNĐ
+                        {Number(getTotalAmountDish(selectedBill)).toLocaleString('vi-VN')} VNĐ
                       </span>
                     </div>
-                    
+
                     {(selectedBill.discount_amount || 0) > 0 && (
                       <div className="flex justify-between items-center mb-2">
                         <span>Giảm giá:</span>
-                        <span className="text-red-600">-{(selectedBill.discount_amount || 0).toLocaleString('vi-VN')} VNĐ</span>
+                        <span className="text-red-600">-{(Number(selectedBill.discount_amount) || 0).toLocaleString('vi-VN')} VNĐ</span>
                       </div>
                     )}
+
+                    <div className="flex justify-between items-center mb-2">
+                      <span>Thuế VAT ({(tax_percentage * 100).toFixed(0)}%):</span>
+                      <span>{Number(Math.round((Number(getTotalAmountDish(selectedBill)) - (Number(selectedBill.discount_amount) || 0)) * tax_percentage)).toLocaleString('vi-VN')} VNĐ</span>
+                    </div>
                     
                     <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
                       <span>Tổng cộng:</span>
-                      <span className="text-red-600">{selectedBill.total_amount?.toLocaleString('vi-VN')} VNĐ</span>
+                      <span className="text-red-600">{Number(selectedBill.total_amount).toLocaleString('vi-VN')} VNĐ</span>
                     </div>
                   </div>
                 )}
@@ -637,9 +650,54 @@ const ManageBills: React.FC = () => {
           <Form.Item
             name="table_number"
             label="Bàn số"
-            rules={[{ required: true, message: 'Vui lòng chọn số bàn' }]}
+            rules={[{ required: true, message: 'Vui lòng chọn bàn' }]}
           >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="Chọn số bàn" />
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Chọn bàn trống"
+              loading={isLoadingTables}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+              notFoundContent={isLoadingTables ? "Đang tải..." : "Không có bàn trống"}
+            >
+              {tablesData?.data
+                ?.filter(table => {
+                  // Loại bỏ bàn đang bảo trì
+                  if (table.status === 'maintenance') return false;
+                  
+                  // Tìm hóa đơn chưa thanh toán của bàn này
+                  const bill = bills?.find(bill => 
+                    bill.table_id === table.id && bill.status === 'unpaid'
+                  );
+                  
+                  // Bàn trống: available hoặc (occupied nhưng không có hóa đơn unpaid)
+                  if (table.status === 'available') {
+                    return true;
+                  } else if (table.status === 'occupied' && !bill) {
+                    return true;
+                  }
+                  
+                  return false;
+                })
+                ?.map(table => {
+                  // Kiểm tra xem bàn có thực sự trống không
+                  const bill = bills?.find(bill => 
+                    bill.table_id === table.id && bill.status === 'unpaid'
+                  );
+                  const isEmpty = table.status === 'available' || (table.status === 'occupied' && !bill);
+                  
+                  return (
+                    <Option key={table.id} value={table.id}>
+                      {table.name} - {table.area} ({table.capacity} chỗ)
+                      {isEmpty ? ' - Trống' : ''}
+                    </Option>
+                  );
+                })
+              }
+            </Select>
           </Form.Item>
 
           <Form.Item

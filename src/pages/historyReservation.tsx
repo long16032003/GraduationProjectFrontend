@@ -35,7 +35,6 @@ import { PageLoader } from '@/components/ui/loader';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
-const { TabPane } = Tabs;
 const { Step } = Steps;
 
 // Interface definitions
@@ -343,21 +342,47 @@ const HistoryReservation: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-      <Breadcrumb className="mb-4">
-        <Breadcrumb.Item href="/">Trang chủ</Breadcrumb.Item>
-        <Breadcrumb.Item href="/profile">Tài khoản</Breadcrumb.Item>
-        <Breadcrumb.Item>Lịch sử đặt bàn</Breadcrumb.Item>
-      </Breadcrumb>
+              <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/">Trang chủ</a>,
+            },
+            {
+              title: <a href="/profile">Tài khoản</a>,
+            },
+            {
+              title: 'Lịch sử đặt bàn',
+            },
+          ]}
+        />
       
       <Title level={2} className="mb-6">Lịch sử đặt bàn</Title>
       
       <Card className="mb-6 shadow-sm">
-        <Tabs activeKey={activeTab} onChange={setActiveTab} className="mb-4">
-          <TabPane tab="Tất cả" key="all" />
-          <TabPane tab="Sắp tới" key="upcoming" />
-          <TabPane tab="Đã hoàn thành" key="completed" />
-          <TabPane tab="Đã hủy" key="cancelled" />
-        </Tabs>
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={setActiveTab} 
+          className="mb-4"
+          items={[
+            {
+              label: 'Tất cả',
+              key: 'all',
+            },
+            {
+              label: 'Sắp tới',
+              key: 'upcoming',
+            },
+            {
+              label: 'Đã hoàn thành',
+              key: 'completed',
+            },
+            {
+              label: 'Đã hủy',
+              key: 'cancelled',
+            },
+          ]}
+        />
         
         <Row gutter={16} className="mb-4">
           <Col xs={24} md={12}>

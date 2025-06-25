@@ -26,6 +26,13 @@ const ManageOrder: React.FC = () => {
 
   const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
     resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
   });
 
   const { data: listTables, isLoading: isLoadingListTables } = useList<TableModel>({
@@ -233,7 +240,7 @@ const ManageOrder: React.FC = () => {
             return (
               <Col xs={12} sm={8} md={6} lg={4} xl={4} key={table.id}>
                 <Badge.Ribbon 
-                  text={getTableStatusText(table.status, bill)} 
+                  text={getTableStatusText(table.status, bill!)} 
                   color={getTableStatusColor(table.status)}
                 >
                   <Card

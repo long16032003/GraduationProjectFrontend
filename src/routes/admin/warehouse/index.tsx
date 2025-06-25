@@ -51,9 +51,21 @@ export const routes: RouteObject[] = [
       },
       {
         path: 'export',
-        lazy: {
-          Component: async () => (await import("@/pages/admin/warehouse/manageExportWarehouse")).default,
-        },
+        Component: Outlet,
+        children: [
+          {
+            index: true,
+            lazy: {
+              Component: async () => (await import("@/pages/admin/warehouse/manageExportWarehouse")).default,
+            },
+          },
+          {
+            path: 'new',
+            lazy: {
+              Component: async () => (await import("@/pages/admin/warehouse/newExportWarehouse")).default,
+            },
+          },
+        ],
       },
     ],
   },

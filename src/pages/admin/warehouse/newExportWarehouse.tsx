@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Form,
   Input,
   Button,
   Card,
   Select,
-  DatePicker,
   InputNumber,
   Table,
   Space,
@@ -15,8 +14,8 @@ import {
   Col,
   Divider,
   message,
-  Tooltip,
-  Popconfirm
+  Popconfirm,
+  Spin
 } from 'antd';
 import {
   PlusOutlined,
@@ -26,21 +25,24 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
-import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import { PageLoader } from '@/components/ui/loader';
+import { useCreate, useList } from '@refinedev/core';
+import auth$ from '@/stores/auth';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
 
-// Interface definitions
+// Interface definitions matching backend structure
 interface Ingredient {
   id: number;
   name: string;
   unit: string;
-  current_quantity: number;
-  unit_price: number;
+  quantity: number;
+  min_quantity: number;
+  creator_id: number;
+  image_id?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ExportItem {
@@ -50,53 +52,49 @@ interface ExportItem {
   unit: string;
   quantity: number;
   available_quantity: number;
-  unit_price: number;
-  total_price: number;
-  reason: string;
 }
 
-// Mock data for demonstration
-const mockIngredients: Ingredient[] = [
-  { id: 1, name: 'Gạo', unit: 'kg', current_quantity: 100, unit_price: 20000 },
-  { id: 2, name: 'Thịt bò', unit: 'kg', current_quantity: 30, unit_price: 180000 },
-  { id: 3, name: 'Thịt heo', unit: 'kg', current_quantity: 50, unit_price: 120000 },
-  { id: 4, name: 'Ớt', unit: 'kg', current_quantity: 10, unit_price: 40000 },
-  { id: 5, name: 'Tỏi', unit: 'kg', current_quantity: 15, unit_price: 60000 },
-  { id: 6, name: 'Hành', unit: 'kg', current_quantity: 20, unit_price: 35000 },
-  { id: 7, name: 'Cà chua', unit: 'kg', current_quantity: 25, unit_price: 40000 },
-  { id: 8, name: 'Dầu ăn', unit: 'lít', current_quantity: 40, unit_price: 50000 },
-  { id: 9, name: 'Nước mắm', unit: 'lít', current_quantity: 20, unit_price: 70000 },
-  { id: 10, name: 'Đường', unit: 'kg', current_quantity: 50, unit_price: 25000 }
-];
+interface ExportFormValues {
+  note?: string;
+  details: Array<{
+    ingredient_id: number;
+    quantity: number;
+  }>;
+}
 
 const NewExportWarehouse: React.FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [isLoading, setIsLoading] = useState(false);
   const [exportItems, setExportItems] = useState<ExportItem[]>([]);
   const [selectedIngredientId, setSelectedIngredientId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState<number | null>(null);
-  const [reason, setReason] = useState<string>('');
   
-  // Calculate total amount
-  const totalAmount = exportItems.reduce((sum, item) => sum + item.total_price, 0);
+  // Get current user
+  const currentUser = auth$.user.get();
+
+  // API hooks
+  const { data: ingredients, isLoading: isLoadingIngredients } = useList<Ingredient>({
+    resource: 'ingredients',
+  });
+
+  const { mutate: createExportIngredient, isLoading: isCreating } = useCreate();
   
   // Handle add item
   const handleAddItem = () => {
-    if (!selectedIngredientId || !quantity || quantity <= 0 || !reason.trim()) {
-      message.error('Vui lòng chọn nguyên liệu, nhập số lượng và lý do xuất kho');
+    if (!selectedIngredientId || !quantity || quantity <= 0) {
+      message.error('Vui lòng chọn nguyên liệu và nhập số lượng hợp lệ');
       return;
     }
     
-    const selectedIngredient = mockIngredients.find(i => i.id === selectedIngredientId);
+    const selectedIngredient = ingredients?.data.find(i => i.id === selectedIngredientId);
     
     if (!selectedIngredient) {
       message.error('Nguyên liệu không hợp lệ');
       return;
     }
     
-    if (quantity > selectedIngredient.current_quantity) {
-      message.error(`Số lượng xuất không được vượt quá số lượng hiện có (${selectedIngredient.current_quantity} ${selectedIngredient.unit})`);
+    if (quantity > selectedIngredient.quantity) {
+      message.error(`Số lượng xuất không được vượt quá số lượng hiện có (${selectedIngredient.quantity} ${selectedIngredient.unit})`);
       return;
     }
     
@@ -107,16 +105,14 @@ const NewExportWarehouse: React.FC = () => {
       const updatedItems = [...exportItems];
       const newQuantity = updatedItems[existingItemIndex].quantity + quantity;
       
-      if (newQuantity > selectedIngredient.current_quantity) {
-        message.error(`Tổng số lượng xuất không được vượt quá số lượng hiện có (${selectedIngredient.current_quantity} ${selectedIngredient.unit})`);
+      if (newQuantity > selectedIngredient.quantity) {
+        message.error(`Tổng số lượng xuất không được vượt quá số lượng hiện có (${selectedIngredient.quantity} ${selectedIngredient.unit})`);
         return;
       }
       
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: newQuantity,
-        total_price: newQuantity * selectedIngredient.unit_price,
-        reason: reason
       };
       
       setExportItems(updatedItems);
@@ -128,10 +124,7 @@ const NewExportWarehouse: React.FC = () => {
         ingredient_name: selectedIngredient.name,
         unit: selectedIngredient.unit,
         quantity: quantity,
-        available_quantity: selectedIngredient.current_quantity,
-        unit_price: selectedIngredient.unit_price,
-        total_price: quantity * selectedIngredient.unit_price,
-        reason: reason
+        available_quantity: selectedIngredient.quantity,
       };
       
       setExportItems([...exportItems, newItem]);
@@ -140,11 +133,9 @@ const NewExportWarehouse: React.FC = () => {
     // Reset selection
     setSelectedIngredientId(null);
     setQuantity(null);
-    setReason('');
     form.setFieldsValue({
       ingredient_id: undefined,
       quantity: null,
-      reason: ''
     });
   };
   
@@ -154,27 +145,36 @@ const NewExportWarehouse: React.FC = () => {
   };
   
   // Handle submit
-  const handleSubmit = (values: any) => {
+  const handleSubmit = (values: ExportFormValues) => {
     if (exportItems.length === 0) {
       message.error('Vui lòng thêm ít nhất một nguyên liệu vào phiếu xuất');
       return;
     }
     
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Form values:', {
-        ...values,
-        items: exportItems,
-        total_amount: totalAmount,
-        created_at: dayjs().format()
-      });
-      
-      message.success('Tạo phiếu xuất kho thành công!');
-      navigate('/admin/warehouse/export');
-      setIsLoading(false);
-    }, 1000);
+    const exportData = {
+      note: values.note || null,
+      details: exportItems.map(item => ({
+        ingredient_id: item.ingredient_id,
+        quantity: item.quantity
+      }))
+    };
+
+    createExportIngredient(
+      {
+        resource: 'export-ingredients',
+        values: exportData,
+      },
+      {
+        onSuccess: () => {
+          message.success('Tạo phiếu xuất kho thành công!');
+          navigate('/admin/warehouse');
+        },
+        onError: (error) => {
+          console.error('Export error:', error);
+          message.error('Có lỗi xảy ra khi tạo phiếu xuất kho');
+        },
+      }
+    );
   };
   
   // Export items table columns
@@ -197,39 +197,25 @@ const NewExportWarehouse: React.FC = () => {
       width: 80,
     },
     {
-      title: 'Số lượng',
+      title: 'Số lượng xuất',
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 100,
+      width: 120,
       render: (quantity: number, record) => (
-        <span>
+        <span className="font-medium">
           {quantity} / {record.available_quantity}
         </span>
       ),
     },
     {
-      title: 'Đơn giá',
-      dataIndex: 'unit_price',
-      key: 'unit_price',
-      width: 120,
-      render: (price: number) => `${price.toLocaleString('vi-VN')} VNĐ`,
-    },
-    {
-      title: 'Thành tiền',
-      dataIndex: 'total_price',
-      key: 'total_price',
-      width: 150,
-      render: (price: number) => (
-        <span className="font-semibold text-orange-600">
-          {price.toLocaleString('vi-VN')} VNĐ
+      title: 'Còn lại',
+      key: 'remaining',
+      width: 100,
+      render: (_, record) => (
+        <span className={`font-medium ${(record.available_quantity - record.quantity) <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {record.available_quantity - record.quantity} {record.unit}
         </span>
       ),
-    },
-    {
-      title: 'Lý do xuất',
-      dataIndex: 'reason',
-      key: 'reason',
-      ellipsis: true,
     },
     {
       title: 'Thao tác',
@@ -249,25 +235,37 @@ const NewExportWarehouse: React.FC = () => {
     },
   ];
 
-  if (isLoading) {
-    return <PageLoader text="Đang xử lý..." />;
+  if (isLoadingIngredients) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Spin size="large" />
+      </div>
+    );
   }
   
   return (
     <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item href="/admin/warehouse/ingredient">Quản lý kho</Breadcrumb.Item>
-          <Breadcrumb.Item href="/admin/warehouse/export">Lịch sử xuất kho</Breadcrumb.Item>
-          <Breadcrumb.Item>Tạo phiếu xuất kho</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: <a href="/admin/warehouse/export">Lịch sử xuất kho</a>,
+            },
+            {
+              title: 'Tạo phiếu xuất kho',
+            },
+          ]}
+        />
         
         <div className="flex justify-between items-center mb-4">
           <Title level={4} className="m-0">Tạo phiếu xuất kho mới</Title>
           <Button 
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/admin/warehouse/export')}
+            onClick={() => navigate('/admin/warehouse')}
           >
             Quay lại
           </Button>
@@ -277,54 +275,9 @@ const NewExportWarehouse: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{
-            export_date: dayjs(),
-            export_type: 'production'
-          }}
         >
-          <Row gutter={16}>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="export_date"
-                label="Ngày xuất kho"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày xuất kho' }]}
-              >
-                <DatePicker 
-                  style={{ width: '100%' }} 
-                  format="DD/MM/YYYY"
-                  disabled
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="export_type"
-                label="Loại xuất kho"
-                rules={[{ required: true, message: 'Vui lòng chọn loại xuất kho' }]}
-              >
-                <Select>
-                  <Option value="production">Sản xuất</Option>
-                  <Option value="damage">Hàng hỏng</Option>
-                  <Option value="transfer">Chuyển kho</Option>
-                  <Option value="other">Khác</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="staff_name"
-                label="Người lập phiếu"
-                rules={[{ required: true, message: 'Vui lòng nhập tên người lập phiếu' }]}
-              >
-                <Input placeholder="Nhập tên người lập phiếu" />
-              </Form.Item>
-            </Col>
-          </Row>
-          
-          <Divider>Thông tin nguyên liệu</Divider>
-          
           <Row gutter={16} className="mb-4">
-            <Col xs={24} md={6}>
+            <Col xs={24} md={8}>
               <Form.Item
                 name="ingredient_id"
                 label="Chọn nguyên liệu"
@@ -335,11 +288,11 @@ const NewExportWarehouse: React.FC = () => {
                   optionFilterProp="children"
                   onChange={(value) => setSelectedIngredientId(value)}
                   filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
                   }
-                  options={mockIngredients.map(item => ({
+                  options={ingredients?.data.map(item => ({
                     value: item.id,
-                    label: `${item.name} (${item.current_quantity} ${item.unit})`,
+                    label: `${item.name} (Còn: ${item.quantity} ${item.unit})`,
                   }))}
                 />
               </Form.Item>
@@ -347,24 +300,13 @@ const NewExportWarehouse: React.FC = () => {
             <Col xs={24} md={6}>
               <Form.Item
                 name="quantity"
-                label="Số lượng"
+                label="Số lượng xuất"
               >
                 <InputNumber
                   style={{ width: '100%' }}
                   min={1}
                   placeholder="Nhập số lượng"
                   onChange={(value) => setQuantity(value)}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="reason"
-                label="Lý do xuất kho"
-              >
-                <Input 
-                  placeholder="Nhập lý do xuất kho"
-                  onChange={(e) => setReason(e.target.value)}
                 />
               </Form.Item>
             </Col>
@@ -375,6 +317,7 @@ const NewExportWarehouse: React.FC = () => {
                 onClick={handleAddItem}
                 style={{ marginBottom: 24 }}
                 block
+                disabled={!selectedIngredientId || !quantity}
               >
                 Thêm nguyên liệu
               </Button>
@@ -388,21 +331,21 @@ const NewExportWarehouse: React.FC = () => {
             bordered
             size="small"
             className="mb-4"
-            summary={() => (
-              <Table.Summary fixed>
-                <Table.Summary.Row>
-                  <Table.Summary.Cell index={0} colSpan={5}>
-                    <strong>Tổng cộng</strong>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={1}>
-                    <strong className="text-orange-600">
-                      {totalAmount.toLocaleString('vi-VN')} VNĐ
-                    </strong>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} colSpan={2}></Table.Summary.Cell>
-                </Table.Summary.Row>
-              </Table.Summary>
-            )}
+            locale={{ emptyText: 'Chưa có nguyên liệu nào được thêm' }}
+            summary={() => 
+              exportItems.length > 0 ? (
+                <Table.Summary fixed>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} colSpan={3}>
+                      <strong>Tổng số loại nguyên liệu: {exportItems.length}</strong>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1} colSpan={3}>
+                      <strong>Tổng số lượng: {exportItems.reduce((sum, item) => sum + item.quantity, 0)}</strong>
+                    </Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              ) : null
+            }
           />
           
           <Divider />
@@ -419,7 +362,7 @@ const NewExportWarehouse: React.FC = () => {
           
           <div className="flex justify-end">
             <Space>
-              <Button onClick={() => navigate('/admin/warehouse/export')}>
+              <Button onClick={() => navigate('/admin/warehouse')}>
                 Hủy
               </Button>
               <Button
@@ -427,6 +370,7 @@ const NewExportWarehouse: React.FC = () => {
                 icon={<SaveOutlined />}
                 htmlType="submit"
                 disabled={exportItems.length === 0}
+                loading={isCreating}
               >
                 Lưu phiếu xuất
               </Button>
@@ -440,11 +384,11 @@ const NewExportWarehouse: React.FC = () => {
           <InfoCircleOutlined className="text-blue-500 mr-2" />
           <Title level={5} className="m-0">Lưu ý khi tạo phiếu xuất kho</Title>
         </div>
-        <ul className="mt-4 pl-5">
-          <li className="mb-2">Số lượng xuất không được vượt quá số lượng hiện có trong kho.</li>
-          <li className="mb-2">Cần ghi rõ lý do xuất kho cho từng nguyên liệu.</li>
-          <li className="mb-2">Kiểm tra kỹ thông tin trước khi lưu phiếu xuất kho.</li>
-          <li>Phiếu xuất kho sau khi lưu không thể chỉnh sửa.</li>
+        <ul className="mt-4 pl-5 space-y-2">
+          <li>• Số lượng xuất không được vượt quá số lượng hiện có trong kho</li>
+          <li>• Kiểm tra kỹ thông tin trước khi lưu phiếu xuất kho</li>
+          <li>• Phiếu xuất kho sau khi lưu sẽ tự động trừ số lượng tồn kho</li>
+          <li>• Ghi chú giúp theo dõi mục đích sử dụng nguyên liệu</li>
         </ul>
       </Card>
     </div>

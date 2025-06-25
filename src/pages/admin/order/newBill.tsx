@@ -12,51 +12,8 @@ import { areas } from '@/utils/constant';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const { Title, Text } = Typography;
-const { Search } = Input;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
-const { Option } = Select;
-
-// Fake data for dishes
-const generateFakeDishes = (): Dish[] => {
-  return [
-    { id: 1, creator_id: 1, name: 'Phở bò tái', description: 'Phở bò tái truyền thống', image_id: null, price: 65000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 2, creator_id: 1, name: 'Bún chả', description: 'Bún chả Hà Nội', image_id: null, price: 55000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 3, creator_id: 1, name: 'Cơm tấm sườn', description: 'Cơm tấm sườn nướng', image_id: null, price: 45000, category_id: 2, is_active: true, created_at: '', updated_at: '' },
-    { id: 4, creator_id: 1, name: 'Bánh mì thịt nướng', description: 'Bánh mì thịt nướng đặc biệt', image_id: null, price: 25000, category_id: 3, is_active: true, created_at: '', updated_at: '' },
-    { id: 5, creator_id: 1, name: 'Gỏi cuốn tôm thịt', description: 'Gỏi cuốn tôm thịt tươi', image_id: null, price: 35000, category_id: 4, is_active: true, created_at: '', updated_at: '' },
-    { id: 6, creator_id: 1, name: 'Chả cá Lã Vọng', description: 'Chả cá Lã Vọng truyền thống', image_id: null, price: 85000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 7, creator_id: 1, name: 'Bún bò Huế', description: 'Bún bò Huế cay nồng', image_id: null, price: 60000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 8, creator_id: 1, name: 'Cao lầu', description: 'Cao lầu Hội An', image_id: null, price: 50000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 9, creator_id: 1, name: 'Nước cam tươi', description: 'Nước cam tươi vắt', image_id: null, price: 20000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-    { id: 10, creator_id: 1, name: 'Trà đá', description: 'Trà đá truyền thống', image_id: null, price: 5000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-  ];
-};
-
-// Fake categories
-const generateFakeCategories = () => {
-  return [
-    { id: 1, name: 'Món chính' },
-    { id: 2, name: 'Khai vị' },
-    { id: 3, name: 'Đồ uống' },
-    { id: 4, name: 'Tráng miệng' },
-    { id: 5, name: 'Nước uống' }
-  ];
-};
-
-// Fake table data
-const generateFakeTable = (tableId: number): TableModel => {
-  return {
-    id: tableId,
-    creator_id: 1,
-    name: `Bàn ${tableId}`,
-    capacity: Math.floor(Math.random() * 6) + 2,
-    status: 'available',
-    area: '1st floor',
-    created_at: dayjs().format(),
-    updated_at: dayjs().format(),
-  };
-};
 
 interface OrderItem extends OrderDish {
   temp_id: string;
@@ -97,6 +54,13 @@ const NewBill: React.FC = () => {
   // API call
   const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
     resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
   });
   const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
     resource: 'dish-categories',

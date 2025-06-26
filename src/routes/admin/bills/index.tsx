@@ -24,6 +24,12 @@ export const routes: RouteObject[] = [
           Component: async () => (await import("@/pages/admin/bill/checkout")).default,
         },
       },
+      {
+        path: 'vnpay-return',
+        lazy: {
+          Component: async () => (await import("@/pages/admin/bill/vnpay-return")).default,
+        },
+      },
     ],
   },
 ];

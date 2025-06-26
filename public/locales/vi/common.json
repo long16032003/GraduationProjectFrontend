@@ -117,7 +117,7 @@
     "title": "Bảng điều khiển"
   },
   "posts": {
-    "posts": "Bài viết",
+    "posts": "bài viết",
     "fields": {
       "id": "ID",
       "title": "Tiêu đề",
@@ -139,7 +139,7 @@
     }
   },
   "dishes": {
-    "dishes": "Món ăn",
+    "dishes": "món ăn",
     "titles": {
       "create": "Tạo món ăn mới",
       "edit": "Chỉnh sửa món ăn",
@@ -148,7 +148,7 @@
     }
   },
   "dish-categories": {
-    "dish-categories": "Danh mục món ăn",
+    "dish-categories": "danh mục món ăn",
     "titles": {
       "create": "Tạo danh mục mới",
       "edit": "Chỉnh sửa danh mục",
@@ -157,7 +157,7 @@
     }
   },
   "tables": {
-    "tables": "Bàn ăn",
+    "tables": "bàn ăn",
     "titles": {
       "create": "Tạo bàn mới",
       "edit": "Chỉnh sửa bàn",
@@ -166,7 +166,7 @@
     }
   },
   "bills": {
-    "bills": "Hóa đơn",
+    "bills": "hóa đơn",
     "titles": {
       "create": "Tạo hóa đơn mới",
       "edit": "Chỉnh sửa hóa đơn",
@@ -175,7 +175,7 @@
     }
   },
   "orders": {
-    "orders": "Đơn hàng",
+    "orders": "đơn gọi món",
     "titles": {
       "create": "Tạo đơn hàng mới",
       "edit": "Chỉnh sửa đơn hàng",
@@ -184,7 +184,7 @@
     }
   },
   "customers": {
-    "customers": "Khách hàng",
+    "customers": "khách hàng",
     "titles": {
       "create": "Tạo khách hàng mới",
       "edit": "Chỉnh sửa khách hàng",
@@ -193,7 +193,7 @@
     }
   },
   "staffs": {
-    "staffs": "Nhân viên",
+    "staffs": "nhân viên",
     "titles": {
       "create": "Tạo nhân viên mới",
       "edit": "Chỉnh sửa nhân viên",
@@ -202,7 +202,7 @@
     }
   },
   "reservations": {
-    "reservations": "Đặt bàn",
+    "reservations": "đặt bàn",
     "titles": {
       "create": "Tạo đặt bàn mới",
       "edit": "Chỉnh sửa đặt bàn",
@@ -211,7 +211,7 @@
     }
   },
   "promotions": {
-    "promotions": "Khuyến mãi",
+    "promotions": "khuyến mãi",
     "titles": {
       "create": "Tạo khuyến mãi mới",
       "edit": "Chỉnh sửa khuyến mãi",
@@ -220,7 +220,7 @@
     }
   },
   "promotion_codes": {
-    "promotion_codes": "Mã khuyến mãi",
+    "promotion_codes": "mã khuyến mãi",
     "titles": {
       "create": "Tạo mã khuyến mãi mới",
       "edit": "Chỉnh sửa mã khuyến mãi",
@@ -229,7 +229,7 @@
     }
   },
   "permissions": {
-    "permissions": "Quyền hạn",
+    "permissions": "quyền hạn",
     "titles": {
       "create": "Tạo quyền hạn mới",
       "edit": "Chỉnh sửa quyền hạn",
@@ -238,7 +238,7 @@
     }
   },
   "role": {
-    "role": "Vai trò",
+    "role": "vai trò",
     "titles": {
       "create": "Tạo vai trò mới",
       "edit": "Chỉnh sửa vai trò",
@@ -247,7 +247,7 @@
     }
   },
   "upload-image": {
-    "upload-image": "Tải ảnh lên",
+    "upload-image": "tải ảnh lên",
     "titles": {
       "create": "Tải ảnh lên",
       "edit": "Chỉnh sửa ảnh",
@@ -256,7 +256,7 @@
     }
   },
   "users": {
-    "users": "Người dùng",
+    "users": "người dùng",
     "titles": {
       "create": "Tạo người dùng mới",
       "edit": "Chỉnh sửa người dùng",
@@ -264,22 +264,31 @@
       "show": "Xem người dùng"
     }
   },
-  "products": {
-    "products": "Sản phẩm",
+  "ingredients": {
+    "ingredients": "nguyên liệu",
     "titles": {
-      "create": "Tạo sản phẩm mới",
-      "edit": "Chỉnh sửa sản phẩm",
-      "list": "Danh sách sản phẩm",
-      "show": "Xem sản phẩm"
+      "create": "Tạo nguyên liệu mới",
+      "edit": "Chỉnh sửa nguyên liệu",
+      "list": "Danh sách nguyên liệu",
+      "show": "Xem nguyên liệu"
     }
   },
-  "collections": {
-    "collections": "Bộ sưu tập",
+  "enter-ingredient": {
+    "enter-ingredient": "phiếu nhập kho",
     "titles": {
-      "create": "Tạo bộ sưu tập mới",
-      "edit": "Chỉnh sửa bộ sưu tập",
-      "list": "Danh sách bộ sưu tập",
-      "show": "Xem bộ sưu tập"
+      "create": "Tạo phiếu nhập kho mới",
+      "edit": "Chỉnh sửa phiếu nhập kho",
+      "list": "Danh sách phiếu nhập kho",
+      "show": "Xem phiếu nhập kho"
+    }
+  },
+  "export-ingredient": {
+    "export-ingredient": "phiếu xuất kho",
+    "titles": {
+      "create": "Tạo phiếu xuất kho mới",
+      "edit": "Chỉnh sửa phiếu xuất kho",
+      "list": "Danh sách phiếu xuất kho",
+      "show": "Xem phiếu xuất kho"
     }
   },
   "table": {

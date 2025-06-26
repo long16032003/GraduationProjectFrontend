@@ -166,6 +166,10 @@ const data = {
       isActive: false,
       items: [
         {
+          title: "Thống kê tổng quan",
+          url: "/admin/statistic",
+        },
+        {
           title: "Thống kê doanh thu",
           url: "/admin/statistic/statistic-bill",
         },

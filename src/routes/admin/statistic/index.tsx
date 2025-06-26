@@ -15,7 +15,7 @@ export const routes: RouteObject[] = [
       {
         index: true,
         lazy: {
-        //   Component: async () => (await import("@/pages/admin/statistic/statisticBill")).default,
+          Component: async () => (await import("@/pages/admin/statistic/statisticDetail")).default,
         },
       },
       {

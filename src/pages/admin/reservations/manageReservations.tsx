@@ -180,8 +180,17 @@ const ManageReservations: React.FC = () => {
       key: 'action',
       render: (_: unknown, record: Reservation) => (
         <Space size="middle">
+          {record.status === 'pending' && (
+            <Button 
+              type="primary"
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+              onClick={() => handleConfirm(record)}
+            >
+              Xác nhận
+            </Button>
+          )}
           <Button 
-            type="primary" 
+            type="default" 
             onClick={() => handleEdit(record)}
             disabled={record.status === 'cancelled'}
           >
@@ -220,23 +229,61 @@ const ManageReservations: React.FC = () => {
     setIsModalVisible(true);
   };
 
+  const handleConfirm = (record: Reservation) => {
+    Modal.confirm({
+      title: 'Xác nhận đặt bàn',
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc muốn xác nhận đặt bàn cho khách hàng ${record.name}?`,
+      okText: 'Xác nhận',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          updateReservation({
+            resource: 'reservations',
+            id: record.id,
+            values: {
+              status: 'confirmed'
+            }
+          }, {
+            onSuccess: () => {
+              message.success('Xác nhận đặt bàn thành công');
+            },
+            onError: () => {
+              message.error('Có lỗi xảy ra khi xác nhận đặt bàn');
+            }
+          });
+        } catch (error) {
+          message.error('Có lỗi xảy ra khi xác nhận đặt bàn');
+        }
+      },
+    });
+  };
+
   const showCancelConfirm = (record: Reservation) => {
     Modal.confirm({
       title: 'Xác nhận hủy đặt bàn',
       icon: <ExclamationCircleOutlined />,
-      content: `Bạn có chắc muốn hủy đặt bàn này?`,
+      content: `Bạn có chắc muốn hủy đặt bàn cho khách hàng ${record.name}?`,
       okText: 'Xác nhận',
       cancelText: 'Đóng',
       onOk: async () => {
         try {
-          setLoading(true);
-          // API call để hủy đặt bàn
-          // await cancelReservation(record.id);
-          message.success('Hủy đặt bàn thành công');
+          updateReservation({
+            resource: 'reservations',
+            id: record.id,
+            values: {
+              status: 'cancelled'
+            }
+          }, {
+            onSuccess: () => {
+              message.success('Hủy đặt bàn thành công');
+            },
+            onError: () => {
+              message.error('Có lỗi xảy ra khi hủy đặt bàn');
+            }
+          });
         } catch (error) {
           message.error('Có lỗi xảy ra khi hủy đặt bàn');
-        } finally {
-          setLoading(false);
         }
       },
     });

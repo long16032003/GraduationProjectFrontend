@@ -18,10 +18,9 @@ import {
   ShoppingOutlined,
   RiseOutlined,
   TrophyOutlined,
+  CalendarOutlined,
   FireOutlined,
-  TeamOutlined,
-  ClockCircleOutlined,
-  CalendarOutlined
+  TeamOutlined
 } from '@ant-design/icons';
 import { Column, Pie, Line } from '@ant-design/plots';
 import { useList } from '@refinedev/core';
@@ -64,9 +63,7 @@ const PERIODS: StatisticPeriod[] = [
   { label: '1 năm qua', value: '365days', days: 365 },
 ];
 
-
-
-export function DashboardPage() {
+const OverviewStatistics: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('today');
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [topDishes, setTopDishes] = useState<TopDishData[]>([]);
@@ -85,12 +82,12 @@ export function DashboardPage() {
       {
         field: 'created_at',
         operator: 'gte',
-        value: startDate.format('YYYY-MM-DD 00:00:00'),
+        value: startDate.format('YYYY-MM-DD'),
       },
       {
         field: 'created_at',
         operator: 'lte',
-        value: endDate.format('YYYY-MM-DD 23:59:59'),
+        value: endDate.format('YYYY-MM-DD'),
       },
       {
         field: 'status',
@@ -113,12 +110,12 @@ export function DashboardPage() {
       {
         field: 'created_at',
         operator: 'gte',
-        value: startDate.format('YYYY-MM-DD 00:00:00'),
+        value: startDate.format('YYYY-MM-DD'),
       },
       {
         field: 'created_at',
         operator: 'lte',
-        value: endDate.format('YYYY-MM-DD 23:59:59'),
+        value: endDate.format('YYYY-MM-DD'),
       },
     ],
     pagination: {
@@ -142,43 +139,12 @@ export function DashboardPage() {
     try {
       const bills = billsData?.data || [];
       const orders = ordersData?.data || [];
-
-      // Debug: Log date range and raw data
-      console.log('Date Range Debug:', {
-        selectedPeriod,
-        startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
-        endDate: endDate.format('YYYY-MM-DD HH:mm:ss'),
-        today: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        billsCount: bills.length,
-        ordersCount: orders.length,
-        billsSample: bills.slice(0, 3).map(b => ({
-          id: b.id,
-          created_at: b.created_at,
-          total_amount: b.total_amount,
-          status: b.status
-        }))
-      });
       
       // Process revenue data by date
       const revenueByDate: { [key: string]: { revenue: number; orders: number; customers: Set<number> } } = {};
       
       bills.forEach(bill => {
-        if (!bill.created_at || !bill.total_amount) return; // Skip invalid bills
-        
-        const billDate = dayjs(bill.created_at);
-        
-        // Double check if bill is within date range
-        if (billDate.isBefore(startDate) || billDate.isAfter(endDate)) {
-          console.log('Bill outside date range:', {
-            billId: bill.id,
-            billDate: billDate.format('YYYY-MM-DD HH:mm:ss'),
-            startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
-            endDate: endDate.format('YYYY-MM-DD HH:mm:ss')
-          });
-          return;
-        }
-        
-        const date = billDate.format('YYYY-MM-DD');
+        const date = dayjs(bill.created_at).format('YYYY-MM-DD');
         if (!revenueByDate[date]) {
           revenueByDate[date] = {
             revenue: 0,
@@ -187,7 +153,7 @@ export function DashboardPage() {
           };
         }
         
-        revenueByDate[date].revenue += Number(bill.total_amount) || 0;
+        revenueByDate[date].revenue += bill.total_amount;
         revenueByDate[date].orders += 1;
         if (bill.customer_id) {
           revenueByDate[date].customers.add(bill.customer_id);
@@ -207,17 +173,7 @@ export function DashboardPage() {
       const dishStats: { [key: string]: { quantity: number; revenue: number; name: string } } = {};
       
       orders.forEach(order => {
-        // Check if order is within date range
-        if (order.created_at) {
-          const orderDate = dayjs(order.created_at);
-          if (orderDate.isBefore(startDate) || orderDate.isAfter(endDate)) {
-            return; // Skip order outside date range
-          }
-        }
-        
         order.order_dishes?.forEach(orderDish => {
-          if (!orderDish.dish_id || !orderDish.quantity || !orderDish.price_at_order_time) return;
-          
           const dishId = orderDish.dish_id;
           const dishName = orderDish.dish?.name || 'Món không xác định';
           
@@ -229,11 +185,8 @@ export function DashboardPage() {
             };
           }
           
-          const quantity = Number(orderDish.quantity) || 0;
-          const price = Number(orderDish.price_at_order_time) || 0;
-          
-          dishStats[dishId].quantity += quantity;
-          dishStats[dishId].revenue += quantity * price;
+          dishStats[dishId].quantity += orderDish.quantity;
+          dishStats[dishId].revenue += orderDish.quantity * orderDish.price_at_order_time;
         });
       });
 
@@ -255,17 +208,7 @@ export function DashboardPage() {
       const categoryStats: { [key: string]: { revenue: number; quantity: number } } = {};
       
       orders.forEach(order => {
-        // Check if order is within date range for category stats
-        if (order.created_at) {
-          const orderDate = dayjs(order.created_at);
-          if (orderDate.isBefore(startDate) || orderDate.isAfter(endDate)) {
-            return; // Skip order outside date range
-          }
-        }
-        
         order.order_dishes?.forEach(orderDish => {
-          if (!orderDish.quantity || !orderDish.price_at_order_time) return;
-          
           const categoryName = orderDish.dish?.dish_categories?.name || 'Khác';
           
           if (!categoryStats[categoryName]) {
@@ -275,11 +218,8 @@ export function DashboardPage() {
             };
           }
           
-          const quantity = Number(orderDish.quantity) || 0;
-          const price = Number(orderDish.price_at_order_time) || 0;
-          
-          categoryStats[categoryName].quantity += quantity;
-          categoryStats[categoryName].revenue += quantity * price;
+          categoryStats[categoryName].quantity += orderDish.quantity;
+          categoryStats[categoryName].revenue += orderDish.quantity * orderDish.price_at_order_time;
         });
       });
 
@@ -290,16 +230,6 @@ export function DashboardPage() {
       }));
 
       setCategoryData(processedCategoryData);
-
-      // Debug final processed data
-      console.log('Final Processed Data:', {
-        processedRevenueData,
-        revenueByDateKeys: Object.keys(revenueByDate),
-        topDishesData: topDishesData.slice(0, 3),
-        categoryStats,
-        processedCategoryData,
-        totalCategories: processedCategoryData.length
-      });
       
     } catch (error) {
       console.error('Error processing statistics data:', error);
@@ -309,20 +239,10 @@ export function DashboardPage() {
   };
 
   // Calculate summary statistics
-  const totalRevenue = revenueData.reduce((sum, item) => sum + (item.revenue || 0), 0);
-  const totalOrders = revenueData.reduce((sum, item) => sum + (item.orders || 0), 0);
-  const totalCustomers = revenueData.reduce((sum, item) => sum + (item.customers || 0), 0);
-  const avgOrderValue = totalOrders > 0 && totalRevenue > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-
-  // Debug logging
-  console.log('Dashboard Stats:', {
-    totalRevenue,
-    totalOrders,
-    totalCustomers,
-    avgOrderValue,
-    revenueDataLength: revenueData.length,
-    period: currentPeriod.label
-  });
+  const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
+  const totalOrders = revenueData.reduce((sum, item) => sum + item.orders, 0);
+  const totalCustomers = revenueData.reduce((sum, item) => sum + item.customers, 0);
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   // Chart configurations
   const revenueChartConfig = {
@@ -342,59 +262,20 @@ export function DashboardPage() {
     },
   };
 
-  // Calculate total category revenue for percentage
-  const totalCategoryRevenue = categoryData.reduce((sum, item) => sum + item.revenue, 0);
-  
   const categoryChartConfig = {
-    data: categoryData.map(item => ({
-      ...item,
-      percentage: totalCategoryRevenue > 0 ? ((item.revenue / totalCategoryRevenue) * 100).toFixed(1) : 0
-    })),
+    data: categoryData,
     angleField: 'revenue',
     colorField: 'category',
     radius: 0.8,
-    innerRadius: 0.4,
     label: {
       type: 'outer',
-      content: '{category}\n{percentage}%',
-      style: {
-        fontSize: 12,
-        fontWeight: 'bold',
-      },
-    },
-    statistic: {
-      title: {
-        style: {
-          fontSize: '14px',
-          fontWeight: 'bold',
-        },
-        content: 'Tổng doanh thu',
-      },
-      content: {
-        style: {
-          fontSize: '16px',
-          fontWeight: 'bold',
-          color: '#52c41a',
-        },
-        content: `${new Intl.NumberFormat('vi-VN').format(totalCategoryRevenue)}đ`,
-      },
+      content: '{name}: {percentage}',
     },
     interactions: [
       {
         type: 'element-active',
       },
-      {
-        type: 'pie-statistic-active',
-      },
     ],
-    legend: {
-      position: 'bottom',
-      itemName: {
-        style: {
-          fontSize: 12,
-        },
-      },
-    },
   };
 
   const dishChartConfig = {
@@ -466,11 +347,11 @@ export function DashboardPage() {
   const isLoading = billsLoading || ordersLoading || loading;
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <Title level={2} className="!mb-0">
           <FireOutlined className="mr-2" />
-          Thống kê tổng quan nhà hàng
+          Thống kê tổng quan
         </Title>
         <Select
           value={selectedPeriod}
@@ -558,39 +439,7 @@ export function DashboardPage() {
             <Col xs={24} lg={8}>
               <Card title="Doanh thu theo danh mục" className="shadow-sm">
                 {categoryData.length > 0 ? (
-                  <>
-                    <Pie {...categoryChartConfig} height={300} />
-                    <div className="mt-4">
-                      <Title level={5}>Chi tiết theo danh mục:</Title>
-                      {categoryData
-                        .sort((a, b) => b.revenue - a.revenue)
-                        .map((item, index) => {
-                          const percentage = totalCategoryRevenue > 0 ? ((item.revenue / totalCategoryRevenue) * 100).toFixed(1) : 0;
-                          return (
-                            <div key={item.category} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                              <div className="flex items-center">
-                                <div 
-                                  className="w-3 h-3 rounded-full mr-3"
-                                  style={{ backgroundColor: ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2'][index % 6] }}
-                                />
-                                <Text strong>{item.category}</Text>
-                              </div>
-                              <div className="text-right">
-                                <div>
-                                  <Text strong style={{ color: '#52c41a' }}>
-                                    {new Intl.NumberFormat('vi-VN').format(item.revenue)}đ
-                                  </Text>
-                                </div>
-                                <Text type="secondary" className="text-sm">
-                                  {percentage}% • {item.quantity} món
-                                </Text>
-                              </div>
-                            </div>
-                          );
-                        })
-                      }
-                    </div>
-                  </>
+                  <Pie {...categoryChartConfig} height={350} />
                 ) : (
                   <Alert message="Chưa có dữ liệu danh mục" type="info" />
                 )}
@@ -629,4 +478,6 @@ export function DashboardPage() {
       )}
     </div>
   );
-}
+};
+
+export default OverviewStatistics; 

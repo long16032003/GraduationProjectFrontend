@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Button, Space, Card, Input, Modal, Tag, DatePicker, Select, Tooltip, Statistic, Row, Col, Form, InputNumber, message } from 'antd';
 import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined, FilterOutlined, PlusOutlined, ShoppingCartOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useList, useOne } from '@refinedev/core';
+import { useList, useOne, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { tax_percentage, type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
+import { type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
 import { useNavigate } from 'react-router';
+import { tax_percentage } from '@/utils/constant';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -40,6 +41,8 @@ const ManageBills: React.FC = () => {
       pageSize: 10,
     },
   });
+
+  const { mutate: updateBill } = useUpdate();
 
   const { data: tablesData, isLoading: isLoadingTables } = useList<TableModel>({
     resource: 'tables',
@@ -96,8 +99,30 @@ const ManageBills: React.FC = () => {
     setSelectedBill(null);
   };
 
-  const handleCancelBill = (billId: number) => {
-    console.log('Hủy hóa đơn', billId);
+  const handleCancelBill = (record: Bill) => {
+    Modal.confirm({
+      title: 'Xác nhận hủy hóa đơn',
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc muốn hủy hóa đơn #${record.id}? Hành động này không thể hoàn tác.`,
+      okText: 'Xác nhận hủy',
+      cancelText: 'Đóng',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          // Gọi API để cập nhật status thành cancelled
+          await updateBill({
+            resource: 'bills',
+            id: record.id,
+            values: { status: 'cancelled' },
+          });
+          message.success('Hủy hóa đơn thành công');
+          // Refresh data ở đây nếu cần
+        } catch (error) {
+          message.error('Có lỗi xảy ra khi hủy hóa đơn');
+          console.error('Cancel bill error:', error);
+        }
+      },
+    });
   };
 
   const handleOpenFilter = () => {
@@ -265,6 +290,14 @@ const ManageBills: React.FC = () => {
                   size="small"
                 />
               </Tooltip>
+              <Tooltip title="Hủy hóa đơn" color='black'>
+                <Button 
+                  icon={<CloseOutlined />} 
+                  onClick={() => handleCancelBill(record)}
+                  danger
+                  size="small"
+                />
+              </Tooltip>
             </>
           )}
           {record.status === 'paid' && (
@@ -276,17 +309,7 @@ const ManageBills: React.FC = () => {
               />
             </Tooltip>
           )}
-          {
-            record.status === 'cancelled' && (
-              <Tooltip title="Hủy hóa đơn" color='black'>
-                <Button 
-                  icon={<CloseOutlined />} 
-                  onClick={() => handleCancelBill(record.id)}
-                  size="small"
-                />
-              </Tooltip>
-            )
-          }
+
         </Space>
       ),
     },

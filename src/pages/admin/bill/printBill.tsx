@@ -4,7 +4,8 @@ import { Card, Table, Divider, Row, Col, Typography, Spin, Button } from 'antd';
 import { PrinterOutlined } from '@ant-design/icons';
 import { useOne } from '@refinedev/core';
 import dayjs from 'dayjs';
-import { type Bill, type OrderDish, tax_percentage } from '@/types';
+import { type Bill, type OrderDish } from '@/types';
+import { tax_percentage } from '@/utils/constant';
 
 const { Title, Text } = Typography;
 

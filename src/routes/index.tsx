@@ -34,6 +34,18 @@ export const routes: RouteObject[] = [
       ...menu_routes,
       ...promotion_routes,
       ...history_reservation_routes,
+      {
+        path: 'print-bill/:billId',
+        lazy: {
+          Component: async () => (await import('@/pages/admin/bill/printBill')).default,
+        },
+      },
+      {
+        path: 'vnpay-return',
+        lazy: {
+          Component: async () => (await import('@/pages/admin/bill/vnpay-return')).default,
+        },
+      },
     ],
   },
 ];

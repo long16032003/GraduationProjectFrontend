@@ -6,7 +6,7 @@ import { CheckOutlined, ClockCircleOutlined, FireOutlined, SearchOutlined, BellO
 import dayjs from 'dayjs';
 import { useMediaQuery } from 'react-responsive';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { useList } from '@refinedev/core';
+import { useList, useUpdate } from '@refinedev/core';
 
 dayjs.extend(relativeTime);
 
@@ -107,6 +107,8 @@ const KitchenDashboard: React.FC = () => {
       refetchInterval: 30000, // Tự động làm mới mỗi 30 giây
     }
   });
+  
+  const {mutate: updateOrder, isLoading: isUpdatingOrder} = useUpdate();
 
   // Tạo dữ liệu mẫu cho nhân viên (trong thực tế sẽ fetch từ API)
   useEffect(() => {
@@ -223,7 +225,11 @@ const KitchenDashboard: React.FC = () => {
     if (selectedOrder && assignedChef) {
       try {
         // Trong thực tế sẽ gọi API để cập nhật trạng thái
-        // await update({ resource: 'orders', id: selectedOrder.id, values: { status: 'processing', chef_id: assignedChef } });
+        updateOrder({
+          resource: 'orders',
+          id: selectedOrder.id,
+          values: { status: 'processing' },
+        });
         
         // Tạm thời cập nhật local state
         const chef = chefs.find(c => c.id === assignedChef);

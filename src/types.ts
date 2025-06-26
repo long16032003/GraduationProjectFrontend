@@ -225,8 +225,6 @@ export interface OrderDish {
   order?: Order;
 }
 
-export const tax_percentage = 0.08
-
 // Promotion interfaces based on database schema
 export interface Promotion {
   id: number;

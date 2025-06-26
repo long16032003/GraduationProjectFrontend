@@ -23,13 +23,13 @@ import {
 import { useBreadcrumb, useLogout } from '@refinedev/core';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
-import type { Customer, User } from '@/types.ts';
+import type { Customer, Staff } from '@/types.ts';
 import { Link, useLocation } from 'react-router';
 import { theme } from '@/config/theme';
 import { UserOutlined, DashboardOutlined, HistoryOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 
 interface UserNavProps {
-  user: User | Customer
+  user: Staff | Customer
 }
 
 const {
@@ -114,8 +114,10 @@ export function UserNav({user, ...rest}: UserNavProps) {
             className="hover:bg-primary/10"
             style={{ color: colorTextBase }}
           >
-            <UserOutlined className="mr-2 h-4 w-4" />
-            Thông tin cá nhân
+            <Link to="/info-user" className="flex items-center">
+              <UserOutlined className="mr-2 h-4 w-4" />
+              Thông tin cá nhân
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/admin" className="flex items-center">
@@ -128,10 +130,6 @@ export function UserNav({user, ...rest}: UserNavProps) {
               <HistoryOutlined className="mr-2 h-4 w-4" />
               Lịch sử đặt bàn
             </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center">
-            <SettingOutlined className="mr-2 h-4 w-4" />
-            Cài đặt
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

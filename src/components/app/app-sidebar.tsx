@@ -15,20 +15,6 @@ import {
   SquareTerminal,
   SquareUserRound,
   Table,
-  LayoutDashboard,
-  TableProperties,
-  CalendarCheck,
-  ListOrdered,
-  UtensilsCrossed,
-  Receipt,
-  ClipboardList,
-  Users,
-  UserCircle,
-  FileText,
-  Tag,
-  PackageSearch,
-  Settings,
-  ChefHat,
 } from "lucide-react"
 
 import { NavMain } from "@/components/app/nav-main.tsx"
@@ -43,6 +29,9 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar.tsx';
+import { mainMenuItems, secondaryMenuItems, filterMenuByPermissions } from '@/config/menu';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useMemo } from 'react';
 
 // This is sample data.
 const data = {
@@ -68,129 +57,6 @@ const data = {
       plan: "Free",
     },
   ],
-  navMain: [
-    {
-      title: "Bàn ăn",
-      url: "/admin/tables",
-      icon: TableProperties,
-      isActive: true,
-    },
-    {
-      title: "Đặt bàn",
-      url: "/admin/reservations",
-      icon: CalendarCheck,
-      isActive: true,
-    },
-    {
-      title: "Danh mục thực đơn",
-      url: "/admin/dishcategories",
-      icon: ListOrdered,
-      isActive: true,
-    },
-    {
-      title: "Thực đơn",
-      url: "/admin/dish",
-      icon: UtensilsCrossed,
-      isActive: true,
-    },
-    {
-      title: "Hóa đơn",
-      url: "/admin/bills",
-      icon: Receipt,
-      isActive: true,
-    },
-    {
-      title: "Gọi món",
-      url: "/admin/order",
-      icon: ClipboardList,
-      isActive: true,
-    },
-    {
-      title: "Bếp",
-      url: "/admin/kitchen",
-      icon: ChefHat,
-      isActive: true,
-    },
-    {
-      title: "Nhân viên",
-      url: "/admin/staffs",
-      icon: Users,
-      isActive: true,
-    },
-    {
-      title: "Khách hàng",
-      url: "/admin/customers",
-      icon: UserCircle,
-      isActive: true,
-    },
-    {
-      title: "Bài viết",
-      url: "/admin/posts",
-      icon: FileText,
-      isActive: true,
-    },
-    {
-      title: "Ưu đãi",
-      url: "/admin/promotions",
-      icon: Tag,
-      isActive: true,
-    },
-    {
-      title: "Kho",
-      url: "#",
-      icon: PackageSearch,
-      isActive: true,
-      items: [
-        {
-          title: "Quản lý nguyên liệu",
-          url: "/admin/warehouse/ingredient",
-        },
-        {
-          title: "Nhập kho",
-          url: "/admin/warehouse/import",
-        },
-        {
-          title: "Xuất kho",
-          url: "/admin/warehouse/export",
-        },
-        {
-          title: "Kiểm kho",
-          url: "/admin/warehouse/inventory",
-        },
-      ],
-    },
-    {
-      title: "Thống kê",
-      url: "#",
-      icon: LayoutDashboard,
-      isActive: false,
-      items: [
-        {
-          title: "Thống kê tổng quan",
-          url: "/admin/statistic",
-        },
-        {
-          title: "Thống kê doanh thu",
-          url: "/admin/statistic/statistic-bill",
-        },
-        {
-          title: "Thống kê món ăn được gọi nhiều nhất",
-          url: "#",
-        },
-        {
-          title: "Thống kê nguyên liệu",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Cài đặt website",
-      url: "/admin/site-settings",
-      icon: Settings,
-    },
-  ],
   projects: [
     // {
     //   name: "Bàn ăn",
@@ -202,6 +68,17 @@ const data = {
 
 const isMobile = false
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { checkPermission } = usePermissions();
+
+  // Filter menu items based on user permissions
+  const filteredMainMenu = useMemo(() => {
+    return filterMenuByPermissions(mainMenuItems, checkPermission);
+  }, [checkPermission]);
+
+  const filteredSecondaryMenu = useMemo(() => {
+    return filterMenuByPermissions(secondaryMenuItems, checkPermission);
+  }, [checkPermission]);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -224,10 +101,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {/* <NavProjects projects={data.projects} /> */}
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredMainMenu} />
       </SidebarContent>
       <SidebarFooter>
-        <NavSecondary items={data.navSecondary} className="mt-auto p-0" />
+        <NavSecondary items={filteredSecondaryMenu} className="mt-auto p-0" />
         {isMobile && <NavUser user={data.user} />}
       </SidebarFooter>
       <SidebarRail />

@@ -5,13 +5,14 @@ import { type IRefineOptions, Refine } from '@refinedev/core';
 import routerBindings, { UnsavedChangesNotifier } from '@refinedev/react-router';
 import { Outlet } from 'react-router';
 import { useNotificationProvider } from '@refinedev/antd';
+import { notification } from 'antd';
 import queryClient from '@/utils/queryClient.ts';
 import { ConfigProvider } from 'antd';
 import { theme } from '@/config/theme';
 import viVN from 'antd/locale/vi_VN';
 import { useTranslation } from 'react-i18next';
 import '@/utils/i18n'; // Import i18n configuration
-// import { accessControlProvider } from '@/providers/access-control-provider.ts';
+import { accessControlProvider } from '@/providers/access-control-provider.ts';
 
 const options: IRefineOptions = {
   disableTelemetry: true,
@@ -33,7 +34,7 @@ export const Root = () => {
         routerProvider={routerBindings}
         authProvider={authProvider}
         notificationProvider={useNotificationProvider}
-        // accessControlProvider={accessControlProvider}
+        accessControlProvider={accessControlProvider}
         dataProvider={dataProvider}
         i18nProvider={{
           translate: (key: string, params?: Record<string, unknown>) => t(key, params) as string,

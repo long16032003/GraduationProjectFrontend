@@ -31,7 +31,7 @@ export const defaultOptions = {
     // Retry after 500ms
     return 500;
   },
-  timeout: 10000, // 10s timeout
+  timeout: 10000000, // 10s timeout
   credentials: 'include', // include cookies in requests
   headers: {
     Accept: 'application/json',

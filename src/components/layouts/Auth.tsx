@@ -6,10 +6,10 @@ import auth$ from '@/stores/auth';
 export function Auth() {
   return (
     <div className="" data-layout="auth">
-      {/* <Authenticated key='auth' fallback={<Outlet />}>
+      <Authenticated key='auth' fallback={<Outlet />}>
         <Navigate to={'/admin'} />
-      </Authenticated> */}
-      <Outlet />
+      </Authenticated>
+      {/* <Outlet /> */}
     </div>
   );
 }

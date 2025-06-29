@@ -618,7 +618,6 @@ const NewBill: React.FC = () => {
             <Form.Item
               name="customer_name"
               label="Tên khách hàng"
-              rules={[{ required: true, message: 'Vui lòng nhập tên khách hàng' }]}
             >
               <Input 
                 prefix={<UserOutlined />}
@@ -630,6 +629,7 @@ const NewBill: React.FC = () => {
             <Form.Item
               name="customer_phone"
               label="Số điện thoại (tùy chọn)"
+              rules={[{ required: true, message: 'Vui lòng nhập số điện thoại khách hàng' }]}
             >
               <Input 
                 placeholder="Nhập số điện thoại"
@@ -637,7 +637,7 @@ const NewBill: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item
+            {/* <Form.Item
               name="number_of_guests"
               label="Số lượng khách"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng khách' }]}
@@ -649,7 +649,7 @@ const NewBill: React.FC = () => {
                 size="large"
                 placeholder="Số lượng khách"
               />
-            </Form.Item>
+            </Form.Item> */}
 
             <Form.Item>
               <Button
@@ -677,9 +677,9 @@ const NewBill: React.FC = () => {
                   <div>
                     <Text strong>SĐT:</Text> {customerInfo?.customer_phone || 'Không có'}
                   </div>
-                  <div>
+                  {/* <div>
                     <Text strong>Số khách:</Text> {customerInfo?.number_of_guests}
-                  </div>
+                  </div> */}
                 </Space>
               </Col>
               <Col span={6} className="text-right">

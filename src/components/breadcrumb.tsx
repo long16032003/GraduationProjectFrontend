@@ -1,0 +1,79 @@
+import React from 'react';
+import {
+  useBreadcrumb,
+  useLink,
+  useRefineContext,
+  useRouterContext,
+  useRouterType,
+  useResource,
+  matchResourceFromRoute,
+} from '@refinedev/core';
+import type { BreadcrumbProps } from '@refinedev/antd';
+import { HomeOutlined } from '@ant-design/icons';
+import { Breadcrumb as AntdBreadcrumb } from 'antd';
+
+export const Breadcrumb: React.FC<BreadcrumbProps> = ({
+  breadcrumbProps,
+  showHome = true,
+  hideIcons = false,
+  meta,
+  minItems = 2,
+}) => {
+  const routerType = useRouterType();
+  const { breadcrumbs } = useBreadcrumb({
+    meta,
+  });
+  const Link = useLink();
+  const { Link: LegacyLink } = useRouterContext();
+  const { hasDashboard } = useRefineContext();
+
+  const { resources } = useResource();
+
+  const rootRouteResource = matchResourceFromRoute('/', resources);
+
+  const ActiveLink = routerType === 'legacy' ? LegacyLink : Link;
+
+  if (breadcrumbs.length < minItems) return null;
+
+  const breadCrumbItems = breadcrumbs.map(({ label, icon, href }) => ({
+    key: `breadcrumb-item-${label}`,
+    title: (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+        }}
+      >
+        {!hideIcons && icon}
+        {href ? <ActiveLink to={href}>{label}</ActiveLink> : <span>{label}</span>}
+      </div>
+    ),
+  }));
+
+  const getBreadcrumbItems = () => {
+    if (showHome && (hasDashboard || rootRouteResource.found)) {
+      return [
+        {
+          key: 'breadcrumb-item-home',
+          title: (
+            <ActiveLink to='/'>
+              {rootRouteResource?.resource?.meta?.icon ?? <HomeOutlined />}
+            </ActiveLink>
+          ),
+        },
+        ...breadCrumbItems,
+      ];
+    }
+
+    return breadCrumbItems;
+  };
+
+  return (
+    <AntdBreadcrumb
+      items={getBreadcrumbItems()}
+      {...breadcrumbProps}
+    />
+  );
+};

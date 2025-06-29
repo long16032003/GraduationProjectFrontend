@@ -32,15 +32,17 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { PageLoader } from '@/components/ui/loader';
+import { useList, useUpdate } from '@refinedev/core';
+import type { Reservation } from '@/types';
+import auth$ from '@/stores/auth';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Step } = Steps;
 
-// Interface definitions
-interface Reservation {
+// UI interface for reservations
+interface UIReservation {
   id: number;
-  reservation_code: string;
   name: string;
   phone: string;
   email: string;
@@ -48,100 +50,122 @@ interface Reservation {
   time: string;
   party_size: number;
   special_request: string;
-  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled';
   table_number: string;
   created_at: string;
 }
 
-// Mock data for demonstration
-const generateMockReservations = (): Reservation[] => {
-  return [
-    {
-      id: 1001,
-      reservation_code: 'RES10012023',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      date: '2023-07-10',
-      time: '18:00',
-      party_size: 4,
-      special_request: 'Bàn gần cửa sổ',
-      status: 'completed',
-      table_number: 'T05',
-      created_at: '2023-07-05T14:30:00'
-    },
-    {
-      id: 1002,
-      reservation_code: 'RES10022023',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      date: '2023-07-15',
-      time: '19:30',
-      party_size: 2,
-      special_request: 'Sinh nhật',
-      status: 'confirmed',
-      table_number: 'T08',
-      created_at: '2023-07-10T09:45:00'
-    },
-    {
-      id: 1003,
-      reservation_code: 'RES10032023',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      date: '2023-07-20',
-      time: '12:00',
-      party_size: 6,
-      special_request: '',
-      status: 'pending',
-      table_number: '',
-      created_at: '2023-07-18T16:20:00'
-    },
-    {
-      id: 1004,
-      reservation_code: 'RES10042023',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      date: '2023-06-28',
-      time: '18:30',
-      party_size: 3,
-      special_request: 'Vị trí yên tĩnh',
-      status: 'cancelled',
-      table_number: '',
-      created_at: '2023-06-25T11:15:00'
-    },
-    {
-      id: 1005,
-      reservation_code: 'RES10052023',
-      name: 'Nguyễn Văn A',
-      phone: '0901234567',
-      email: 'nguyenvana@example.com',
-      date: '2023-08-05',
-      time: '20:00',
-      party_size: 8,
-      special_request: 'Đặt bàn cho tiệc gia đình',
-      status: 'confirmed',
-      table_number: 'T12',
-      created_at: '2023-07-30T13:40:00'
-    }
-  ];
+// Helper function to map API reservation to UI format
+const mapReservationToUI = (reservation: Reservation): UIReservation => {
+  console.log('Mapping reservation:', reservation);
+  return {
+    id: reservation.id,
+    name: reservation.name || reservation.customer?.name || 'N/A',
+    phone: reservation.phone,
+    email: reservation.customer?.email || '',
+    date: dayjs(reservation.reservation_date).format('YYYY-MM-DD'),
+    time: dayjs(reservation.reservation_date).format('HH:mm'),
+    party_size: reservation.number_of_guests,
+    special_request: reservation.notes || '',
+    status: reservation.status || 'pending',
+    table_number: reservation.table?.name || '',
+    created_at: reservation.created_at,
+  };
 };
 
 const HistoryReservation: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
-  const [reservations] = useState<Reservation[]>(generateMockReservations());
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<UIReservation | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('all');
+
+  // Get current user
+  const user = auth$.user.get();
+  console.log('Current user:', user);
+  
+  // Check if user is a customer (has 'point' property)
+  const isCustomer = user && 'point' in user;
+  console.log('Is customer:', isCustomer);
+  
+  // Create filters based on user info
+  const getReservationFilters = () => {
+    if (!user) return [];
+    
+    const filters = [];
+    
+    // If user is a customer with customer_id, filter by customer_id
+    if (isCustomer && user.id) {
+      filters.push({
+        field: 'customer_id',
+        operator: 'eq' as const,
+        value: user.id,
+      });
+    }
+    
+    // If user has phone number, also filter by phone (using OR logic)
+    if (user.phone) {
+      filters.push({
+        field: 'phone',
+        operator: 'eq' as const,
+        value: user.phone,
+      });
+    }
+    
+    return filters;
+  };
+
+  // API hooks
+  const { data: reservationsData, isLoading, refetch, error } = useList<Reservation>({
+    resource: 'reservations',
+    filters: getReservationFilters(),
+    queryOptions: {
+      enabled: !!user && (isCustomer || !!user.phone), // Only enabled if user has ID or phone
+    },
+  });
+
+  console.log('Reservations data:', reservationsData);
+  console.log('Is loading:', isLoading);
+  console.log('Error:', error);
+  console.log('Filters applied:', getReservationFilters());
+
+  const { mutate: updateReservation } = useUpdate();
+
+  // Map API data to UI format
+  const reservations = reservationsData?.data ? (reservationsData.data as Reservation[]).map(mapReservationToUI) : [];
+
+  // Check user authentication and access
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 max-w-6xl">
+        <Card className="text-center">
+          <Title level={3}>Vui lòng đăng nhập để xem lịch sử đặt bàn</Title>
+          <Button type="primary" href="/auth/login">
+            Đăng nhập
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isCustomer && !user.phone) {
+    return (
+      <div className="container mx-auto p-4 max-w-6xl">
+        <Card className="text-center">
+          <Title level={3}>Không thể xem lịch sử đặt bàn</Title>
+          <Text>Tài khoản của bạn chưa có thông tin khách hàng hoặc số điện thoại</Text>
+          <br />
+          <Button type="primary" href="/" style={{ marginTop: 16 }}>
+            Về trang chủ
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   // Filter reservations based on search text, date range and status
   const filteredReservations = reservations.filter(reservation => {
     const matchesSearch = 
-      reservation.reservation_code.toLowerCase().includes(searchText.toLowerCase()) ||
       reservation.table_number.toLowerCase().includes(searchText.toLowerCase()) ||
       reservation.special_request.toLowerCase().includes(searchText.toLowerCase());
     
@@ -153,7 +177,7 @@ const HistoryReservation: React.FC = () => {
     const matchesTab = 
       activeTab === 'all' || 
       (activeTab === 'upcoming' && (reservation.status === 'confirmed' || reservation.status === 'pending')) ||
-      (activeTab === 'completed' && reservation.status === 'completed') || 
+      (activeTab === 'completed' && reservation.status === 'confirmed') || 
       (activeTab === 'cancelled' && reservation.status === 'cancelled');
     
     return matchesSearch && matchesDateRange && matchesTab;
@@ -208,7 +232,7 @@ const HistoryReservation: React.FC = () => {
   };
 
   // Handle view reservation details
-  const handleViewDetails = (reservation: Reservation) => {
+  const handleViewDetails = (reservation: UIReservation) => {
     setSelectedReservation(reservation);
     setIsDetailModalVisible(true);
   };
@@ -227,20 +251,29 @@ const HistoryReservation: React.FC = () => {
       return stepIndex <= 1 ? 'finish' : stepIndex === 2 ? 'process' : 'wait';
     }
     
-    if (status === 'completed') {
-      return 'finish';
-    }
-    
     return 'wait';
   };
 
+  // Handle cancel reservation
+  const handleCancelReservation = (reservationId: number) => {
+    updateReservation({
+      resource: 'reservations',
+      id: reservationId,
+      values: { status: 'cancelled' }
+    }, {
+      onSuccess: () => {
+        refetch();
+        setIsDetailModalVisible(false);
+      }
+    });
+  };
   // Reservation table columns
-  const columns: ColumnsType<Reservation> = [
+  const columns: ColumnsType<UIReservation> = [
     {
       title: 'Mã đặt bàn',
-      dataIndex: 'reservation_code',
-      key: 'reservation_code',
-      render: (code) => <span className="font-medium">{code}</span>,
+      dataIndex: 'id',
+      key: 'id',
+      render: (id) => <span className="font-medium">{id}</span>,
     },
     {
       title: 'Ngày',
@@ -445,7 +478,7 @@ const HistoryReservation: React.FC = () => {
             <Button
               key="cancel"
               danger
-              onClick={() => console.log('Cancel reservation', selectedReservation?.id)}
+              onClick={() => handleCancelReservation(selectedReservation.id)}
             >
               Hủy đặt bàn
             </Button>
@@ -461,8 +494,7 @@ const HistoryReservation: React.FC = () => {
             <Steps
               current={
                 selectedReservation.status === 'pending' ? 1 :
-                selectedReservation.status === 'confirmed' ? 2 :
-                selectedReservation.status === 'completed' ? 3 : 0
+                selectedReservation.status === 'confirmed' ? 2 : 0
               }
               status={selectedReservation.status === 'cancelled' ? 'error' : 'process'}
               className="mb-6"
@@ -490,7 +522,7 @@ const HistoryReservation: React.FC = () => {
             
             <Descriptions bordered column={{ xxl: 2, xl: 2, lg: 2, md: 2, sm: 1, xs: 1 }}>
               <Descriptions.Item label="Mã đặt bàn">
-                {selectedReservation.reservation_code}
+                  {selectedReservation.id}
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo">
                 {dayjs(selectedReservation.created_at).format('DD/MM/YYYY HH:mm')}

@@ -126,35 +126,41 @@ const AddOrder: React.FC = () => {
     }
   };
 
-  const handleSubmitOrder = (values: { note?: string }) => {
+  const handleSubmitOrder = async (values: { note?: string }) => {
     if (cart.length === 0) {
       message.warning('Vui lòng chọn ít nhất một món!');
       return;
     }
 
-    const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
-    const orderData = {
-      bill_id: bill?.id || 0,
-      table_id: bill?.table_id || 0,
-      order_dishes: cart,
-      note: values.note
-    }
-
-    createOrder({
-      resource: 'orders',
-      values: orderData,
-    }, {
-      onSuccess: () => {
-        message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
-        // navigate('/admin/order');
-      },
-      onError: () => {
-        message.error('Đã xảy ra lỗi khi thêm đơn gọi món!');
+    try {
+      const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
+      const orderData = {
+        bill_id: bill?.id || 0,
+        table_id: bill?.table_id || 0,
+        order_dishes: cart,
+        note: values.note
       }
-    });
 
-    // message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
-    // navigate('/admin/order');
+      await new Promise<{ data: Order }>((resolve, reject) => {
+        createOrder({
+          resource: 'orders',
+          values: orderData,
+        }, {
+          onSuccess: (data) => {
+            resolve(data);
+          },
+          onError: (error) => {
+            reject(error);
+          }
+        });
+      });
+
+      message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
+      navigate('/admin/order');
+    } catch (error) {
+      console.error('Lỗi thêm đơn gọi món:', error);
+      message.error('Đã xảy ra lỗi khi thêm đơn gọi món!');
+    }
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);

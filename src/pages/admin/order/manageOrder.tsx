@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { type TableModel, type Bill, type Order, type OrderDish, type Dish, type DishCategory } from '@/types';
 import { useList } from '@refinedev/core';
 import { caculateTotalAmount } from '@/utils/caculateTotalAmountBill';
+import { areas } from '@/utils/constant';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -322,7 +323,7 @@ const ManageOrder: React.FC = () => {
                           padding: '2px 8px'
                         }}
                       >
-                        {table.area}
+                        {areas[table.area as keyof typeof areas]}
                       </Tag>
                     </div>
                     

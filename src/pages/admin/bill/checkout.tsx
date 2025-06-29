@@ -221,7 +221,7 @@ const Checkout: React.FC = () => {
 
         if (result.success) {
           message.success('Thanh toán thành công!');
-          navigate('/admin/bills');
+          window.location.href = '/admin/bills';
         } else {
           message.error(result.message || 'Có lỗi xảy ra khi thanh toán');
         }

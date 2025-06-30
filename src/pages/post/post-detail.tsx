@@ -15,7 +15,7 @@ import {
 import dayjs from 'dayjs';
 import { Link, useParams } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
-import type { Customer, Post, User } from '@/types';
+import type { Customer, Post, Staff } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { Result } from 'antd/lib';
@@ -63,7 +63,7 @@ const PostDetail: React.FC = () => {
   const post = data?.data;
   const relatedPosts = relatedData?.data || [];
 
-  const user = use$(auth$.user) as User;
+  const user = use$(auth$.user) as Staff;
 
   // Kiểm tra quyền edit của user với post
   const canEdit = user?.id === post?.creator_id || user?.role === 'admin';

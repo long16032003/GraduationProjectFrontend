@@ -1,9 +1,10 @@
 import type { AccessControlProvider } from '@refinedev/core';
 import auth$ from '@/stores/auth.ts';
+import type { Staff } from '@/types';
 
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ resource, action, params }) => {
-    const user = auth$.user.peek();
+    const user = auth$.user.peek() as Staff;
 
     if (!user) {
       return {

@@ -6,7 +6,7 @@ import { Link, useParams } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import type { Post, User } from '@/types';
+import type { Post, Staff } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 
@@ -23,7 +23,7 @@ const EditPost: React.FC = () => {
     title: string;
     summary: string;
     content: string;
-    creator: User;
+    creator: Staff;
     created_at: string;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -35,7 +35,7 @@ const EditPost: React.FC = () => {
   });
   
   const go = useGo();
-  const user = use$(auth$.user);
+  const user = use$(auth$.user) as Staff;
   const post = postData?.data;
 
   // Kiểm tra quyền chỉnh sửa
@@ -114,7 +114,7 @@ const EditPost: React.FC = () => {
       setPreviewData({
         ...values,
         content: content,
-        creator: post?.creator || user as User,
+        creator: post?.creator || user as Staff,
         created_at: post?.created_at || new Date().toISOString()
       });
       setPreviewVisible(true);

@@ -75,18 +75,21 @@
 }
 @layer base {
     * {
-        border-color: hsl(var(--border))
+        border-color: hsl(var(--border));
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--border)) transparent;
     }
     html {
         scroll-behavior: smooth;
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        touch-action: manipulation;
     }
     body {
         overscroll-behavior: none;
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
         font-synthesis-weight: none;
-        text-rendering: optimizeLegibility
+        text-rendering: optimizeLegibility;
     }
     /* @link: https://developer.chrome.com/docs/css-ui/scrollbar-styling */
     @supports (font: -apple-system-body) and (-webkit-appearance:none) {
@@ -102,12 +105,12 @@
     }
 
     ::-webkit-scrollbar-track {
-        background: transparent
+        background: transparent;
     }
 
     ::-webkit-scrollbar-thumb {
         background: hsl(var(--border));
-        border-radius: 5px
+        border-radius: 5px;
     }
 
     * {

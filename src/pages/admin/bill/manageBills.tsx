@@ -170,13 +170,14 @@ const ManageBills: React.FC = () => {
   };
 
   // Calculate summary statistics
-  const totalBills = bills?.length || 0;
-  const totalRevenue = bills?.reduce((sum: number, bill: Bill) => {
+  const billsArray = bills as Bill[];
+  const totalBills = billsArray?.length || 0;
+  const totalRevenue: number = billsArray ? billsArray.reduce((sum: number, bill: Bill) => {
     const amount = Number(bill.total_amount) || 0;
     return sum + amount;
-  }, 0) || 0;
-  const paidBills = bills?.filter((bill: Bill) => bill.status === 'paid').length || 0;
-  const unpaidBills = bills?.filter((bill: Bill) => bill.status === 'unpaid').length || 0;
+  }, 0) : 0;
+  const paidBills = billsArray ? billsArray.filter((bill: Bill) => bill.status === 'paid').length : 0;
+  const unpaidBills = billsArray ? billsArray.filter((bill: Bill) => bill.status === 'unpaid').length : 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -348,7 +349,7 @@ const ManageBills: React.FC = () => {
               valueStyle={{ color: '#3f8600' }}
               suffix="VNĐ"
               precision={0}
-              formatter={(value) => `${value.toLocaleString('vi-VN')}`}
+              formatter={(value) => `${(value as number).toLocaleString('vi-VN')}`}
             />
           </Card>
         </Col>
@@ -399,7 +400,7 @@ const ManageBills: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={bills}
+        dataSource={billsArray}
         loading={isLoadingList}
         rowKey='id'
         pagination={{

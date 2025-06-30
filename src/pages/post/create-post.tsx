@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Typography, Breadcrumb, Space, Row, Col, Select, Upload, Image } from 'antd';
+import { Card, Form, Input, Button, message, Typography, Breadcrumb, Space, Row, Col, Select, Upload, Image, type UploadFile } from 'antd';
 import { HomeOutlined, SaveOutlined, EyeOutlined, PlusOutlined, InboxOutlined } from '@ant-design/icons';
 import { useCreate, useGo } from '@refinedev/core';
 import { Link } from 'react-router';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import type { Post, User } from '@/types';
+import type { Post, Staff } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
+import type { UploadProps } from 'antd/lib';
+import type { UploadChangeParam } from 'antd/lib/upload/interface';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -22,7 +24,7 @@ const CreatePost: React.FC = () => {
     title: string;
     summary: string;
     content: string;
-    creator: User;
+    creator: Staff;
     created_at: string;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -97,7 +99,7 @@ const CreatePost: React.FC = () => {
   };
 
   // Xử lý upload ảnh
-  const handleImageUpload = {
+  const handleImageUpload: UploadProps = {
     name: 'file',
     multiple: false,
     action: '/api/upload', // Thay đổi theo API upload của bạn
@@ -114,7 +116,7 @@ const CreatePost: React.FC = () => {
       }
       return true;
     },
-    onChange: (info: { file: { status: string } }) => {
+    onChange: (info: UploadChangeParam<UploadFile>) => {
       if (info.file.status === 'uploading') {
         setUploading(true);
       }

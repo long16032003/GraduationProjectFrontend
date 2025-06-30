@@ -1,8 +1,11 @@
+import type { Role } from '@/pages/admin/role/.form/schema.ts';
+
 export interface LoginFormValues {
   email: string;
   password: string;
   redirectPath?: string;
   remember?: boolean;
+  guard?: 'web' | 'customer'| null;
 }
 
 export interface LoginCustomerFormValues {
@@ -26,7 +29,9 @@ export interface Staff {
   email: string;
   name: string;
   phone: string;
-  role: string;
+  superadmin?: boolean;
+  roles?: Role[] | undefined
+  permissions?: Record<string, number> | undefined
   created_at?: string;
   updated_at?: string;
 }
@@ -58,7 +63,7 @@ export interface PermissionResource {
   actions: {
     [key: string]: PermissionAction;
   };
-  children: PermissionResource[]; // This is an empty array in the example
+  children: any[]; // This is an empty array in the example
 }
 
 // Define the group interface
@@ -66,7 +71,7 @@ export interface PermissionGroup {
   type: 'group';
   name: string;
   description: string;
-  actions: PermissionAction[]; // This is an empty array in the example
+  actions: any[]; // This is an empty array in the example
   children: {
     [key: string]: PermissionResource;
   };

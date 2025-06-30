@@ -191,7 +191,7 @@ const NewBill: React.FC = () => {
       // Bước 2: Tạo Order đầu tiên
       const orderData = {
         table_id: parseInt(tableId!),
-        bill_id: newBill?.id,
+        bill_id: newBill.data.id,
         note: values.note || null,
         order_dishes: cart.map(item => ({
           dish_id: item.dish_id,

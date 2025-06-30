@@ -4,7 +4,7 @@ import auth$ from '@/stores/auth';
 import type { Staff, Customer } from '@/types';
 
 export const usePermissions = () => {
-  const user = use$(auth$.user) as Staff | Customer | null;
+  const user = use$(auth$.user) as Staff | null;
 
   /**
    * Kiểm tra một quyền cụ thể

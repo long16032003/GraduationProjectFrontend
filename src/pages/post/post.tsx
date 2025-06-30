@@ -44,6 +44,8 @@ const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1565299624946-b28f40a0a
 
 const PostPage: React.FC = () => {
   const user = use$(auth$.user);
+  const guard = use$(auth$.guard);
+  console.log("guard: ",guard);
   const { data, isLoading, refetch } = useList<Post>({
     resource: 'posts',
     sorters: [{ field: 'created_at', order: 'desc' }],
@@ -175,7 +177,7 @@ const PostPage: React.FC = () => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             className="mb-6"
           />
-          {user && (
+          {guard === 'staff' && (
             <Link to="/posts/create">
               <Button type="primary" size="large" className="font-medium">
                 Tạo bài viết mới
@@ -192,7 +194,7 @@ const PostPage: React.FC = () => {
   
   return (
     <MainLayout>
-      <div className="bg-gradient-to-br from-orange-50 to-white">
+      <div className=" from-orange-50 to-white">
         <div className="container mx-auto px-4 py-8">
           <Breadcrumb 
             className="mb-6"
@@ -222,7 +224,7 @@ const PostPage: React.FC = () => {
                 <div className="h-1 w-20 bg-orange-500 mt-2 rounded-full"></div>
               </div>
               
-              {user && (
+              {guard === 'staff' && (
                 <Link to="/posts/create">
                   <Button type="primary" className="bg-orange-500 hover:bg-orange-600 border-orange-500">
                     Tạo bài viết mới

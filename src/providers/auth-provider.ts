@@ -2,7 +2,7 @@ import { httpClient } from '@/utils/http';
 import type { AuthActionResponse, AuthProvider, CheckResponse, IdentityResponse, OnErrorResponse, PermissionResponse } from '@refinedev/core';
 import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
-import type { LoginFormValues, PermissionsResponse, RegisterFormValues, User } from '@/types';
+import type { LoginFormValues, PermissionsResponse, RegisterFormValues, Staff } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
 import { message } from 'antd';
 import { DEFAULT_ERROR_MESSAGES } from '@/utils/error-handler';
@@ -15,7 +15,8 @@ export const authProvider: AuthProvider = {
   logout: async (): Promise<AuthActionResponse> => {
     auth$.user.set(null)
     const guard = auth$.guard.peek()
-    httpClient(guard === 'user' ? 'logout' : 'logout-customer', { method: 'post' })
+    console.log(guard);
+    httpClient(guard === 'staff' ? 'logout' : 'logout-customer', { method: 'post' })
       .catch((error: FetchError) => {
         // Handle the error if needed
         if (error instanceof FetchError) {
@@ -33,7 +34,7 @@ export const authProvider: AuthProvider = {
   },
   getIdentity: async (): Promise<IdentityResponse> => {
     try {
-      const user: User = await httpClient('@me');
+      const user: Staff = await httpClient('@me');
       auth$.user.set(user)
       return user;
     } catch (error) {
@@ -59,8 +60,10 @@ export const authProvider: AuthProvider = {
     await httpClient('login', { method: 'post', body: rest });
     // After a successful login, we can fetch the user data
     const user = await httpClient('@me');
+    console.log("login: ", user);
     // Set the user data in the auth store
     auth$.user.set(user)
+    auth$.guard.set('staff')
     // Return a success response
     return {
       success: true,

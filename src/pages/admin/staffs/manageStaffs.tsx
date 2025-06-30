@@ -15,7 +15,10 @@ import {
   Tooltip,
   Row,
   Col,
-  Statistic
+  Statistic,
+  Checkbox,
+  Divider,
+  Badge
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -25,15 +28,30 @@ import {
   EyeOutlined,
   MailOutlined,
   PhoneOutlined,
-  TeamOutlined
+  TeamOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 import { useList, useCreate, useUpdate, useDelete } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Staff } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
+import { httpClient } from '@/utils/http';
+
+// Role interface
+interface Role {
+  id: number;
+  name: string;
+  level: number;
+  status: boolean;
+}
 
 const { Option } = Select;
+
+// Extended Staff type with role
+interface StaffWithRole extends Staff {
+  role: string;
+}
 
 // Cấu hình phân quyền
 const ROLE_PERMISSIONS = {
@@ -105,15 +123,18 @@ const ManageStaffs: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState<Staff | null>(null);
-  const [viewingUser, setViewingUser] = useState<Staff | null>(null);
+  const [isAssignRoleModalVisible, setIsAssignRoleModalVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState<StaffWithRole | null>(null);
+  const [viewingUser, setViewingUser] = useState<StaffWithRole | null>(null);
+  const [assigningUser, setAssigningUser] = useState<StaffWithRole | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
 
   // Lấy thông tin user hiện tại
   const currentUser = use$(auth$.user);
-  const currentUserRole = currentUser?.role;
+  const currentUserRole = (currentUser as StaffWithRole)?.role;
 
   // Fetch staff list (users with role admin, staff, or chef)
-  const { data: staffData, isLoading, refetch } = useList<Staff>({
+  const { data: staffData, isLoading, refetch } = useList<StaffWithRole>({
     resource: 'staffs',
     filters: [
       {
@@ -133,6 +154,15 @@ const ManageStaffs: React.FC = () => {
   const { mutate: createUser, isLoading: isCreating } = useCreate();
   const { mutate: updateUser, isLoading: isUpdating } = useUpdate();
   const { mutate: deleteUser, isLoading: isDeleting } = useDelete();
+
+  // Fetch all roles for assign role modal
+  const { data: rolesData, isLoading: rolesLoading } = useList<Role>({
+    resource: 'role',
+    pagination: { mode: 'off' },
+  });
+
+  // Loading state for role assignment
+  const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
 
   const staffs = staffData?.data || [];
 
@@ -175,7 +205,7 @@ const ManageStaffs: React.FC = () => {
       title: 'Nhân viên',
       key: 'user_info',
       width: 200,
-      render: (user: Staff) => (
+      render: (user: StaffWithRole) => (
         <div className="flex items-center space-x-3">
           <Avatar 
             size={40} 
@@ -202,25 +232,7 @@ const ManageStaffs: React.FC = () => {
         <div className="text-sm">{phone || 'Chưa cập nhật'}</div>
       ),
     },
-    {
-      title: 'Vai trò',
-      dataIndex: 'role',
-      key: 'role',
-      width: 120,
-      render: (role: string) => (
-        <Tag color={getRoleColor(role)} className="font-medium">
-          {getRoleText(role)}
-        </Tag>
-      ),
-      filters: [
-        { text: 'Admin', value: 'admin'},
-        { text: 'Quản trị viên', value: 'manager' },
-        { text: 'Nhân viên thu ngân', value: 'cashier' },
-        { text: 'Nhân viên phục vụ', value: 'service staff' },
-        { text: 'Đầu bếp', value: 'chef' },
-      ],
-      onFilter: (value: unknown, record: Staff) => record.role === value,
-    },
+
     {
       title: 'Ngày tham gia',
       key: 'created_at',
@@ -239,9 +251,9 @@ const ManageStaffs: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 180,
+      width: 220,
       fixed: 'right' as const,
-      render: (user: Staff) => {
+      render: (user: StaffWithRole) => {
         const canEdit = canEditRole(user.role, currentUserRole);
         
         if (!canEdit) {
@@ -265,6 +277,15 @@ const ManageStaffs: React.FC = () => {
                 size="small"
                 onClick={() => handleView(user)}
                 className="text-blue-500 hover:text-blue-600"
+              />
+            </Tooltip>
+            <Tooltip title="Phân quyền">
+              <Button
+                type="text"
+                icon={<SettingOutlined />}
+                size="small"
+                onClick={() => handleAssignRole(user)}
+                className="text-purple-500 hover:text-purple-600"
               />
             </Tooltip>
             <Tooltip title="Sửa thông tin">
@@ -305,7 +326,7 @@ const ManageStaffs: React.FC = () => {
     setIsModalVisible(true);
   };
 
-  const handleEdit = (user: Staff) => {
+  const handleEdit = (user: StaffWithRole) => {
     setEditingUser(user);
     editForm.setFieldsValue({
       name: user.name,
@@ -316,9 +337,62 @@ const ManageStaffs: React.FC = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleView = (user: Staff) => {
+  const handleView = (user: StaffWithRole) => {
     setViewingUser(user);
     setIsViewModalVisible(true);
+  };
+
+  const handleAssignRole = (user: StaffWithRole) => {
+    setAssigningUser(user);
+    // Initialize selected roles from user's current roles
+    const currentRoles = user.roles?.map((role: Role) => role.id) || [];
+    setSelectedRoles(currentRoles);
+    setIsAssignRoleModalVisible(true);
+  };
+
+  const handleRoleToggle = (roleId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedRoles(prev => [...prev, roleId]);
+    } else {
+      setSelectedRoles(prev => prev.filter(id => id !== roleId));
+    }
+  };
+
+  const handleSaveRoles = async () => {
+    if (!assigningUser) return;
+    
+    setIsUpdatingRoles(true);
+    
+    try {
+      // Gọi API assign roles
+      const response = await httpClient(`${import.meta.env.VITE_API_URL}/staffs/${assigningUser.id}/roles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          role_ids: selectedRoles,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        message.success('Cập nhật quyền thành công!');
+        setIsAssignRoleModalVisible(false);
+        setAssigningUser(null);
+        setSelectedRoles([]);
+        refetch();
+      } else {
+        message.error(data.message || 'Có lỗi xảy ra khi cập nhật quyền');
+      }
+    } catch (error) {
+      // message.error('Có lỗi xảy ra khi cập nhật quyền');
+    } finally {
+      setIsUpdatingRoles(false);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -768,6 +842,129 @@ const ManageStaffs: React.FC = () => {
                     {dayjs(viewingUser.created_at).format('DD/MM/YYYY HH:mm:ss')}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Assign Role Modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <SettingOutlined className="text-purple-500" />
+            <span>Phân quyền cho nhân viên</span>
+          </div>
+        }
+        open={isAssignRoleModalVisible}
+        onCancel={() => {
+          setIsAssignRoleModalVisible(false);
+          setAssigningUser(null);
+          setSelectedRoles([]);
+        }}
+        footer={[
+          <Button 
+            key="cancel" 
+            onClick={() => {
+              setIsAssignRoleModalVisible(false);
+              setAssigningUser(null);
+              setSelectedRoles([]);
+            }}
+          >
+            Hủy
+          </Button>,
+          <Button 
+            key="save" 
+            type="primary" 
+            loading={isUpdatingRoles}
+            onClick={handleSaveRoles}
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            Lưu thay đổi
+          </Button>
+        ]}
+        width={700}
+      >
+        {assigningUser && (
+          <div className="space-y-6 mt-4">
+            {/* User Info */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Avatar size={48} icon={<UserOutlined />} className="bg-purple-500">
+                  {assigningUser.name?.charAt(0)?.toUpperCase()}
+                </Avatar>
+                <div>
+                  <h4 className="font-semibold m-0">{assigningUser.name}</h4>
+                  <p className="text-gray-600 m-0">{assigningUser.email}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Current Roles */}
+            <div>
+              <h5 className="font-medium mb-3">Roles hiện tại:</h5>
+              <div className="flex flex-wrap gap-2">
+                {assigningUser.roles?.length ? (
+                  assigningUser.roles.map((role: Role) => (
+                    <Badge key={role.id} color="blue" text={role.name} />
+                  ))
+                ) : (
+                  <span className="text-gray-500 italic">Chưa có role nào</span>
+                )}
+              </div>
+            </div>
+
+            <Divider />
+
+            {/* Available Roles */}
+            <div>
+              <h5 className="font-medium mb-3">Chọn roles:</h5>
+              {rolesLoading ? (
+                <div className="text-center py-4">Đang tải...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {rolesData?.data?.map((role: Role) => (
+                    <div key={role.id} className="border rounded-lg p-3 hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          checked={selectedRoles.includes(role.id)}
+                          onChange={(e) => handleRoleToggle(role.id, e.target.checked)}
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium">{role.name}</div>
+                          <div className="text-sm text-gray-500">
+                            Level: {role.level} | 
+                            {role.status ? (
+                              <span className="text-green-600 ml-1">Active</span>
+                            ) : (
+                              <span className="text-red-600 ml-1">Inactive</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h5 className="font-medium mb-2">Tóm tắt thay đổi:</h5>
+              <p className="text-sm mb-2">
+                <strong>Số roles được chọn:</strong> {selectedRoles.length}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {selectedRoles.length > 0 ? (
+                  selectedRoles.map(roleId => {
+                    const role = rolesData?.data?.find((r: Role) => r.id === roleId);
+                    return role ? (
+                      <Badge key={roleId} color="purple" text={role.name} />
+                    ) : null;
+                  })
+                ) : (
+                  <span className="text-gray-500 italic">Không có role nào được chọn</span>
+                )}
               </div>
             </div>
           </div>

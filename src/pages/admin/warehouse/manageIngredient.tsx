@@ -48,6 +48,7 @@ import type { Media } from '@/types';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
 import { NoPermission } from '@/components/NoPermission';
+import { httpClient } from '@/utils/http';
 
 // Define interfaces based on the new database structure
 interface Ingredient {
@@ -79,7 +80,7 @@ const ManageIngredient: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
-  const { data: ingredients, isLoading } = useList<Ingredient>({
+  const { data: ingredients, isLoading, refetch } = useList<Ingredient>({
     resource: 'ingredients',
   });
 
@@ -102,6 +103,8 @@ const ManageIngredient: React.FC = () => {
   const [imageFile, setImageFile] = useState<Media | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [isLowStockModalVisible, setIsLowStockModalVisible] = useState(false);
+  // State for storing actual quantities during stock check
+  const [actualQuantities, setActualQuantities] = useState<Record<number, number>>({});
 
   // Mock data for development
   // const ingredients = generateMockIngredients();
@@ -116,6 +119,13 @@ const ManageIngredient: React.FC = () => {
 
   // Columns for the inventory table
   const inventoryColumns: ColumnsType<Ingredient> = [
+    {
+      title: 'STT',
+      dataIndex: 'index',
+      key: 'index',
+      width: '5%',
+      render: (text: string, record: Ingredient, index: number) => index + 1,
+    },
     {
       title: 'Tên nguyên liệu',
       dataIndex: 'name',
@@ -174,7 +184,7 @@ const ManageIngredient: React.FC = () => {
       dataIndex: 'created_at',
       key: 'created_at',
       width: '15%',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
+      render: (date: string) => dayjs(date).format('HH:mm DD/MM/YYYY'),
       sorter: (a: Ingredient, b: Ingredient) => 
         dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
@@ -358,18 +368,132 @@ const ManageIngredient: React.FC = () => {
 
   const handleSaveStockCheck = async () => {
     try {
-      const values = await form.validateFields();
+      // Filter ingredients that have quantity changes
+      const ingredientsToUpdate = ingredients?.data?.filter(ingredient => {
+        const actualQty = actualQuantities[ingredient.id];
+        return actualQty !== undefined && actualQty !== ingredient.quantity;
+      }) || [];
+
+      if (ingredientsToUpdate.length === 0) {
+        message.info('Không có thay đổi nào để lưu');
+        return;
+      }
+
+      // Create detailed change summary
+      const changeDetails = ingredientsToUpdate.map(ingredient => {
+        const actualQty = actualQuantities[ingredient.id];
+        const difference = actualQty - ingredient.quantity;
+        return {
+          name: ingredient.name,
+          unit: ingredient.unit,
+          systemQty: ingredient.quantity,
+          actualQty: actualQty,
+          difference: difference
+        };
+      });
+
+      // Show confirmation dialog
+      Modal.confirm({
+        title: 'Xác nhận lưu kiểm kho',
+        icon: <ExclamationCircleOutlined />,
+        content: (
+          <div>
+            <p>Bạn có chắc chắn muốn cập nhật <strong>{ingredientsToUpdate.length}</strong> nguyên liệu sau?</p>
+            <div className="max-h-64 overflow-y-auto mt-3">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2">Nguyên liệu</th>
+                    <th className="text-center p-2">Hệ thống</th>
+                    <th className="text-center p-2">Thực tế</th>
+                    <th className="text-center p-2">Chênh lệch</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {changeDetails.map((item, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="p-2">{item.name}</td>
+                      <td className="text-center p-2">{item.systemQty} {item.unit}</td>
+                      <td className="text-center p-2">{item.actualQty} {item.unit}</td>
+                      <td className={`text-center p-2 font-medium ${
+                        item.difference > 0 ? 'text-green-600' : 
+                        item.difference < 0 ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {item.difference > 0 ? '+' : ''}{item.difference} {item.unit}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-yellow-600">
+              <strong>Lưu ý:</strong> Thao tác này sẽ thay đổi số lượng tồn kho trong hệ thống và không thể hoàn tác.
+            </p>
+          </div>
+        ),
+        okText: 'Đồng ý cập nhật',
+        cancelText: 'Hủy',
+        width: 600,
+        onOk: async () => {
+          try {
+            // Create const for ingredients that need updating
+            const ingredientsNeedUpdate = ingredientsToUpdate;
+            
+            // Create object with format {id_ingredient: quantity} using forEach
+            const updateData: Record<number, number> = {};
+            ingredientsNeedUpdate.forEach(ingredient => {
+              updateData[ingredient.id] = actualQuantities[ingredient.id];
+            });
+
+            // Call single API to update all ingredients
+            await httpClient(`${API_URL}/ingredients/update-quantitys`, {
+              method: 'PUT',
+              body: updateData,
+            });
+            
+            message.success(`Đã cập nhật số lượng tồn kho thực tế.`);
+            
+            // Reset actual quantities to match updated system quantities
+            const newActualQuantities: Record<number, number> = {};
+            ingredients?.data?.forEach(ingredient => {
+              newActualQuantities[ingredient.id] = actualQuantities[ingredient.id] || ingredient.quantity;
+            });
+            setActualQuantities(newActualQuantities);
+            
+            // Refresh data to get updated quantities
+            await refetch();
+            
+          } catch (error) {
+            console.error('Bulk update failed:', error);
+            message.error('Có lỗi xảy ra khi cập nhật. Vui lòng thử lại');
+          }
+        },
+      });
       
-      // Save stock check results
-      // useCreate would be called here in a real application
-      message.success('Đã lưu kết quả kiểm kho thành công');
-      
-      setIsStockCheckModalVisible(false);
-      form.resetFields();
     } catch (error) {
-      console.error('Validate Failed:', error);
+      console.error('Save stock check failed:', error);
+      message.error('Có lỗi xảy ra. Vui lòng thử lại');
     }
   };
+
+  // Handle actual quantity change
+  const handleActualQuantityChange = (ingredientId: number, value: number | null) => {
+    setActualQuantities(prev => ({
+      ...prev,
+      [ingredientId]: value || 0
+    }));
+  };
+
+  // Initialize actual quantities when component mounts or data changes
+  useEffect(() => {
+    if (ingredients?.data) {
+      const initialQuantities: Record<number, number> = {};
+      ingredients.data.forEach(ingredient => {
+        initialQuantities[ingredient.id] = ingredient.quantity;
+      });
+      setActualQuantities(initialQuantities);
+    }
+  }, [ingredients?.data]);
 
   return (
     <CanAccess resource='ingredient' action='create' fallback={<NoPermission />}>
@@ -421,46 +545,76 @@ const ManageIngredient: React.FC = () => {
         </Row>
       </Card>
 
-      {/* Statistics Cards */}
+      {/* Statistics Dashboard */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card className="shadow-sm">
-            <Statistic
-              title="Tổng nguyên liệu"
-              value={ingredients?.data.length}
-              prefix={<InfoCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <Text className="text-gray-500 text-sm">Tổng nguyên liệu</Text>
+                <div className="text-2xl font-bold text-blue-600 mt-1">
+                  {ingredients?.data.length || 0}
+                </div>
+                <Text className="text-xs text-gray-400">loại nguyên liệu</Text>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-full">
+                <InfoCircleOutlined className="text-blue-600 text-xl" />
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card className="shadow-sm">
-            <Statistic
-              title="Cần nhập thêm"
-              value={lowStockItems?.length}
-              prefix={<WarningOutlined />}
-              valueStyle={{ color: lowStockItems && lowStockItems.length > 0 ? '#ff4d4f' : '#52c41a' }}
-            />
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <Text className="text-gray-500 text-sm">Cần nhập thêm</Text>
+                <div className="text-2xl font-bold text-red-600 mt-1">
+                  {lowStockItems?.length || 0}
+                </div>
+                <Text className="text-xs text-gray-400">nguyên liệu thiếu</Text>
+              </div>
+              <div className="bg-red-100 p-3 rounded-full">
+                <WarningOutlined className="text-red-600 text-xl" />
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card className="shadow-sm">
-            <Statistic
-              title="Tổng tồn kho"
-              value={ingredients?.data.reduce((sum, item) => sum + item.quantity, 0)}
-              prefix={<InfoCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <Text className="text-gray-500 text-sm">Tồn kho an toàn</Text>
+                <div className="text-2xl font-bold text-green-600 mt-1">
+                  {ingredients?.data.filter(item => item.quantity > item.min_quantity).length || 0}
+                </div>
+                <Text className="text-xs text-gray-400">nguyên liệu đủ</Text>
+              </div>
+              <div className="bg-green-100 p-3 rounded-full">
+                <InfoCircleOutlined className="text-green-600 text-xl" />
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Card className="shadow-sm">
-            <Statistic
-              title="Tồn kho an toàn"
-              value={ingredients?.data.filter(item => item.quantity > item.min_quantity).length}
-              prefix={<InfoCircleOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
+
+        <Col xs={24} sm={12} lg={6}>
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <Text className="text-gray-500 text-sm">Tỷ lệ an toàn</Text>
+                <div className="text-2xl font-bold text-orange-600 mt-1">
+                  {ingredients?.data && ingredients.data.length > 0 
+                    ? Math.round((ingredients.data.filter(item => item.quantity > item.min_quantity).length / ingredients.data.length) * 100)
+                    : 0
+                  }%
+                </div>
+                <Text className="text-xs text-gray-400">kho đảm bảo</Text>
+              </div>
+              <div className="bg-orange-100 p-3 rounded-full">
+                <SyncOutlined className="text-orange-600 text-xl" />
+              </div>
+            </div>
           </Card>
         </Col>
       </Row>
@@ -503,27 +657,7 @@ const ManageIngredient: React.FC = () => {
                   loading={false} // Set to true when loading data from API
                   bordered
                   scroll={{ x: 800 }}
-                  summary={pageData => {
-                    let totalQuantity = 0;
-                    
-                    pageData.forEach(item => {
-                      totalQuantity += item.quantity;
-                    });
-                    
-                    return (
-                      <Table.Summary fixed>
-                        <Table.Summary.Row>
-                          <Table.Summary.Cell index={0} colSpan={2}>
-                            <strong>Tổng cộng</strong>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={1}>
-                            <strong>{totalQuantity}</strong>
-                          </Table.Summary.Cell>
-                          <Table.Summary.Cell index={2} colSpan={3}></Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      </Table.Summary>
-                    );
-                  }}
+
                 />
               ),
             },
@@ -570,7 +704,8 @@ const ManageIngredient: React.FC = () => {
                           <InputNumber
                             style={{ width: '100%' }}
                             min={0}
-                            defaultValue={record.quantity}
+                            value={actualQuantities[record.id] || record.quantity}
+                            onChange={(value) => handleActualQuantityChange(record.id, value)}
                             addonAfter={record.unit}
                           />
                         ),
@@ -579,9 +714,23 @@ const ManageIngredient: React.FC = () => {
                         title: 'Chênh lệch',
                         key: 'difference',
                         width: '15%',
-                        render: () => (
-                          <span>0</span>
-                        ),
+                        render: (_, record: Ingredient) => {
+                          const actualQty = actualQuantities[record.id] || record.quantity;
+                          const difference = actualQty - record.quantity;
+                          return (
+                            <span 
+                              className={
+                                difference > 0 
+                                  ? 'text-green-600 font-semibold' 
+                                  : difference < 0 
+                                    ? 'text-red-600 font-semibold' 
+                                    : 'text-gray-600'
+                              }
+                            >
+                              {difference > 0 ? '+' : ''}{difference} {record.unit}
+                            </span>
+                          );
+                        },
                       },
                     ]}
                     dataSource={filteredIngredients}
@@ -590,7 +739,12 @@ const ManageIngredient: React.FC = () => {
                     bordered
                     footer={() => (
                       <div className="text-right">
-                        <Button type="primary" icon={<SaveOutlined />}>
+                        <Button 
+                          type="primary" 
+                          icon={<SaveOutlined />}
+                          onClick={handleSaveStockCheck}
+                          loading={isUpdating}
+                        >
                           Lưu kiểm kho
                         </Button>
                       </div>
@@ -632,15 +786,7 @@ const ManageIngredient: React.FC = () => {
             label="Đơn vị"
             rules={[{ required: true, message: 'Vui lòng nhập đơn vị' }]}
           >
-            <Select>
-              <Select.Option value="kg">Kilogram (kg)</Select.Option>
-              <Select.Option value="g">Gram (g)</Select.Option>
-              <Select.Option value="l">Lít (l)</Select.Option>
-              <Select.Option value="ml">Mililít (ml)</Select.Option>
-              <Select.Option value="quả">Quả</Select.Option>
-              <Select.Option value="cái">Cái</Select.Option>
-              <Select.Option value="thùng">Thùng</Select.Option>
-            </Select>
+            <Input placeholder="Ví dụ: kg, g, lít, ml, quả, cái, thùng..." />
           </Form.Item>
           {/* <Form.Item
             name="quantity"
@@ -862,21 +1008,6 @@ const ManageIngredient: React.FC = () => {
               </Table.Summary>
             )}
           />
-          
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-3">
-              <InfoCircleOutlined className="text-blue-500 mt-1" />
-              <div>
-                <div className="font-medium text-blue-900 mb-2">Gợi ý hành động:</div>
-                <ul className="text-blue-800 space-y-1 text-sm">
-                  <li>• Ưu tiên nhập các nguyên liệu có mức độ "Khẩn cấp" và "Cao"</li>
-                  <li>• Liên hệ nhà cung cấp để đặt hàng sớm nhất có thể</li>
-                  <li>• Xem xét tăng mức tồn kho tối thiểu cho những nguyên liệu thường xuyên thiếu</li>
-                  <li>• Thiết lập cảnh báo tự động khi tồn kho đạt 80% mức tối thiểu</li>
-                </ul>
-              </div>
-            </div>
-          </div>
         </div>
       </Modal>
 

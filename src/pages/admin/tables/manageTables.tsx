@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Table, Button, Space, Card, Input, Tag, Modal, Form, InputNumber, Select, message } from 'antd';
 import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
-import type { Post, TableModel, User } from '@/types';
+import type { TableModel } from '@/types';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import { areas } from '@/utils/constant';
 
@@ -77,7 +77,7 @@ const TableManagement: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, record: TableModel) => (
+      render: (_: unknown, record: TableModel) => (
         <Space size="middle">
           <Button type="primary" onClick={() => handleEdit(record)}>
             Sửa
@@ -143,14 +143,12 @@ const TableManagement: React.FC = () => {
           id: editingTable.id,
           values: values,
         });
-        message.success('Cập nhật thành công');
       } else {
         // API call để thêm bàn mới
         await createTable({
           resource: 'tables',
           values: values,
         });
-        message.success('Thêm bàn thành công');
       }
       setIsModalVisible(false);
       form.resetFields();
@@ -193,7 +191,7 @@ const TableManagement: React.FC = () => {
       </div>
 
       <Table
-        columns={columns as any}
+        columns={columns as TableProps<TableModel>['columns']}
         dataSource={filteredData}
         loading={loading || isLoadingList}
         rowKey="id"

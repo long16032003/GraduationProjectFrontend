@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import dns from 'node:dns';
 import process from 'node:process';
-import { ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport } from 'vite';
+import { AliasOptions, ConfigEnv, defineConfig, loadEnv, Plugin, UserConfigExport } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -11,12 +11,15 @@ import sri from './plugins/sri';
 import { patch } from './plugins/patch.ts';
 import { createProxyConfig } from './config/proxy.ts';
 import { normalizeSourcemapValue } from './utility.ts';
+import path from 'node:path';
 
 // @see: https://vitejs.dev/config/server-options.html#server-host
 dns.setDefaultResultOrder('verbatim');
 
+const root = path.resolve(__dirname, './src');
+
 // https://vitejs.dev/config/
-export default function(config: ConfigEnv): UserConfigExport {
+export default function (config: ConfigEnv): UserConfigExport {
   // load .env
   const env = loadEnv(config.mode, process.cwd(), '');
   const domain = new URL(env.VITE_APP_URL || 'https://admin.r0.test');
@@ -26,7 +29,7 @@ export default function(config: ConfigEnv): UserConfigExport {
       patch([
         {
           pattern: 'node_modules/@formily/json-schema/esm/compiler.js',
-          to: '.patch/@formily/json-schema/compiler.ts',
+          to: '.patch/@formily/json-schema/compiler.js',
         },
       ]),
       mkcert({
@@ -50,8 +53,9 @@ export default function(config: ConfigEnv): UserConfigExport {
     },
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-      },
+        '@': root,
+        lodash: 'lodash-es',
+      } as AliasOptions,
     },
     server: {
       host: domain.hostname,

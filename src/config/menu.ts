@@ -82,7 +82,7 @@ export const mainMenuItems: MenuItem[] = [
     title: "Bếp",
     url: "/admin/kitchen",
     icon: ChefHat,
-    permission: "bill:update", // Permission để update trạng thái order
+    permission: "order:update", // Permission để update trạng thái order
     isActive: true,
   },
   {

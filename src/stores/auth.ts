@@ -5,13 +5,13 @@ import type { Customer, Staff } from '@/types.ts';
 
 interface AuthStore {
   user: Staff | Customer | null;
-  guard: 'user' | 'customer';
+  guard: 'staff' | 'customer';
   isAuthenticated: boolean;
 }
 
 const auth$ = observable<AuthStore>({
   user: null,
-  guard: 'user',
+  guard: 'staff',
   // Computeds
   isAuthenticated: (): boolean => !!auth$.user.get(),
 })

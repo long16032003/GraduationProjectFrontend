@@ -19,7 +19,7 @@ import {
   ColorPicker,
   Spin
 } from 'antd';
-import { useList, useUpdate } from '@refinedev/core';
+import { CanAccess, useList, useUpdate } from '@refinedev/core';
 import {
   SaveOutlined,
   UploadOutlined,
@@ -40,6 +40,7 @@ import {
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import type { Color } from 'antd/es/color-picker';
 import { PageLoader } from '@/components/ui/loader';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -334,7 +335,8 @@ const SiteSettings: React.FC = () => {
   }
 
   return (
-    <div className="p-4">
+    <CanAccess resource='site-settings' action='create' fallback={<NoPermission />}>
+      <div className="p-4">
       <Card className="shadow-sm mb-4">
         <Breadcrumb 
           className="mb-4"
@@ -775,6 +777,7 @@ const SiteSettings: React.FC = () => {
         </ul>
       </Card>
     </div>
+    </CanAccess>
   );
 };
 

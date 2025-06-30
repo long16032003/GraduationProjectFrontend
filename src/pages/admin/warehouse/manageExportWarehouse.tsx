@@ -28,7 +28,8 @@ import {
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import { useList } from '@refinedev/core';
+import { CanAccess, useList } from '@refinedev/core';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -515,7 +516,8 @@ const ManageExportWarehouse: React.FC = () => {
   }
   
   return (
-    <div className="p-4">
+    <CanAccess resource='export-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-4">
       <Card className="shadow-sm mb-4">
         <Breadcrumb 
           className="mb-4"
@@ -673,7 +675,8 @@ const ManageExportWarehouse: React.FC = () => {
           </>
         )}
       </Modal>
-    </div>
+      </div>
+    </CanAccess>
   );
 };
 

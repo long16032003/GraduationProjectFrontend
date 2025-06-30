@@ -43,10 +43,11 @@ import {
 import type { TableProps, ColumnsType } from 'antd/es/table';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
-import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
+import { CanAccess, useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import type { Media } from '@/types';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router';
+import { NoPermission } from '@/components/NoPermission';
 
 // Define interfaces based on the new database structure
 interface Ingredient {
@@ -371,7 +372,8 @@ const ManageIngredient: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <CanAccess resource='ingredient' action='create' fallback={<NoPermission />}>
+      <div className="flex flex-1 flex-col gap-4 p-4">
       <Card className="shadow-sm">
         <Row gutter={[16, 16]} align="middle" justify="space-between">
           <Col>
@@ -947,6 +949,7 @@ const ManageIngredient: React.FC = () => {
         </Form>
       </Modal>
     </div>
+    </CanAccess>
   );
 };
 

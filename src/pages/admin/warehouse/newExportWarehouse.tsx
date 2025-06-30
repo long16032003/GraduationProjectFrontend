@@ -26,8 +26,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import type { ColumnsType } from 'antd/es/table';
-import { useCreate, useList } from '@refinedev/core';
+import { CanAccess, useCreate, useList } from '@refinedev/core';
 import auth$ from '@/stores/auth';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -244,7 +245,8 @@ const NewExportWarehouse: React.FC = () => {
   }
   
   return (
-    <div className="p-4">
+    <CanAccess resource='export-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-4">
       <Card className="shadow-sm mb-4">
         <Breadcrumb 
           className="mb-4"
@@ -392,6 +394,7 @@ const NewExportWarehouse: React.FC = () => {
         </ul>
       </Card>
     </div>
+    </CanAccess>
   );
 };
 

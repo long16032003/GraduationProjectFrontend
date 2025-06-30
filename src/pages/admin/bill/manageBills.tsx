@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Button, Space, Card, Input, Modal, Tag, DatePicker, Select, Tooltip, Statistic, Row, Col, Form, InputNumber, message } from 'antd';
 import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined, FilterOutlined, PlusOutlined, ShoppingCartOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useList, useOne, useUpdate } from '@refinedev/core';
+import { CanAccess, useList, useOne, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
@@ -281,7 +281,7 @@ const ManageBills: React.FC = () => {
             />
           </Tooltip>
           {record.status === 'unpaid' && (
-            <>
+            <CanAccess resource='bill' action='update'>
               <Tooltip title="Thanh toán" color='black'>
                 <Button 
                   icon={<CheckOutlined />} 
@@ -298,7 +298,7 @@ const ManageBills: React.FC = () => {
                   size="small"
                 />
               </Tooltip>
-            </>
+            </CanAccess>
           )}
           {record.status === 'paid' && (
             <Tooltip title="In hóa đơn" color='black'>
@@ -323,7 +323,12 @@ const ManageBills: React.FC = () => {
   }
 
   return (
-    <Card title='Quản lý hóa đơn' className='m-4'>
+    <CanAccess 
+      resource='bill'
+      action='create'
+      fallback={<div>Bạn không có quyền truy cập trang này</div>}
+    >
+      <Card title='Quản lý hóa đơn' className='m-4'>
       {/* Summary Statistics */}
       <Row gutter={16} className="mb-6">
         <Col span={6}>
@@ -760,6 +765,7 @@ const ManageBills: React.FC = () => {
         </Form>
       </Modal>
     </Card>
+    </CanAccess>
   );
 };
 

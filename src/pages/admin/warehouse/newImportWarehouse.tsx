@@ -29,10 +29,11 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
-import { useCreate, useList } from '@refinedev/core';
+import { CanAccess, useCreate, useList } from '@refinedev/core';
 import type { ColumnsType } from 'antd/es/table';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -298,7 +299,8 @@ const NewImportWarehouse: React.FC = () => {
   }, []);
   
   return (
-    <div className="p-6">
+    <CanAccess resource='enter-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-6">
       <Card className="shadow-sm">
         <Breadcrumb 
           className="mb-4"
@@ -433,6 +435,7 @@ const NewImportWarehouse: React.FC = () => {
         </Spin>
       </Card>
     </div>
+    </CanAccess>
   );
 };
 

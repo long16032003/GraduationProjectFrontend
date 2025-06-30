@@ -36,12 +36,13 @@ import {
   PictureOutlined,
   LoadingOutlined
 } from '@ant-design/icons';
-import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
+import { CanAccess, useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import type { Promotion, PromotionCode, PromotionFormData, Media, Customer } from '@/types';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -478,7 +479,8 @@ const ManagePromotions: React.FC = () => {
   ];
 
   return (
-    <div className="p-6">
+    <CanAccess resource='promotion' action='create' fallback={<NoPermission />}>
+      <div className="p-6">
       <Card 
         title={
           <div className="flex items-center gap-3">
@@ -838,6 +840,7 @@ const ManagePromotions: React.FC = () => {
         />
       </Modal>
     </div>
+    </CanAccess>
   );
 };
 

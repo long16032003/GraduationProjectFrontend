@@ -193,7 +193,7 @@ export interface Bill {
   total_amount: number;
   discount_amount?: number;
   created_at: string;
-  payment_method: 'cash' | 'credit_card' | 'momo' | 'vnpay' | 'bank_transfer' | null;
+  payment_method: 'cash' | 'credit_card' | 'vnpay' | 'bank_transfer' | null;
   status: 'paid' | 'unpaid' | 'cancelled';
   items?: BillItem[];
   tax_amount?: number;

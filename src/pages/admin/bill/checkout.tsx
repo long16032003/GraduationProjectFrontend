@@ -164,6 +164,7 @@ const Checkout: React.FC = () => {
   const generateSePayQR = () => {
     if (id && total > 0) {
       const qrUrl = generateQuickQRCode(parseInt(id), total);
+      console.log(qrUrl)
       setSePayQRCode(qrUrl);
       setShowSePayQR(true);
     }
@@ -235,7 +236,7 @@ const Checkout: React.FC = () => {
       // Xử lý thanh toán VNPay
       await createVNPayPaymentHandler();
     } else {
-      // Xử lý các phương thức thanh toán khác (cash, bank_transfer, momo, etc.)
+      // Xử lý các phương thức thanh toán khác (cash, bank_transfer, etc.)
       try {
         setIsProcessingPayment(true);
         
@@ -487,7 +488,6 @@ const Checkout: React.FC = () => {
                 <Select>
                   <Option value="cash">Tiền mặt</Option>
                   <Option value="bank_transfer">Chuyển khoản</Option>
-                  <Option value="momo">MoMo</Option>
                   <Option value="vnpay">VNPay</Option>
                 </Select>
               </Form.Item>

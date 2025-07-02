@@ -17,7 +17,7 @@
 </FilesMatch>
 # Allow Access Control Headers
 <IfModule mod_headers.c>
-    SetEnvIfNoCase Origin "^https?://((www\.)?[a-z0-9]+\.)?(r0\.test|localhost)(:\d+)?$" AccessControlAllowOrigin=$0
+    SetEnvIfNoCase Origin "^https?://((www\.)?[a-z0-9]+\.)?(r0\.test|gialong\.xyz|localhost)(:\d+)?$" AccessControlAllowOrigin=$0
     Header always set Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
     Header always set Access-Control-Allow-Methods "GET,OPTIONS"
     # https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header

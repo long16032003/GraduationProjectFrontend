@@ -124,6 +124,22 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
 
   if (!order) return null;
 
+  // Logic để lọc món ăn: nếu có món bị thiếu thì chỉ hiển thị món bị thiếu
+  const getFilteredDishes = () => {
+    const allActiveDishes = order.order_dishes.filter(dish => dish.status !== 'cancelled');
+    const missingDishes = allActiveDishes.filter(dish => dish.is_available === false);
+    
+    // Nếu có món bị thiếu, chỉ hiển thị món bị thiếu
+    if (missingDishes.length > 0) {
+      return missingDishes;
+    }
+    
+    // Nếu không có món bị thiếu, hiển thị tất cả món
+    return allActiveDishes;
+  };
+
+  const filteredDishes = getFilteredDishes();
+
   return (
     <Modal
       title={
@@ -154,7 +170,7 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
       <Title level={5}>Kiểm tra từng món trước khi phục vụ:</Title>
       
       <List
-        dataSource={order.order_dishes.filter(dish => dish.status !== 'cancelled')}
+        dataSource={filteredDishes}
         renderItem={(dish: OrderDish) => {
           const status = dishStatuses.find(s => s.dishId === dish.dish_id);
           const isConfirmed = status?.isConfirmed ?? true;

@@ -45,6 +45,21 @@ const OrderCard: React.FC<OrderCardProps> = ({
     order.status === 'not completed' || (order.priority !== undefined && order.priority > 3);
   const StatusIcon = getStatusIcon(order.status);
 
+  // Logic để lọc món ăn: nếu có món bị thiếu thì chỉ hiển thị món bị thiếu
+  const getFilteredDishes = () => {
+    const missingDishes = order.order_dishes.filter(dish => dish.is_available === false);
+    
+    // Nếu có món bị thiếu, chỉ hiển thị món bị thiếu
+    if (missingDishes.length > 0) {
+      return missingDishes;
+    }
+    
+    // Nếu không có món bị thiếu, hiển thị tất cả món
+    return order.order_dishes;
+  };
+
+  const filteredDishes = getFilteredDishes();
+
   const renderOrderActions = () => {
     if (order.status === 'cancelled') {
       return (
@@ -143,7 +158,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
               className='font-bold mr-2'
               style={{ fontSize: '16px' }}
             >
-              {order.table?.name}
+              {order.table?.name} - Đơn #{order.id}
             </span>
             {isHighPriority && (
               <Badge
@@ -172,7 +187,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
     >
       <List
         size='small'
-        dataSource={isExpanded ? order.order_dishes : order.order_dishes.slice(0, 3)}
+        dataSource={isExpanded ? filteredDishes : filteredDishes.slice(0, 3)}
         renderItem={(dish) => (
           <List.Item style={{ padding: '2px 0' }}>
             <div className='w-full flex justify-between items-center'>
@@ -265,8 +280,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
           </List.Item>
         )}
       />
-
-      {order.order_dishes.length > 3 && (
+      {/* {order.order_dishes.length > 3 && ( */}
+      {filteredDishes.length > 3 && (
         <div className='text-center py-1'>
           <Button
             type='link'
@@ -281,7 +296,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           >
             {isExpanded 
               ? 'Thu gọn' 
-              : `Xem thêm ${order.order_dishes.length - 3} món khác`
+              : `Xem thêm ${filteredDishes.length - 3} món khác`
             }
           </Button>
         </div>

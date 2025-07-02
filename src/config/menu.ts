@@ -32,9 +32,8 @@ export const mainMenuItems: MenuItem[] = [
     title: "Bảng điều khiển",
     url: "/admin",
     icon: LayoutDashboard,
-    isActive: true,
     permission: "statistic:browse",
-    // Không có permission - public cho tất cả admin
+    isActive: true,
   },
   {
     title: "Bàn ăn",

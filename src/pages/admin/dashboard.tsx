@@ -256,6 +256,14 @@ export function DashboardPage() {
 
       setTopDishes(topDishesData);
 
+      // Debug topDishes data
+      console.log('TopDishes Debug:', {
+        dishStatsKeys: Object.keys(dishStats),
+        topDishesData: topDishesData.slice(0, 5),
+        totalQuantity,
+        dishStatsValues: Object.values(dishStats).slice(0, 3)
+      });
+
       // Process category data
       const categoryStats: { [key: string]: { revenue: number; quantity: number } } = {};
 
@@ -349,43 +357,36 @@ export function DashboardPage() {
     },
   };
 
-  // Calculate total category revenue for percentage
-  const totalCategoryRevenue = categoryData.reduce((sum, item) => sum + item.revenue, 0);
+  // Calculate total dishes quantity for percentage
+  const totalDishesQuantity = topDishes.reduce((sum, item) => sum + item.quantity, 0);
 
-  const categoryChartConfig = {
-    data: categoryData.map((item) => ({
+  const dishPieChartConfig = {
+    data: topDishes.slice(0, 5).map((item) => ({
       ...item,
+      dish_name: item.dish_name || 'Không xác định',
       percentage:
-        totalCategoryRevenue > 0 ? ((item.revenue / totalCategoryRevenue) * 100).toFixed(1) : 0,
+        totalDishesQuantity > 0 ? ((item.quantity / totalDishesQuantity) * 100).toFixed(1) : '0',
     })),
-    angleField: 'revenue',
-    colorField: 'category',
+    angleField: 'quantity',
+    colorField: 'dish_name',
     radius: 0.8,
     innerRadius: 0.4,
-    label: {
-      content: (data: { category: string; percentage: string }) =>
-        `${data.category}\n${data.percentage}%`,
-      style: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        textAlign: 'center',
-      },
-    },
+    label: false,
     statistic: {
       title: {
         style: {
           fontSize: '14px',
           fontWeight: 'bold',
         },
-        content: 'Tổng doanh thu',
+        content: 'Tổng số món',
       },
       content: {
         style: {
           fontSize: '16px',
           fontWeight: 'bold',
-          color: '#52c41a',
+          color: '#1890ff',
         },
-        content: `${new Intl.NumberFormat('vi-VN').format(totalCategoryRevenue)}đ`,
+        content: `${new Intl.NumberFormat('vi-VN').format(totalDishesQuantity)}`,
       },
     },
     interactions: [
@@ -406,14 +407,27 @@ export function DashboardPage() {
     },
   };
 
-  const dishChartConfig = {
-    data: topDishes.slice(0, 5),
-    xField: 'quantity',
-    yField: 'dish_name',
-    seriesField: 'dish_name',
+  const billChartConfig = {
+    data: revenueData,
+    xField: 'date',
+    yField: 'orders',
     color: '#52c41a',
+    columnWidthRatio: 0.6,
+    meta: {
+      orders: {
+        alias: 'Số hóa đơn',
+      },
+      date: {
+        alias: 'Ngày',
+      },
+    },
     label: {
       position: 'middle',
+      style: {
+        fill: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+      },
     },
   };
 
@@ -627,76 +641,23 @@ export function DashboardPage() {
                 lg={8}
               >
                 <Card
-                  title='Doanh thu theo danh mục'
+                  title='Hóa đơn thanh toán thành công'
                   className='shadow-sm'
                 >
-                  {categoryData.length > 0 ? (
-                    <>
-                      <Pie
-                        {...categoryChartConfig}
-                        height={300}
-                      />
-                      <div className='mt-4'>
-                        <Title level={5}>Chi tiết theo danh mục:</Title>
-                        {categoryData
-                          .sort((a, b) => b.revenue - a.revenue)
-                          .map((item, index) => {
-                            const percentage =
-                              totalCategoryRevenue > 0
-                                ? ((item.revenue / totalCategoryRevenue) * 100).toFixed(1)
-                                : 0;
-                            return (
-                              <div
-                                key={item.category}
-                                className='flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0'
-                              >
-                                <div className='flex items-center'>
-                                  <div
-                                    className='w-3 h-3 rounded-full mr-3'
-                                    style={{
-                                      backgroundColor: [
-                                        '#1890ff',
-                                        '#52c41a',
-                                        '#faad14',
-                                        '#f5222d',
-                                        '#722ed1',
-                                        '#13c2c2',
-                                      ][index % 6],
-                                    }}
-                                  />
-                                  <Text strong>{item.category}</Text>
-                                </div>
-                                <div className='text-right'>
-                                  <div>
-                                    <Text
-                                      strong
-                                      style={{ color: '#52c41a' }}
-                                    >
-                                      {new Intl.NumberFormat('vi-VN').format(item.revenue)}đ
-                                    </Text>
-                                  </div>
-                                  <Text
-                                    type='secondary'
-                                    className='text-sm'
-                                  >
-                                    {percentage}% • {item.quantity} món
-                                  </Text>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </>
+                  {revenueData.length > 0 ? (
+                    <Column
+                      {...billChartConfig}
+                      height={350}
+                    />
                   ) : (
                     <Alert
-                      message='Chưa có dữ liệu danh mục'
+                      message='Chưa có dữ liệu hóa đơn'
                       type='info'
                     />
                   )}
                 </Card>
               </Col>
             </Row>
-
             {/* Top Dishes Table */}
             <Row gutter={[16, 16]}>
               <Col
@@ -728,17 +689,70 @@ export function DashboardPage() {
                 lg={8}
               >
                 <Card
-                  title='Top 5 món bán chạy'
+                  title='Top món ăn được gọi nhiều nhất'
                   className='shadow-sm'
                 >
-                  {topDishes.length > 0 ? (
-                    <Column
-                      {...dishChartConfig}
-                      height={350}
-                    />
+                  {topDishes.length > 0 && topDishes.some(dish => dish.dish_name && dish.quantity > 0) ? (
+                    <>
+                      <Pie
+                        {...dishPieChartConfig}
+                        height={300}
+                      />
+                      <div className='mt-4'>
+                        <Title level={5}>Chi tiết theo món ăn:</Title>
+                        {topDishes
+                          .slice(0, 5)
+                          .sort((a, b) => b.quantity - a.quantity)
+                          .map((item, index) => {
+                            const percentage =
+                              totalDishesQuantity > 0
+                                ? ((item.quantity / totalDishesQuantity) * 100).toFixed(1)
+                                : 0;
+                            return (
+                              <div
+                                key={item.dish_name}
+                                className='flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0'
+                              >
+                                <div className='flex items-center'>
+                                  <div
+                                    className='w-3 h-3 rounded-full mr-3'
+                                    style={{
+                                      backgroundColor: [
+                                        '#1890ff',
+                                        '#52c41a',
+                                        '#faad14',
+                                        '#f5222d',
+                                        '#722ed1',
+                                      ][index % 5],
+                                    }}
+                                  />
+                                  <Text strong>{item.dish_name}</Text>
+                                </div>
+                                <div className='text-right'>
+                                  <div>
+                                    <Text
+                                      strong
+                                      style={{ color: '#1890ff' }}
+                                    >
+                                      {item.quantity} món
+                                    </Text>
+                                  </div>
+                                  <Text
+                                    type='secondary'
+                                    className='text-sm'
+                                  >
+                                    {percentage}% • {new Intl.NumberFormat('vi-VN').format(item.revenue)}đ
+                                  </Text>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </>
                   ) : (
                     <Alert
-                      message='Chưa có dữ liệu'
+                      message='Chưa có dữ liệu món ăn'
+                      description={`Không tìm thấy dữ liệu món ăn trong khoảng thời gian ${currentPeriod.label.toLowerCase()}. Hãy thử chọn khoảng thời gian khác.`}
                       type='info'
                     />
                   )}

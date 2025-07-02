@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Card, Form, Input, InputNumber, Select, Button, Table, Space, message, Divider, Typography, Modal, Alert } from 'antd';
-import { ArrowLeftOutlined, CheckOutlined, ExclamationCircleOutlined, GiftOutlined } from '@ant-design/icons';
+import { Card, Form, Input, InputNumber, Select, Button, Table, Space, message, Divider, Typography, Modal, Alert, Image, Tooltip } from 'antd';
+import { ArrowLeftOutlined, CheckOutlined, ExclamationCircleOutlined, GiftOutlined, QrcodeOutlined, CopyOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { type Bill, type BillItem, type Order, type OrderDish, type PromotionCode } from '@/types';
 import { useOne, useShow, useList, useUpdate } from '@refinedev/core';
 import { createVNPayPayment, debugVNPayData } from '@/services/vnpayService';
+import { generateQuickQRCode, formatAmount, copyToClipboard, SEPAY_CONFIG, generatePaymentContent } from '@/services/sepayService';
 import { httpClient } from '@/utils/http';
 import { tax_percentage } from '@/utils/constant';
 
@@ -28,6 +29,8 @@ const Checkout: React.FC = () => {
   } | null>(null);
   const [isCouponLoading, setIsCouponLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [sePayQRCode, setSePayQRCode] = useState<string>('');
+  const [showSePayQR, setShowSePayQR] = useState(false);
 
   const { data: billData, isLoading: isLoadingBill } = useOne<Bill>({
     resource: 'bills',
@@ -44,8 +47,14 @@ const Checkout: React.FC = () => {
     if (!bill?.orders || bill.orders.length === 0) return { subtotal: 0, tax: 0, total: 0, couponDiscount: 0 };
 
     const subtotal = bill.orders.reduce((sum: number, order: Order) => {
-      return sum + (order.order_dishes?.reduce((orderSum: number, dish: OrderDish) => 
-        orderSum + ((dish.quantity || 0) * (dish.price_at_order_time || 0)), 0) || 0);
+      // Chỉ tính các order có status là "done"
+      if (order.status !== 'done') return sum;
+      
+      return sum + (order.order_dishes?.reduce((orderSum: number, dish: OrderDish) => {
+        // Chỉ tính các dish không bị hủy và không available
+        if (dish.cancelled_at || dish.is_available == 0) return orderSum;
+        return orderSum + ((dish.quantity || 0) * (dish.price_at_order_time || 0));
+      }, 0) || 0);
     }, 0);
     
     // Tính giảm giá từ mã ưu đãi
@@ -70,6 +79,8 @@ const Checkout: React.FC = () => {
   const handleBack = () => {
     navigate('/admin/bills');
   };
+
+  console.log(bill?.customer_id);
 
   // Lấy danh sách promotion codes từ API
   const { data: promotionCodesData } = useList<PromotionCode>({
@@ -149,6 +160,32 @@ const Checkout: React.FC = () => {
     message.info('Đã hủy mã ưu đãi');
   };
 
+  // Tạo QR code SePay
+  const generateSePayQR = () => {
+    if (id && total > 0) {
+      const qrUrl = generateQuickQRCode(parseInt(id), total);
+      setSePayQRCode(qrUrl);
+      setShowSePayQR(true);
+    }
+  };
+
+  // Cập nhật QR code khi total thay đổi (do mã giảm giá)
+  useEffect(() => {
+    if (form.getFieldValue('payment_method') === 'bank_transfer' && id && total > 0) {
+      generateSePayQR();
+    }
+  }, [total, id, form]);
+
+  // Copy text vào clipboard
+  const handleCopyText = async (text: string, label: string) => {
+    const success = await copyToClipboard(text);
+    if (success) {
+      message.success(`Đã copy ${label}!`);
+    } else {
+      message.error(`Không thể copy ${label}`);
+    }
+  };
+
   interface PaymentFormValues {
     payment_method: string;
     amount_paid: number;
@@ -198,7 +235,7 @@ const Checkout: React.FC = () => {
       // Xử lý thanh toán VNPay
       await createVNPayPaymentHandler();
     } else {
-      // Xử lý các phương thức thanh toán khác
+      // Xử lý các phương thức thanh toán khác (cash, bank_transfer, momo, etc.)
       try {
         setIsProcessingPayment(true);
         
@@ -207,7 +244,7 @@ const Checkout: React.FC = () => {
         const paymentData = {
           bill_id: parseInt(id as string),
           payment_method: values.payment_method,
-          amount_paid: values.amount_paid,
+          amount_paid: values.payment_method === 'bank_transfer' ? total : values.amount_paid,
           notes: values.notes,
           discount_amount: couponDiscount,
           coupon_code: appliedCoupon?.code || null,
@@ -220,8 +257,13 @@ const Checkout: React.FC = () => {
         });
 
         if (result.success) {
-          message.success('Thanh toán thành công!');
-          window.location.href = '/admin/bills';
+          if (values.payment_method === 'bank_transfer') {
+            message.success('Đã tạo yêu cầu thanh toán chuyển khoản! Vui lòng thực hiện chuyển khoản theo QR code. SePay sẽ tự động xác nhận khi nhận được tiền.');
+            // Không redirect ngay, để khách hàng có thể chuyển khoản
+          } else {
+            message.success('Thanh toán thành công!');
+            window.location.href = '/admin/bills';
+          }
         } else {
           message.error(result.message || 'Có lỗi xảy ra khi thanh toán');
         }
@@ -284,78 +326,102 @@ const Checkout: React.FC = () => {
             </div>
           </Card>
 
-          <Card title="Chi tiết món ăn">
+          <Card title="Chi tiết đơn gọi món">
+            {/** Đã có gọi món */}
             {bill.orders && bill.orders.length > 0 ? (
               <div>
-                {bill.orders.map((order: Order, orderIndex: number) => (
-                  <div key={order.id || orderIndex} className="mb-6">
-                    <div className="mb-3 p-3 bg-gray-50 rounded">
-                      <h4 className="text-base font-semibold mb-1">
-                        Đơn gọi món #{order.id} - {dayjs(order.created_at).format('HH:mm DD/MM/YYYY')}
-                      </h4>
-                      {order.note && (
-                        <p className="text-gray-600 text-sm">Ghi chú: {order.note}</p>
-                      )}
-                    </div>
-                    
-                    {order.order_dishes && order.order_dishes.length > 0 ? (
-                      <Table
-                        columns={[
-                          {
-                            title: 'Món ăn',
-                            dataIndex: ['dish', 'name'],
-                            key: 'dish_name',
-                            render: (dishName: string, record: OrderDish) => 
-                              dishName || record.dish?.name || 'Món ăn không xác định',
-                          },
-                          {
-                            title: 'Số lượng',
-                            dataIndex: 'quantity',
-                            key: 'quantity',
-                            width: '15%',
-                          },
-                          {
-                            title: 'Đơn giá',
-                            dataIndex: 'price_at_order_time',
-                            key: 'price_at_order_time',
-                            width: '20%',
-                            render: (price: number) => `${Number(price)?.toLocaleString('vi-VN')} VNĐ`,
-                          },
-                          {
-                            title: 'Thành tiền',
-                            key: 'total_price',
-                            width: '20%',
-                            render: (_: unknown, record: OrderDish) => 
-                              `${((record.quantity || 0) * (record.price_at_order_time || 0)).toLocaleString('vi-VN')} VNĐ`,
-                          },
-                        ]}
-                        dataSource={order.order_dishes}
-                        pagination={false}
-                        rowKey={(record: OrderDish) => `${order.id}-${record.dish_id}`}
-                        size="small"
-                        summary={(pageData) => {
-                          const orderTotal = pageData.reduce(
-                            (sum: number, item: OrderDish) => sum + ((item.quantity || 0) * (item.price_at_order_time || 0)),
-                            0,
-                          );
-                          
-                          return (
-                            <Table.Summary.Row>
-                              <Table.Summary.Cell index={0} colSpan={3}>
-                                <Text strong>Tổng tiền đơn này</Text>
-                              </Table.Summary.Cell>
-                              <Table.Summary.Cell index={1}>
-                                <Text strong>{orderTotal.toLocaleString('vi-VN')} VNĐ</Text>
-                              </Table.Summary.Cell>
-                            </Table.Summary.Row>
-                          );
-                        }}
-                      />
-                    ) : (
-                      <p className="text-gray-500 italic">Đơn này không có món ăn nào.</p>
-                    )}
+                {bill.orders.filter((order: Order) => order.status === 'done').length === 0 ? (
+                  <div className="text-center p-8 bg-yellow-50 rounded-md border border-yellow-200">
+                    <p className="text-yellow-700 font-medium">Chưa có đơn gọi món nào hoàn thành để thanh toán.</p>
+                    <p className="text-yellow-600 text-sm mt-2">Vui lòng chờ bếp hoàn thành món ăn trước khi thanh toán.</p>
                   </div>
-                ))}
+                ) : (
+                  bill.orders
+                    .filter((order: Order) => order.status === 'done')
+                    .map((order: Order, orderIndex: number) => {
+                      // Lọc order_dishes thỏa mãn điều kiện
+                      const validOrderDishes = order.order_dishes?.filter((dish: OrderDish) => 
+                        !dish.cancelled_at && dish.is_available == 1
+                      ) || [];
+
+                      //Chỉ hiển thị order nếu có ít nhất 1 dish hợp lệ
+                      if (validOrderDishes.length === 0) return null;
+
+                      return (
+                        <div key={order.id || orderIndex} className="mb-6">
+                          <div className="mb-3 p-3 bg-gray-50 rounded">
+                            <h4 className="text-base font-semibold mb-1">
+                              Đơn gọi món #{order.id} - {dayjs(order.created_at).format('HH:mm DD/MM/YYYY')} 
+                              <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                                Hoàn thành
+                              </span>
+                            </h4>
+                            {order.note && (
+                              <p className="text-gray-600 text-sm">Ghi chú: {order.note}</p>
+                            )}
+                          </div>
+                          
+                          {validOrderDishes.length > 0 ? (
+                            <Table
+                              columns={[
+                                {
+                                  title: 'Món ăn',
+                                  dataIndex: ['dish', 'name'],
+                                  key: 'dish_name',
+                                  render: (dishName: string, record: OrderDish) => 
+                                    dishName || record.dish?.name || 'Món ăn không xác định',
+                                },
+                                {
+                                  title: 'Số lượng',
+                                  dataIndex: 'quantity',
+                                  key: 'quantity',
+                                  width: '15%',
+                                },
+                                {
+                                  title: 'Đơn giá',
+                                  dataIndex: 'price_at_order_time',
+                                  key: 'price_at_order_time',
+                                  width: '20%',
+                                  render: (price: number) => `${Number(price)?.toLocaleString('vi-VN')} VNĐ`,
+                                },
+                                {
+                                  title: 'Thành tiền',
+                                  key: 'total_price',
+                                  width: '20%',
+                                  render: (_: unknown, record: OrderDish) => 
+                                    `${((record.quantity || 0) * (record.price_at_order_time || 0)).toLocaleString('vi-VN')} VNĐ`,
+                                },
+                              ]}
+                              dataSource={validOrderDishes}
+                              pagination={false}
+                              rowKey={(record: OrderDish) => `${order.id}-${record.dish_id}`}
+                              size="small"
+                              summary={(pageData) => {
+                                const orderTotal = pageData.reduce(
+                                  (sum: number, item: OrderDish) => sum + ((item.quantity || 0) * (item.price_at_order_time || 0)),
+                                  0,
+                                );
+                                
+                                return (
+                                  <Table.Summary.Row>
+                                    <Table.Summary.Cell index={0} colSpan={3}>
+                                      <Text strong>Tổng tiền đơn này</Text>
+                                    </Table.Summary.Cell>
+                                    <Table.Summary.Cell index={1}>
+                                      <Text strong>{orderTotal.toLocaleString('vi-VN')} VNĐ</Text>
+                                    </Table.Summary.Cell>
+                                  </Table.Summary.Row>
+                                );
+                              }}
+                            />
+                          ) : (
+                            <p className="text-gray-500 italic">Đơn này không có món ăn hợp lệ.</p>
+                          )}
+                        </div>
+                      );
+                    })
+                    .filter(Boolean)
+                )}
                 
                 {/* Tổng kết cuối */}
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
@@ -464,7 +530,7 @@ const Checkout: React.FC = () => {
                 )}
                 
                 {/* Gợi ý mã ưu đãi */}
-                {!appliedCoupon && promotionCodesData?.data && promotionCodesData.data.length > 0 && (
+                {!appliedCoupon && promotionCodesData?.data && promotionCodesData.data.length > 0 && bill?.customer_id && (
                   <div className="mt-2">
                     <Text type="secondary" className="text-xs">
                       Mã ưu đãi có sẵn: 
@@ -490,7 +556,14 @@ const Checkout: React.FC = () => {
 
               <Form.Item
                 noStyle
-                shouldUpdate={(prevValues, currentValues) => prevValues.payment_method !== currentValues.payment_method}
+                shouldUpdate={(prevValues, currentValues) => {
+                  // Tạo QR code khi chuyển sang bank_transfer
+                  if (currentValues.payment_method === 'bank_transfer' && 
+                      prevValues.payment_method !== 'bank_transfer') {
+                    generateSePayQR();
+                  }
+                  return prevValues.payment_method !== currentValues.payment_method;
+                }}
               >
                 {({ getFieldValue }) => {
                   const paymentMethod = getFieldValue('payment_method');
@@ -504,6 +577,112 @@ const Checkout: React.FC = () => {
                           type="info"
                           showIcon
                         />
+                      </div>
+                    );
+                  }
+
+                  if (paymentMethod === 'bank_transfer') {
+                    return (
+                      <div className="mb-4">
+                        {sePayQRCode && (
+                          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="text-center mb-4">
+                              <QrcodeOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                              <h4 className="mt-2 mb-4 font-semibold">Quét mã QR để chuyển khoản</h4>
+                              <Image
+                                src={sePayQRCode}
+                                alt="SePay QR Code"
+                                width={200}
+                                height={200}
+                                style={{ border: '1px solid #d9d9d9', borderRadius: '8px' }}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-3 text-sm">
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">Ngân hàng:</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{SEPAY_CONFIG.BANK_NAME}</span>
+                                  <Tooltip title="Copy tên ngân hàng">
+                                    <Button 
+                                      size="small" 
+                                      type="text" 
+                                      icon={<CopyOutlined />}
+                                      onClick={() => handleCopyText(SEPAY_CONFIG.BANK_NAME, 'tên ngân hàng')}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">Số tài khoản:</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono">{SEPAY_CONFIG.ACCOUNT_NUMBER}</span>
+                                  <Tooltip title="Copy số tài khoản">
+                                    <Button 
+                                      size="small" 
+                                      type="text" 
+                                      icon={<CopyOutlined />}
+                                      onClick={() => handleCopyText(SEPAY_CONFIG.ACCOUNT_NUMBER, 'số tài khoản')}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">Chủ tài khoản:</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{SEPAY_CONFIG.ACCOUNT_NAME}</span>
+                                  <Tooltip title="Copy tên chủ tài khoản">
+                                    <Button 
+                                      size="small" 
+                                      type="text" 
+                                      icon={<CopyOutlined />}
+                                      onClick={() => handleCopyText(SEPAY_CONFIG.ACCOUNT_NAME, 'tên chủ tài khoản')}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium">Số tiền:</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-red-600">{formatAmount(total)}</span>
+                                  <Tooltip title="Copy số tiền">
+                                    <Button 
+                                      size="small" 
+                                      type="text" 
+                                      icon={<CopyOutlined />}
+                                      onClick={() => handleCopyText(total.toString(), 'số tiền')}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-start">
+                                <span className="font-medium">Nội dung:</span>
+                                <div className="flex items-start gap-2 max-w-[200px]">
+                                  <span className="text-right break-words">{generatePaymentContent(parseInt(id!))}</span>
+                                  <Tooltip title="Copy nội dung chuyển khoản">
+                                    <Button 
+                                      size="small" 
+                                      type="text" 
+                                      icon={<CopyOutlined />}
+                                      onClick={() => handleCopyText(generatePaymentContent(parseInt(id!)), 'nội dung chuyển khoản')}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <Alert
+                              message="SePay sẽ tự động xác nhận thanh toán khi nhận được tiền"
+                              type="info"
+                              showIcon
+                              className="mt-4"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   }
@@ -584,6 +763,15 @@ const Checkout: React.FC = () => {
             message="Lưu ý"
             description="Bạn sẽ được chuyển hướng đến trang thanh toán VNPay. Vui lòng hoàn tất thanh toán trên VNPay."
             type="warning"
+            showIcon
+            className="mt-3"
+          />
+        )}
+        {form.getFieldValue('payment_method') === 'bank_transfer' && (
+          <Alert
+            message="Thanh toán chuyển khoản"
+            description="Vui lòng chuyển khoản theo thông tin QR code phía trên. Hệ thống sẽ tự động xác nhận thanh toán sau khi nhận được tiền."
+            type="info"
             showIcon
             className="mt-3"
           />

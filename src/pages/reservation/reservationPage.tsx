@@ -218,16 +218,15 @@ const ReservationPage: React.FC = () => {
       console.log("Data to be sent:", reservationData);
       
       // Gọi API đặt bàn
-      await createReservation({
+      const result = await createReservation({
         resource: "reservations",
         values: reservationData
       });
       
-      setTimeout(() => {
-        setReservationSuccess(true);
-        setCurrentStep(3);
-        setLoading(false);
-      }, 1500);
+      // Cập nhật state ngay sau khi API thành công
+      setReservationSuccess(true);
+      setCurrentStep(3);
+      setLoading(false);
     } catch (error) {
       console.error("Reservation error:", error);
       message.error('Có lỗi xảy ra khi đặt bàn');
@@ -572,7 +571,7 @@ const ReservationPage: React.FC = () => {
               </Form>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 3 && reservationSuccess && (
               <Result
                 status='success'
                 title='Đặt bàn thành công!'

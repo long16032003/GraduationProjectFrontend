@@ -283,7 +283,7 @@ const ManageBills: React.FC = () => {
           </Tooltip>
           {record.status === 'unpaid' && (
             <CanAccess resource='bill' action='update'>
-              <Tooltip title="Thanh toán" color='black'>
+              <Tooltip title="Thanh toán" color='black' className='mr-2'>
                 <Button 
                   icon={<CheckOutlined />} 
                   onClick={() => handleCheckout(record.id)}

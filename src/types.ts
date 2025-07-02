@@ -225,6 +225,12 @@ export interface OrderDish {
   order_id: number;
   quantity: number;
   price_at_order_time: number;
+  cancelled_reason?: string;
+  cancelled_by?: number;
+  cancelled_at?: string;
+  is_available?: number;
+  note?: string;
+  status?: 'active' | 'cancelled';
   // Relations
   dish?: Dish;
   order?: Order;

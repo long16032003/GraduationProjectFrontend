@@ -404,10 +404,24 @@ const KitchenDashboard: React.FC = () => {
 
   const handleConfirmComplete = async (orderId: number) => {
     try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      // Cập nhật tất cả order_dishes thành is_available: true khi hoàn thành
+      const updatedOrderDishes = order.order_dishes.map(dish => {
+        return {
+          ...dish,
+          is_available: true
+        };
+      });
+
       updateOrder({
         resource: 'orders',
         id: orderId,
-        values: { status: 'done' },
+        values: { 
+          status: 'done',
+          order_dishes: updatedOrderDishes
+        },
       });
 
       const updatedOrders = orders.map((order) => {
@@ -415,6 +429,7 @@ const KitchenDashboard: React.FC = () => {
           return {
             ...order,
             status: 'done' as const,
+            order_dishes: updatedOrderDishes
           };
         }
         return order;

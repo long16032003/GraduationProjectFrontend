@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Form,
   Input,
@@ -16,8 +16,10 @@ import {
   Divider,
   message,
   Tooltip,
-  ColorPicker
+  ColorPicker,
+  Spin
 } from 'antd';
+import { CanAccess, useList, useUpdate } from '@refinedev/core';
 import {
   SaveOutlined,
   UploadOutlined,
@@ -38,6 +40,7 @@ import {
 import type { UploadFile, UploadProps } from 'antd/es/upload/interface';
 import type { Color } from 'antd/es/color-picker';
 import { PageLoader } from '@/components/ui/loader';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -74,6 +77,33 @@ interface SiteSettings {
   bannerImages: UploadFile[];
 }
 
+// Interface for API setting item
+interface SettingItem {
+  key: string;
+  value: string;
+}
+
+// Interface for API response data
+interface ApiSettingsResponse {
+  site_name?: string;
+  site_tagline?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  opening_hours?: string;
+  facebook_url?: string;
+  zalo_url?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  heading_font?: string;
+  body_font?: string;
+  font_size?: string;
+  logo?: string;
+  favicon?: string;
+  banner_images?: string;
+}
+
 // Font options
 const fontOptions = [
   { value: 'Roboto, sans-serif', label: 'Roboto' },
@@ -99,38 +129,149 @@ const SiteSettings: React.FC = () => {
   const [form] = Form.useForm();
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  
-  // Mock initial data
-  const initialSettings: SiteSettings = {
-    siteName: 'Nhà hàng Việt Nam',
-    siteTagline: 'Hương vị truyền thống - Phục vụ chuyên nghiệp',
-    contactEmail: 'contact@restaurant.com',
-    contactPhone: '0901234567',
-    address: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
-    openingHours: '08:00 - 22:00 (Thứ 2 - Chủ nhật)',
-    facebookUrl: 'https://facebook.com/restaurant',
-    zaloUrl: 'https://zalo.com/restaurant',
-    primaryColor: '#e53935',
-    secondaryColor: '#4caf50',
-    accentColor: '#ff9800',
-    headingFont: 'Montserrat, sans-serif',
-    bodyFont: 'Roboto, sans-serif',
-    fontSize: 'medium',
-    logo: [],
-    favicon: [],
-    bannerImages: []
-  };
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  // Fetch settings from API
+  const { data: settingsData, isLoading: settingsLoading, error: settingsError } = useList({
+    resource: 'site-settings',
+    pagination: { mode: 'off' },
+  });
+
+  // Debug API response
+  useEffect(() => {
+    if (settingsData) {
+      console.log('Settings API Response:', settingsData);
+      console.log('Settings data type:', typeof settingsData.data);
+      console.log('Is array:', Array.isArray(settingsData.data));
+      console.log('Data length:', settingsData.data?.length);
+    }
+    if (settingsError) {
+      console.error('Settings API Error:', settingsError);
+    }
+  }, [settingsData, settingsError]);
+
+  // Update settings mutation
+  const { mutate: updateSettings } = useUpdate();
+
+  // Process settings data from API
+  useEffect(() => {
+    console.log('Processing settings data...', { settingsData, isLoading: settingsLoading });
+    
+    if (settingsData?.data && typeof settingsData.data === 'object' && !Array.isArray(settingsData.data)) {
+      console.log('Settings data is object, processing...');
+      const apiData = settingsData.data as ApiSettingsResponse;
+      console.log('API data object:', apiData);
+
+      // Map API response directly to form fields (since it's already an object)
+      const formData: SiteSettings = {
+        siteName: apiData.site_name || '',
+        siteTagline: apiData.site_tagline || '',
+        contactEmail: apiData.contact_email || '',
+        contactPhone: apiData.contact_phone || '',
+        address: apiData.address || '',
+        openingHours: apiData.opening_hours || '',
+        facebookUrl: apiData.facebook_url || '',
+        zaloUrl: apiData.zalo_url || '',
+        primaryColor: apiData.primary_color || '#e53935',
+        secondaryColor: apiData.secondary_color || '#4caf50',
+        accentColor: apiData.accent_color || '#ff9800',
+        headingFont: apiData.heading_font || 'Montserrat, sans-serif',
+        bodyFont: apiData.body_font || 'Roboto, sans-serif',
+        fontSize: apiData.font_size || 'medium',
+        logo: apiData.logo ? (() => {
+          try { return JSON.parse(apiData.logo); } 
+          catch { return []; }
+        })() : [],
+        favicon: apiData.favicon ? (() => {
+          try { return JSON.parse(apiData.favicon); } 
+          catch { return []; }
+        })() : [],
+        bannerImages: apiData.banner_images ? (() => {
+          try { return JSON.parse(apiData.banner_images); } 
+          catch { return []; }
+        })() : [],
+      };
+
+      console.log('Form data created:', formData);
+      
+      setSettings(formData);
+      
+      // Force update form fields
+      setTimeout(() => {
+        form.resetFields();
+        form.setFieldsValue(formData);
+        console.log('Form values after reset and set:', form.getFieldsValue());
+      }, 100);
+    } else if (!settingsLoading) {
+      // No data from API, use empty form
+      console.log('No settings data found or unexpected format, using empty form');
+      const emptySettings: SiteSettings = {
+        siteName: '',
+        siteTagline: '',
+        contactEmail: '',
+        contactPhone: '',
+        address: '',
+        openingHours: '',
+        facebookUrl: '',
+        zaloUrl: '',
+        primaryColor: '#e53935',
+        secondaryColor: '#4caf50',
+        accentColor: '#ff9800',
+        headingFont: 'Montserrat, sans-serif',
+        bodyFont: 'Roboto, sans-serif',
+        fontSize: 'medium',
+        logo: [],
+        favicon: [],
+        bannerImages: [],
+      };
+      setSettings(emptySettings);
+      form.setFieldsValue(emptySettings);
+    }
+  }, [settingsData, settingsLoading, form]);
   
   // Handle form submit
   const handleSubmit = (values: SiteSettings) => {
     setIsSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Form values:', values);
-      message.success('Lưu thiết lập thành công!');
-      setIsSaving(false);
-    }, 1500);
+    // Convert form values to API format
+    const settingsToUpdate = {
+      site_name: values.siteName,
+      site_tagline: values.siteTagline,
+      contact_email: values.contactEmail,
+      contact_phone: values.contactPhone,
+      address: values.address,
+      opening_hours: values.openingHours,
+      facebook_url: values.facebookUrl,
+      zalo_url: values.zaloUrl,
+      primary_color: values.primaryColor,
+      secondary_color: values.secondaryColor,
+      accent_color: values.accentColor,
+      heading_font: values.headingFont,
+      body_font: values.bodyFont,
+      font_size: values.fontSize,
+      logo: JSON.stringify(values.logo),
+      favicon: JSON.stringify(values.favicon),
+      banner_images: JSON.stringify(values.bannerImages),
+    };
+
+    updateSettings(
+      {
+        resource: 'site-settings',
+        id: '1', // Using a dummy id since we're updating all settings
+        values: { settings: settingsToUpdate },
+      },
+      {
+        onSuccess: () => {
+          message.success('Lưu thiết lập thành công!');
+          setIsSaving(false);
+        },
+        onError: (error) => {
+          console.error('Error updating settings:', error);
+          message.error('Có lỗi xảy ra khi lưu thiết lập!');
+          setIsSaving(false);
+        },
+      }
+    );
   };
   
   // Handle logo upload
@@ -164,13 +305,50 @@ const SiteSettings: React.FC = () => {
     </div>
   );
   
+  if (settingsLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" tip="Đang tải thiết lập..." />
+      </div>
+    );
+  }
+
+  if (settingsError) {
+    return (
+      <div className="p-4">
+        <Card>
+          <div className="text-center py-8">
+            <Title level={4} type="danger">Lỗi tải dữ liệu thiết lập</Title>
+            <Text>Không thể kết nối với API. Vui lòng kiểm tra console để xem chi tiết.</Text>
+            <br />
+            <Button 
+              type="primary" 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+            >
+              Thử lại
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4">
+    <CanAccess resource='site-settings' action='create' fallback={<NoPermission />}>
+      <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item>Thiết lập trang web</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: 'Thiết lập trang web',
+            },
+          ]}
+        />
         
         <div className="flex justify-between items-center mb-4">
           <Title level={4} className="m-0">
@@ -178,22 +356,34 @@ const SiteSettings: React.FC = () => {
             Thiết lập trang web
           </Title>
           
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={() => form.submit()}
-            loading={isSaving}
-          >
-            Lưu thiết lập
-          </Button>
+          <Space>
+            <Button
+              type="default"
+              onClick={() => {
+                console.log('Current settings:', settings);
+                console.log('Current form values:', form.getFieldsValue());
+                console.log('API data:', settingsData);
+              }}
+            >
+              Debug Info
+            </Button>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={() => form.submit()}
+              loading={isSaving}
+            >
+              Lưu thiết lập
+            </Button>
+          </Space>
         </div>
         
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={initialSettings}
-        >
+                  <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            key={JSON.stringify(settings)}
+          >
           <Tabs activeKey={activeTab} onChange={setActiveTab}>
             <TabPane tab="Thông tin chung" key="general">
               <Row gutter={16}>
@@ -300,6 +490,7 @@ const SiteSettings: React.FC = () => {
                       format="hex"
                       showText
                       disabledAlpha
+                      value={settings?.primaryColor}
                     />
                   </Form.Item>
                 </Col>
@@ -314,6 +505,7 @@ const SiteSettings: React.FC = () => {
                       format="hex"
                       showText
                       disabledAlpha
+                      value={settings?.secondaryColor}
                     />
                   </Form.Item>
                 </Col>
@@ -328,45 +520,46 @@ const SiteSettings: React.FC = () => {
                       format="hex"
                       showText
                       disabledAlpha
+                      value={settings?.accentColor}
                     />
                   </Form.Item>
                 </Col>
               </Row>
               
-              <div className="mt-6 mb-4">
-                <Title level={5}>Xem trước bảng màu</Title>
-                <div className="flex flex-wrap gap-4 mt-3">
-                  <div 
-                    className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
-                    style={{ backgroundColor: form.getFieldValue('primaryColor') }}
-                  >
-                    <div className="text-center">
-                      <div className="font-bold">Màu chính</div>
-                      <div>{form.getFieldValue('primaryColor')}</div>
+                              <div className="mt-6 mb-4">
+                  <Title level={5}>Xem trước bảng màu</Title>
+                  <div className="flex flex-wrap gap-4 mt-3">
+                    <div 
+                      className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
+                      style={{ backgroundColor: settings?.primaryColor || '#e53935' }}
+                    >
+                      <div className="text-center">
+                        <div className="font-bold">Màu chính</div>
+                        <div>{settings?.primaryColor || '#e53935'}</div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div 
-                    className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
-                    style={{ backgroundColor: form.getFieldValue('secondaryColor') }}
-                  >
-                    <div className="text-center">
-                      <div className="font-bold">Màu phụ</div>
-                      <div>{form.getFieldValue('secondaryColor')}</div>
+                    
+                    <div 
+                      className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
+                      style={{ backgroundColor: settings?.secondaryColor || '#4caf50' }}
+                    >
+                      <div className="text-center">
+                        <div className="font-bold">Màu phụ</div>
+                        <div>{settings?.secondaryColor || '#4caf50'}</div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div 
-                    className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
-                    style={{ backgroundColor: form.getFieldValue('accentColor') }}
-                  >
-                    <div className="text-center">
-                      <div className="font-bold">Màu nhấn</div>
-                      <div>{form.getFieldValue('accentColor')}</div>
+                    
+                    <div 
+                      className="w-32 h-32 rounded-lg flex items-center justify-center text-white shadow-md"
+                      style={{ backgroundColor: settings?.accentColor || '#ff9800' }}
+                    >
+                      <div className="text-center">
+                        <div className="font-bold">Màu nhấn</div>
+                        <div>{settings?.accentColor || '#ff9800'}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
             </TabPane>
             
             <TabPane tab="Hình ảnh" key="images">
@@ -435,9 +628,9 @@ const SiteSettings: React.FC = () => {
               
               <div className="border p-4 rounded-lg bg-gray-50">
                 <div className="flex items-center mb-4">
-                  {form.getFieldValue('logo')?.length ? (
+                  {settings?.logo?.length ? (
                     <img 
-                      src={previewImage(form.getFieldValue('logo')[0])} 
+                      src={previewImage(settings.logo[0])} 
                       alt="Logo preview" 
                       className="h-12 mr-4"
                     />
@@ -448,19 +641,19 @@ const SiteSettings: React.FC = () => {
                   )}
                   
                   <div>
-                    <div className="font-bold text-lg" style={{ fontFamily: form.getFieldValue('headingFont') }}>
-                      {form.getFieldValue('siteName') || 'Tên nhà hàng'}
+                    <div className="font-bold text-lg" style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}>
+                      {settings?.siteName || 'Tên nhà hàng'}
                     </div>
-                    <div className="text-sm text-gray-500" style={{ fontFamily: form.getFieldValue('bodyFont') }}>
-                      {form.getFieldValue('siteTagline') || 'Khẩu hiệu nhà hàng'}
+                    <div className="text-sm text-gray-500" style={{ fontFamily: settings?.bodyFont || 'Roboto, sans-serif' }}>
+                      {settings?.siteTagline || 'Khẩu hiệu nhà hàng'}
                     </div>
                   </div>
                 </div>
                 
                 <div className="w-full h-40 bg-gray-200 rounded flex items-center justify-center">
-                  {form.getFieldValue('bannerImages')?.length ? (
+                  {settings?.bannerImages?.length ? (
                     <img 
-                      src={previewImage(form.getFieldValue('bannerImages')[0])} 
+                      src={previewImage(settings.bannerImages[0])} 
                       alt="Banner preview" 
                       className="w-full h-40 object-cover rounded"
                     />
@@ -527,21 +720,21 @@ const SiteSettings: React.FC = () => {
               <div className="border p-6 rounded-lg bg-gray-50">
                 <div 
                   className="text-3xl font-bold mb-3"
-                  style={{ fontFamily: form.getFieldValue('headingFont') }}
+                  style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
                 >
                   Tiêu đề lớn (H1)
                 </div>
                 
                 <div 
                   className="text-2xl font-bold mb-3"
-                  style={{ fontFamily: form.getFieldValue('headingFont') }}
+                  style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
                 >
                   Tiêu đề vừa (H2)
                 </div>
                 
                 <div 
                   className="text-xl font-bold mb-4"
-                  style={{ fontFamily: form.getFieldValue('headingFont') }}
+                  style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
                 >
                   Tiêu đề nhỏ (H3)
                 </div>
@@ -549,9 +742,9 @@ const SiteSettings: React.FC = () => {
                 <div 
                   className="mb-3"
                   style={{ 
-                    fontFamily: form.getFieldValue('bodyFont'),
-                    fontSize: form.getFieldValue('fontSize') === 'small' ? '14px' : 
-                             form.getFieldValue('fontSize') === 'large' ? '18px' : '16px'
+                    fontFamily: settings?.bodyFont || 'Roboto, sans-serif',
+                    fontSize: settings?.fontSize === 'small' ? '14px' : 
+                             settings?.fontSize === 'large' ? '18px' : '16px'
                   }}
                 >
                   Đây là đoạn văn mẫu để xem trước font chữ và kích thước chữ. 
@@ -561,7 +754,7 @@ const SiteSettings: React.FC = () => {
                 
                 <div 
                   className="text-sm"
-                  style={{ fontFamily: form.getFieldValue('bodyFont') }}
+                  style={{ fontFamily: settings?.bodyFont || 'Roboto, sans-serif' }}
                 >
                   Đây là chữ nhỏ thường dùng cho chân trang hoặc ghi chú.
                 </div>
@@ -584,6 +777,7 @@ const SiteSettings: React.FC = () => {
         </ul>
       </Card>
     </div>
+    </CanAccess>
   );
 };
 

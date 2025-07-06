@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router';
-import queryClient from '@/utils/queryClient.ts';
-import { loader as newLoader } from '@/pages/admin/role/new/loader.ts';
-import { HydrateFallback } from '@/components/HydrateFallback';
+// import queryClient from '@/utils/queryClient.ts';
+// import { loader as newLoader } from '@/pages/admin/role/new/loader.ts';
+// import { HydrateFallback } from '@/components/HydrateFallback';
 
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
@@ -12,18 +12,34 @@ export const routes: RouteObject[] = [
   {
     path: 'role',
     children: [
-      // {
-      //   index: true,
-      //   lazy: {
-      //     Component: async () => (await import("@/pages/admin/dashboard.tsx")).DashboardPage,
-      //   },
-      // },
+      {
+        index: true,
+        lazy: {
+          Component: async () => (await import("@/pages/admin/role/list")).default,
+        },
+      },
       {
         path: 'new',
-        // loader: newLoader(queryClient),
-        // HydrateFallback: HydrateFallback,
         lazy: {
           Component: async () => (await import("@/pages/admin/role/new")).default,
+        },
+      },
+      {
+        path: ':id',
+        lazy: {
+          Component: async () => (await import("@/pages/admin/role/edit")).default,
+        },
+      },
+      {
+        path: ':id/show',
+        lazy: {
+          Component: async () => (await import("@/pages/admin/role/show")).default,
+        },
+      },
+      {
+        path: 'demo',
+        lazy: {
+          Component: async () => (await import("@/pages/admin/role/demo-permissions")).default,
         },
       },
     ],

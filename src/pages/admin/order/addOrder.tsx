@@ -1,61 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select } from 'antd';
+import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Form, List, Badge, Tabs, Drawer, Image } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { ArrowLeftOutlined, PlusOutlined, MinusOutlined, ShoppingCartOutlined, CheckOutlined, SearchOutlined, MenuOutlined, HistoryOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, MinusOutlined, ShoppingCartOutlined, CheckOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMediaQuery } from 'react-responsive';
-import { type Dish, type OrderDish, type Bill } from '@/types';
+import { type Dish, type OrderDish, type Bill, type DishCategory, type Order } from '@/types';
+import { useCreate, useList, useOne } from '@refinedev/core';
+import { caculateTotalAmount } from '@/utils/caculateTotalAmountBill';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const { Title, Text } = Typography;
-const { Search } = Input;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
-const { Option } = Select;
-
-// Fake data for dishes (same as in manageOrder.tsx)
-const generateFakeDishes = (): Dish[] => {
-  return [
-    { id: 1, creator_id: 1, name: 'Phở bò tái', description: 'Phở bò tái truyền thống', image_id: null, price: 65000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 2, creator_id: 1, name: 'Bún chả', description: 'Bún chả Hà Nội', image_id: null, price: 55000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 3, creator_id: 1, name: 'Cơm tấm sườn', description: 'Cơm tấm sườn nướng', image_id: null, price: 45000, category_id: 2, is_active: true, created_at: '', updated_at: '' },
-    { id: 4, creator_id: 1, name: 'Bánh mì thịt nướng', description: 'Bánh mì thịt nướng đặc biệt', image_id: null, price: 25000, category_id: 3, is_active: true, created_at: '', updated_at: '' },
-    { id: 5, creator_id: 1, name: 'Gỏi cuốn tôm thịt', description: 'Gỏi cuốn tôm thịt tươi', image_id: null, price: 35000, category_id: 4, is_active: true, created_at: '', updated_at: '' },
-    { id: 6, creator_id: 1, name: 'Chả cá Lã Vọng', description: 'Chả cá Lã Vọng truyền thống', image_id: null, price: 85000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 7, creator_id: 1, name: 'Bún bò Huế', description: 'Bún bò Huế cay nồng', image_id: null, price: 60000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 8, creator_id: 1, name: 'Cao lầu', description: 'Cao lầu Hội An', image_id: null, price: 50000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 9, creator_id: 1, name: 'Nước cam tươi', description: 'Nước cam tươi vắt', image_id: null, price: 20000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-    { id: 10, creator_id: 1, name: 'Trà đá', description: 'Trà đá truyền thống', image_id: null, price: 5000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-  ];
-};
-
-// Fake categories
-const generateFakeCategories = () => {
-  return [
-    { id: 1, name: 'Món chính' },
-    { id: 2, name: 'Khai vị' },
-    { id: 3, name: 'Đồ uống' },
-    { id: 4, name: 'Tráng miệng' },
-    { id: 5, name: 'Nước uống' }
-  ];
-};
-
-// Fake bill data
-const generateFakeBill = (billId: number): Bill => {
-  return {
-    id: billId,
-    creator_id: 1,
-    customer_id: 1,
-    customer_name: `Khách bàn ${billId}`,
-    customer_phone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
-    table_id: billId,
-    table_number: billId,
-    total_amount: 150000,
-    created_at: dayjs().subtract(1, 'hour').format(),
-    payment_method: null,
-    status: 'unpaid',
-  };
-};
 
 interface OrderItem extends OrderDish {
   temp_id: string;
@@ -72,19 +30,41 @@ const AddOrder: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('menu');
   const [isCartDrawerVisible, setIsCartDrawerVisible] = useState(false);
 
+  //API call
+  const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
+    resource: 'dish-categories',
+  });
+  const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
+    resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
+  });
+
+  const { data: billData, isLoading: isLoadingBill } = useOne<Bill>({
+    resource: 'bills',
+    id: billId,
+  });
+
+  const { mutate: createOrder, isLoading: isCreatingOrder } = useCreate<Order>();
+  
   // Responsive breakpoints
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   // Mock data
-  const dishes = useMemo(() => generateFakeDishes(), []);
-  const categories = useMemo(() => generateFakeCategories(), []);
-  const bill = useMemo(() => billId ? generateFakeBill(parseInt(billId)) : null, [billId]);
+  const dishes = listDishes?.data;
+  const categories = listDishCategories?.data;
+  const bill = billData?.data;
   
   // Filter dishes
   const filteredDishes = useMemo(() => {
-    let result = [...dishes];
+    let result = [...dishes || []];
     
     if (selectedCategory !== 'all') {
       result = result.filter(dish => dish.category_id === selectedCategory);
@@ -146,23 +126,41 @@ const AddOrder: React.FC = () => {
     }
   };
 
-  const handleSubmitOrder = (values: { note?: string }) => {
+  const handleSubmitOrder = async (values: { note?: string }) => {
     if (cart.length === 0) {
       message.warning('Vui lòng chọn ít nhất một món!');
       return;
     }
 
-    const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
-    
-    console.log('Đơn gọi món mới cho hóa đơn', billId, ':', {
-      bill_id: billId,
-      items: cart,
-      total_amount: totalAmount,
-      note: values.note
-    });
+    try {
+      const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
+      const orderData = {
+        bill_id: bill?.id || 0,
+        table_id: bill?.table_id || 0,
+        order_dishes: cart,
+        note: values.note
+      }
 
-    message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
-    navigate('/admin/order');
+      await new Promise<{ data: Order }>((resolve, reject) => {
+        createOrder({
+          resource: 'orders',
+          values: orderData,
+        }, {
+          onSuccess: (data) => {
+            resolve(data);
+          },
+          onError: (error) => {
+            reject(error);
+          }
+        });
+      });
+
+      message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
+      navigate('/admin/order');
+    } catch (error) {
+      console.error('Lỗi thêm đơn gọi món:', error);
+      message.error('Đã xảy ra lỗi khi thêm đơn gọi món!');
+    }
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.price_at_order_time), 0);
@@ -196,11 +194,11 @@ const AddOrder: React.FC = () => {
             >
               Tất cả
             </Button>
-            {categories.map(category => (
+            {categories?.map(category => (
               <Button
                 key={category.id}
                 type={selectedCategory === category.id ? 'primary' : 'default'}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedCategory(category.id as unknown as number)}
                 size={isMobile ? 'small' : 'middle'}
                 style={{ 
                   borderRadius: '20px',
@@ -224,21 +222,23 @@ const AddOrder: React.FC = () => {
             xxl: 3
           }}
           dataSource={filteredDishes}
-          renderItem={dish => (
+          renderItem={(dish: Dish) => (
             <List.Item>
               <Card
                 hoverable
-                cover={
-                  <div style={{ 
-                    height: isMobile ? 100 : 200, 
-                    background: `linear-gradient(45deg, #f0f0f0, #e0e0e0)`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '24px' : '32px'
-                  }}>
-                    🍽️
-                  </div>
+                cover={ 
+                    <div className='relative h-60 overflow-hidden'>
+                        {dish.image?.path ? <Image
+                        src={`${API_URL}/storage/${dish.image?.path}`}
+                        alt={dish.name}
+                        className='w-full h-full object-cover'
+                        preview={false} /> : <Image
+                            src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200" 
+                            alt={dish.name}
+                            className="w-full h-full object-cover"
+                            preview={false}
+                        />}
+                    </div>
                 }
                 onClick={() => handleAddToCart(dish)}
                 style={{ height: '100%' }}
@@ -511,17 +511,17 @@ const AddOrder: React.FC = () => {
             <Col span={8}>
               <Text strong>Hóa đơn:</Text> #{bill.id}
               <br />
-              <Text strong>Bàn:</Text> {bill.table_number}
+              <Text strong>Bàn:</Text> {bill.table?.name}
             </Col>
             <Col span={8}>
-              <Text strong>Khách hàng:</Text> {bill.customer_name}
+              <Text strong>Khách hàng:</Text> {bill.customer_name || bill.customer_by_phone?.name}
               <br />
-              <Text strong>SĐT:</Text> {bill.customer_phone}
+              <Text strong>SĐT:</Text> {bill.customer_phone || bill.customer_by_phone?.phone}
             </Col>
             <Col span={8}>
               <Text strong>Tổng hiện tại:</Text> 
               <Text strong style={{ color: '#f5222d', marginLeft: 8 }}>
-                {bill.total_amount.toLocaleString('vi-VN')} VNĐ
+                {caculateTotalAmount(bill).toLocaleString('vi-VN')} {cartTotal ? `+ ${Number(cartTotal).toLocaleString('vi-VN')} = ${Number(caculateTotalAmount(bill) + cartTotal).toLocaleString('vi-VN')} VNĐ` : ''}
               </Text>
               <br />
               <Text strong>Thời gian:</Text> {dayjs().format('HH:mm DD/MM/YYYY')}

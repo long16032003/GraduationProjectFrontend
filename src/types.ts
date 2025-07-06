@@ -1,8 +1,11 @@
+import type { Role } from '@/pages/admin/role/.form/schema.ts';
+
 export interface LoginFormValues {
   email: string;
   password: string;
   redirectPath?: string;
   remember?: boolean;
+  guard?: 'web' | 'customer'| null;
 }
 
 export interface LoginCustomerFormValues {
@@ -20,21 +23,28 @@ export interface RegisterFormValues {
   redirectPath?: string;
 }
 
-export interface User {
+export interface Staff {
   id?: number;
   uuid?: string;
   email: string;
   name: string;
-  role: string;
+  phone: string;
+  superadmin?: boolean;
+  roles?: Role[] | undefined
+  permissions?: Record<string, number> | undefined
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Customer {
-  id?: number;
-  uuid?: string;
-  email?: string;
-  phone: string;
+  id: number;
+  uuid: string;
   name: string;
+  phone: string;
+  email: string;
   point: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Define the action interface
@@ -53,7 +63,7 @@ export interface PermissionResource {
   actions: {
     [key: string]: PermissionAction;
   };
-  children: PermissionResource[]; // This is an empty array in the example
+  children: any[]; // This is an empty array in the example
 }
 
 // Define the group interface
@@ -61,7 +71,7 @@ export interface PermissionGroup {
   type: 'group';
   name: string;
   description: string;
-  actions: PermissionAction[]; // This is an empty array in the example
+  actions: any[]; // This is an empty array in the example
   children: {
     [key: string]: PermissionResource;
   };
@@ -88,7 +98,7 @@ export interface Staff {
 }
 
 export interface DishCategory {
-  id: string;
+  id: number;
   name: string;
   description?: string;
   created_at?: string;
@@ -103,14 +113,14 @@ export interface Dish {
   image_id: number | null;
   price: number;
   category_id: number;
-  is_active: boolean;
+  is_active: number;
   created_at: string;
   updated_at: string;
   dish_categories?: DishCategory;
-  creator?: User;
+  creator?: Staff;
   image?: Media;
   // rating?: number;
-  // is_featured?: boolean;
+  is_featured?: number;
 }
 
 export interface Media {
@@ -130,7 +140,8 @@ export interface Post {
   summary: string;
   content: string;
   created_at: string;
-  creator: User;
+  status?: 'published' | 'locked' | 'draft';
+  creator: Staff;
 }
 
 export interface TableModel {
@@ -142,7 +153,7 @@ export interface TableModel {
   area: '1st floor' | '2nd floor' | '3rd floor' | 'rooftop';
   created_at: string;
   updated_at: string;
-  creator?: User;
+  creator?: Staff;
 }
 
 export interface Reservation {
@@ -159,7 +170,7 @@ export interface Reservation {
   creator_type: 'staff' | 'customer';
   created_at: string;
   updated_at: string;
-  customer?: User;
+  customer?: Staff;
   table?: TableModel;
 }
 
@@ -176,8 +187,9 @@ export interface Bill {
   customer_id: number;
   customer_name?: string;
   customer_phone?: string;
+  customer?: Customer;
+  customer_by_phone?: Customer;
   table_id: number;
-  table_number?: number;
   total_amount: number;
   discount_amount?: number;
   created_at: string;
@@ -199,11 +211,13 @@ export interface Order {
   creator_id: number;
   order_time: string;
   note?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  status: 'init' | 'processing' | 'finished process' | 'not completed' | 'done';
   // Relations
   bill?: Bill;
-  creator?: User;
+  creator?: Staff;
   order_dishes?: OrderDish[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface OrderDish {
@@ -211,9 +225,65 @@ export interface OrderDish {
   order_id: number;
   quantity: number;
   price_at_order_time: number;
+  cancelled_reason?: string;
+  cancelled_by?: number;
+  cancelled_at?: string;
+  is_available?: number;
+  note?: string;
+  status?: 'active' | 'cancelled';
   // Relations
   dish?: Dish;
   order?: Order;
 }
 
-export const tax_percentage = 0.08
+// Promotion interfaces based on database schema
+export interface Promotion {
+  id: number;
+  creator_id: number;
+  name: string;
+  description: string | null;
+  discount_percentage: number | null;
+  discount_amount: number | null;
+  min_order_amount: number | null;
+  max_discount_amount: number | null;
+  discount_type: 'percentage' | 'fixed';
+  required_points: number;
+  limit: number;
+  image_id?: number | null;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  creator?: Staff;
+  promotion_codes?: PromotionCode[];
+  image?: Media;
+}
+
+export interface PromotionCode {
+  id: number;
+  code: string;
+  promotion_id: number;
+  customer_id: number | null;
+  used_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  promotion?: Promotion;
+  customer?: Customer;
+}
+
+export interface PromotionFormData {
+  name: string;
+  description?: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_percentage?: number;
+  discount_amount?: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  required_points: number;
+  limit: number;
+  start_date: string;
+  end_date: string;
+  image_id?: string;
+}

@@ -113,10 +113,11 @@
     "clone": "Nhân bản"
   },
   "dashboard": {
+    "dashboard": "Bảng điều khiển",
     "title": "Bảng điều khiển"
   },
   "posts": {
-    "posts": "Bài viết",
+    "posts": "bài viết",
     "fields": {
       "id": "ID",
       "title": "Tiêu đề",
@@ -135,6 +136,159 @@
       "edit": "Chỉnh sửa bài viết",
       "list": "Bài viết",
       "show": "Xem bài viết"
+    }
+  },
+  "dishes": {
+    "dishes": "món ăn",
+    "titles": {
+      "create": "Tạo món ăn mới",
+      "edit": "Chỉnh sửa món ăn",
+      "list": "Danh sách món ăn",
+      "show": "Xem món ăn"
+    }
+  },
+  "dish-categories": {
+    "dish-categories": "danh mục món ăn",
+    "titles": {
+      "create": "Tạo danh mục mới",
+      "edit": "Chỉnh sửa danh mục",
+      "list": "Danh sách danh mục",
+      "show": "Xem danh mục"
+    }
+  },
+  "tables": {
+    "tables": "bàn ăn",
+    "titles": {
+      "create": "Tạo bàn mới",
+      "edit": "Chỉnh sửa bàn",
+      "list": "Danh sách bàn",
+      "show": "Xem bàn"
+    }
+  },
+  "bills": {
+    "bills": "hóa đơn",
+    "titles": {
+      "create": "Tạo hóa đơn mới",
+      "edit": "Chỉnh sửa hóa đơn",
+      "list": "Danh sách hóa đơn",
+      "show": "Xem hóa đơn"
+    }
+  },
+  "orders": {
+    "orders": "đơn gọi món",
+    "titles": {
+      "create": "Tạo đơn hàng mới",
+      "edit": "Chỉnh sửa đơn hàng",
+      "list": "Danh sách đơn hàng",
+      "show": "Xem đơn hàng"
+    }
+  },
+  "customers": {
+    "customers": "khách hàng",
+    "titles": {
+      "create": "Tạo khách hàng mới",
+      "edit": "Chỉnh sửa khách hàng",
+      "list": "Danh sách khách hàng",
+      "show": "Xem khách hàng"
+    }
+  },
+  "staffs": {
+    "staffs": "nhân viên",
+    "titles": {
+      "create": "Tạo nhân viên mới",
+      "edit": "Chỉnh sửa nhân viên",
+      "list": "Danh sách nhân viên",
+      "show": "Xem nhân viên"
+    }
+  },
+  "reservations": {
+    "reservations": "đặt bàn",
+    "titles": {
+      "create": "Tạo đặt bàn mới",
+      "edit": "Chỉnh sửa đặt bàn",
+      "list": "Danh sách đặt bàn",
+      "show": "Xem đặt bàn"
+    }
+  },
+  "promotions": {
+    "promotions": "khuyến mãi",
+    "titles": {
+      "create": "Tạo khuyến mãi mới",
+      "edit": "Chỉnh sửa khuyến mãi",
+      "list": "Danh sách khuyến mãi",
+      "show": "Xem khuyến mãi"
+    }
+  },
+  "promotion_codes": {
+    "promotion_codes": "mã khuyến mãi",
+    "titles": {
+      "create": "Tạo mã khuyến mãi mới",
+      "edit": "Chỉnh sửa mã khuyến mãi",
+      "list": "Danh sách mã khuyến mãi",
+      "show": "Xem mã khuyến mãi"
+    }
+  },
+  "permissions": {
+    "permissions": "quyền hạn",
+    "titles": {
+      "create": "Tạo quyền hạn mới",
+      "edit": "Chỉnh sửa quyền hạn",
+      "list": "Danh sách quyền hạn",
+      "show": "Xem quyền hạn"
+    }
+  },
+  "role": {
+    "role": "vai trò",
+    "titles": {
+      "create": "Tạo vai trò mới",
+      "edit": "Chỉnh sửa vai trò",
+      "list": "Danh sách vai trò",
+      "show": "Xem vai trò"
+    }
+  },
+  "upload-image": {
+    "upload-image": "tải ảnh lên",
+    "titles": {
+      "create": "Tải ảnh lên",
+      "edit": "Chỉnh sửa ảnh",
+      "list": "Danh sách ảnh",
+      "show": "Xem ảnh"
+    }
+  },
+  "users": {
+    "users": "người dùng",
+    "titles": {
+      "create": "Tạo người dùng mới",
+      "edit": "Chỉnh sửa người dùng",
+      "list": "Danh sách người dùng",
+      "show": "Xem người dùng"
+    }
+  },
+  "ingredients": {
+    "ingredients": "nguyên liệu",
+    "titles": {
+      "create": "Tạo nguyên liệu mới",
+      "edit": "Chỉnh sửa nguyên liệu",
+      "list": "Danh sách nguyên liệu",
+      "show": "Xem nguyên liệu"
+    }
+  },
+  "enter-ingredient": {
+    "enter-ingredient": "phiếu nhập kho",
+    "titles": {
+      "create": "Tạo phiếu nhập kho mới",
+      "edit": "Chỉnh sửa phiếu nhập kho",
+      "list": "Danh sách phiếu nhập kho",
+      "show": "Xem phiếu nhập kho"
+    }
+  },
+  "export-ingredient": {
+    "export-ingredient": "phiếu xuất kho",
+    "titles": {
+      "create": "Tạo phiếu xuất kho mới",
+      "edit": "Chỉnh sửa phiếu xuất kho",
+      "list": "Danh sách phiếu xuất kho",
+      "show": "Xem phiếu xuất kho"
     }
   },
   "table": {

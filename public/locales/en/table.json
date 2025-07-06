@@ -1,0 +1,20 @@
+{
+  "triggerDesc": "Click to sort descending",
+  "triggerAsc": "Click to sort ascending", 
+  "cancelSort": "Click to cancel sorting",
+  "sortTitle": "Sort",
+  "expand": "Expand row",
+  "collapse": "Collapse row",
+  "filterTitle": "Filter",
+  "filterConfirm": "Confirm",
+  "filterReset": "Reset",
+  "filterEmptyText": "No filters",
+  "filterCheckall": "Select all",
+  "filterSearchPlaceholder": "Search in filters",
+  "selectAll": "Select all",
+  "selectInvert": "Invert selection",
+  "selectionAll": "Select all data",
+  "sortTooltipAsc": "Sort ascending",
+  "sortTooltipDesc": "Sort descending",
+  "sortTooltipCancel": "Cancel sort"
+} 

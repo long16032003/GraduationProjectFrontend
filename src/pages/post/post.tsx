@@ -1,7 +1,7 @@
 import React from 'react';
-import { Typography, Spin, Empty, Avatar, Button, Tooltip, Divider, Tag } from 'antd';
-import { CalendarOutlined, UserOutlined, EditOutlined, HomeOutlined, ReadOutlined, FieldTimeOutlined, FireOutlined } from '@ant-design/icons';
-import { useList } from '@refinedev/core';
+import { Typography, Spin, Empty, Avatar, Button, Tooltip, Divider, Tag, Dropdown, Modal, message } from 'antd';
+import { CalendarOutlined, UserOutlined, EditOutlined, HomeOutlined, ReadOutlined, FieldTimeOutlined, FireOutlined, MoreOutlined, DeleteOutlined, LockOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useList, useDelete, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Post, Staff } from '@/types';
 import { Link } from 'react-router';
@@ -9,6 +9,7 @@ import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { Breadcrumb } from 'antd/lib';
+import type { MenuProps } from 'antd';
 
 const { Title, Paragraph } = Typography;
 
@@ -43,10 +44,15 @@ const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1565299624946-b28f40a0a
 
 const PostPage: React.FC = () => {
   const user = use$(auth$.user);
-  const { data, isLoading } = useList<Post>({
+  const guard = use$(auth$.guard);
+  console.log("guard: ",guard);
+  const { data, isLoading, refetch } = useList<Post>({
     resource: 'posts',
     sorters: [{ field: 'created_at', order: 'desc' }],
   });
+
+  const { mutate: deletePost } = useDelete<Post>();
+  const { mutate: updatePost } = useUpdate<Post>();
 
   const posts = data?.data || [];
 
@@ -54,6 +60,101 @@ const PostPage: React.FC = () => {
   const canEdit = (post: Post) => {
     return user?.id === post.creator_id || (user as Staff)?.role === 'admin';
   };
+
+  // Xử lý xóa bài viết
+  const handleDelete = (post: Post) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa bài viết',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
+          <div className="bg-gray-50 p-3 rounded mt-2">
+            <strong>{post.title}</strong>
+          </div>
+        </div>
+      ),
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: () => {
+        deletePost({
+          resource: 'posts',
+          id: post.id,
+        }, {
+          onSuccess: () => {
+            message.success('Xóa bài viết thành công');
+            refetch();
+          },
+          onError: (error) => {
+            message.error(error?.message || 'Có lỗi xảy ra khi xóa bài viết');
+          }
+        });
+      },
+    });
+  };
+
+  // Xử lý khóa/mở khóa bài viết
+  const handleToggleLock = (post: Post) => {
+    const isLocked = post.status === 'locked';
+    const action = isLocked ? 'mở khóa' : 'khóa';
+    
+    Modal.confirm({
+      title: `Xác nhận ${action} bài viết`,
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc chắn muốn ${action} bài viết "${post.title}"?`,
+      okText: action === 'khóa' ? 'Khóa' : 'Mở khóa',
+      cancelText: 'Hủy',
+      onOk: () => {
+        updatePost({
+          resource: 'posts',
+          id: post.id,
+          values: {
+            status: isLocked ? 'published' : 'locked'
+          }
+        }, {
+          onSuccess: () => {
+            message.success(`${action === 'khóa' ? 'Khóa' : 'Mở khóa'} bài viết thành công`);
+            refetch();
+          },
+          onError: (error) => {
+            message.error(error?.message || `Có lỗi xảy ra khi ${action} bài viết`);
+          }
+        });
+      },
+    });
+  };
+
+  // Menu dropdown cho quản lý bài viết
+  const getManagementMenu = (post: Post): MenuProps => ({
+    items: [
+      {
+        key: 'edit',
+        icon: <EditOutlined />,
+        label: 'Cập nhật',
+        onClick: () => {
+          // Navigate to edit page - will be implemented
+          window.location.href = `/posts/edit/${post.id}`;
+        }
+      },
+      {
+        key: 'lock',
+        icon: <LockOutlined />,
+        label: post.status === 'locked' ? 'Mở khóa' : 'Khóa',
+        onClick: () => handleToggleLock(post)
+      },
+      {
+        type: 'divider',
+      },
+      {
+        key: 'delete',
+        icon: <DeleteOutlined />,
+        label: 'Xóa',
+        danger: true,
+        onClick: () => handleDelete(post)
+      },
+    ],
+  });
 
   if (isLoading) {
     return (
@@ -76,7 +177,7 @@ const PostPage: React.FC = () => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             className="mb-6"
           />
-          {user && (
+          {guard === 'staff' && (
             <Link to="/posts/create">
               <Button type="primary" size="large" className="font-medium">
                 Tạo bài viết mới
@@ -93,7 +194,7 @@ const PostPage: React.FC = () => {
   
   return (
     <MainLayout>
-      <div className="bg-gradient-to-br from-orange-50 to-white">
+      <div className=" from-orange-50 to-white">
         <div className="container mx-auto px-4 py-8">
           <Breadcrumb 
             className="mb-6"
@@ -123,7 +224,7 @@ const PostPage: React.FC = () => {
                 <div className="h-1 w-20 bg-orange-500 mt-2 rounded-full"></div>
               </div>
               
-              {user && (
+              {guard === 'staff' && (
                 <Link to="/posts/create">
                   <Button type="primary" className="bg-orange-500 hover:bg-orange-600 border-orange-500">
                     Tạo bài viết mới
@@ -148,7 +249,12 @@ const PostPage: React.FC = () => {
                       </div>
                       
                       <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                        <Tag color="orange" className="mb-3">Nổi bật</Tag>
+                        <div className="flex items-start justify-between mb-3">
+                          <Tag color="orange">Nổi bật</Tag>
+                          {featuredPosts[0].status === 'locked' && (
+                            <Tag color="red" icon={<LockOutlined />}>Đã khóa</Tag>
+                          )}
+                        </div>
                         <Title level={2} className="!text-white !mb-2 group-hover:text-orange-300 transition-colors duration-300 line-clamp-2">
                           {featuredPosts[0].title}
                         </Title>
@@ -180,20 +286,16 @@ const PostPage: React.FC = () => {
                   </Link>
                   
                   {canEdit(featuredPosts[0]) && (
-                    <Tooltip title="Chỉnh sửa bài viết">
-                      <Link 
-                        to={`/posts/edit/${featuredPosts[0].id}`}
-                        className="absolute top-4 right-4 z-10"
-                      >
+                    <div className="absolute top-4 right-4 z-10">
+                      <Dropdown menu={getManagementMenu(featuredPosts[0])} trigger={['click']} placement="bottomRight">
                         <Button 
                           type="primary"
-                          icon={<EditOutlined />}
-                          className="!bg-white/80 backdrop-blur-sm !text-orange-600 hover:!bg-white"
+                          className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-none shadow-lg"
                         >
-                          Sửa
+                          Quản lý <MoreOutlined />
                         </Button>
-                      </Link>
-                    </Tooltip>
+                      </Dropdown>
+                    </div>
                   )}
                 </div>
               )}
@@ -211,11 +313,16 @@ const PostPage: React.FC = () => {
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <div className="absolute top-0 right-0 m-3">
+                            <div className="absolute top-0 right-0 m-3 flex gap-2">
                               <Tag color="orange" className="bg-orange-500/90 backdrop-blur-sm">
                                 <FireOutlined className="mr-1" />
                                 Đề xuất
                               </Tag>
+                              {post.status === 'locked' && (
+                                <Tag color="red" icon={<LockOutlined />} className="bg-red-500/90 backdrop-blur-sm">
+                                  Khóa
+                                </Tag>
+                              )}
                             </div>
                           </div>
                           <div className="p-4 flex-grow flex flex-col">
@@ -247,19 +354,16 @@ const PostPage: React.FC = () => {
                       </Link>
 
                       {canEdit(post) && (
-                        <Tooltip title="Chỉnh sửa bài viết">
-                          <Link 
-                            to={`/posts/edit/${post.id}`}
-                            className="absolute top-4 left-4 z-10"
-                          >
+                        <div className="absolute top-4 left-4 z-10">
+                          <Dropdown menu={getManagementMenu(post)} trigger={['click']} placement="bottomLeft">
                             <Button 
-                              type="primary"
-                              icon={<EditOutlined />}
                               size="small"
-                              className="!bg-white/80 backdrop-blur-sm !text-orange-600 hover:!bg-white"
-                            />
-                          </Link>
-                        </Tooltip>
+                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-orange-300 shadow-md"
+                            >
+                              Quản lý <MoreOutlined />
+                            </Button>
+                          </Dropdown>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -289,12 +393,19 @@ const PostPage: React.FC = () => {
                         className="block h-full"
                       >
                         <div className="bg-white rounded-lg shadow-sm group-hover:shadow-md transition-all duration-300 h-full flex flex-col transform group-hover:-translate-y-1">
-                          <div className="aspect-[16/10] overflow-hidden rounded-t-lg">
+                          <div className="aspect-[16/10] overflow-hidden rounded-t-lg relative">
                             <img 
                               src={thumbnailImage} 
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
+                                                         {post.status === 'locked' && (
+                               <div className="absolute top-2 right-2">
+                                 <Tag color="red" icon={<LockOutlined />} className="text-xs">
+                                   Khóa
+                                 </Tag>
+                               </div>
+                             )}
                           </div>
                           <div className="p-4 flex-grow flex flex-col">
                             <Title 
@@ -325,19 +436,16 @@ const PostPage: React.FC = () => {
                       </Link>
 
                       {canEdit(post) && (
-                        <Tooltip title="Chỉnh sửa bài viết">
-                          <Link 
-                            to={`/posts/edit/${post.id}`}
-                            className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
+                        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Dropdown menu={getManagementMenu(post)} trigger={['click']} placement="bottomRight">
                             <Button 
-                              type="primary"
-                              icon={<EditOutlined />}
                               size="small"
-                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white"
-                            />
-                          </Link>
-                        </Tooltip>
+                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-orange-300 shadow-md"
+                            >
+                              Quản lý <MoreOutlined />
+                            </Button>
+                          </Dropdown>
+                        </div>
                       )}
                     </div>
                   );

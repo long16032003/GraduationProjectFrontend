@@ -65,6 +65,7 @@ const theme: ThemeConfig = {
 
     margin: 16,
     marginLG: 16,
+    
 
   },
   components: {
@@ -106,6 +107,14 @@ const theme: ThemeConfig = {
       headerBg: '#ffffff',
       headerHeight: 48,
       siderBg: '#ffffff',
+    },
+    Tooltip: {
+      colorBgSpotlight: '#374151', // gray-700 - màu nền tooltip
+      colorTextLightSolid: '#ffffff', // màu chữ trắng
+      borderRadius: 6,
+      paddingXS: 8, // padding trong tooltip
+      fontSize: 12, // kích thước chữ
+      lineHeight: 1.5,
     }
   },
 }

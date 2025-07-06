@@ -29,27 +29,24 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
-import { useCreate, useList } from '@refinedev/core';
+import { CanAccess, useCreate, useList } from '@refinedev/core';
 import type { ColumnsType } from 'antd/es/table';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
+import { NoPermission } from '@/components/NoPermission';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// Define interfaces based on the database diagram
+// Define interfaces based on the backend API
 interface Ingredient {
   id: number;
   name: string;
   unit: string;
+  quantity: number;
+  min_quantity: number;
   created_at: string;
   updated_at: string;
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-  contact: string;
-  address: string;
-  phone: string;
 }
 
 interface ImportItem {
@@ -60,40 +57,19 @@ interface ImportItem {
   quantity: number;
   unit_price: number;
   total_price: number;
-  supplier_id?: number;
-  supplier_name?: string;
+  supplier_name: string;
 }
 
 interface ImportFormValues {
-  note: string;
-  created_at: string;
-  items: ImportItem[];
+  note?: string;
+  total_amount: number;
+  details: {
+    ingredient_id: number;
+    quantity: number;
+    unit_price: number;
+    supplier_name: string;
+  }[];
 }
-
-// Mock data function for development
-const generateMockIngredients = (): Ingredient[] => {
-  const ingredients = [
-    { id: 1, name: 'Gạo', unit: 'kg', created_at: '2023-06-10T08:00:00', updated_at: '2023-06-10T08:00:00' },
-    { id: 2, name: 'Thịt bò', unit: 'kg', created_at: '2023-06-11T09:15:00', updated_at: '2023-06-11T09:15:00' },
-    { id: 3, name: 'Cà chua', unit: 'kg', created_at: '2023-06-12T10:30:00', updated_at: '2023-06-12T10:30:00' },
-    { id: 4, name: 'Hành tây', unit: 'kg', created_at: '2023-06-13T11:45:00', updated_at: '2023-06-13T11:45:00' },
-    { id: 5, name: 'Ớt', unit: 'kg', created_at: '2023-06-14T13:00:00', updated_at: '2023-06-14T13:00:00' },
-    { id: 6, name: 'Tỏi', unit: 'kg', created_at: '2023-06-15T14:15:00', updated_at: '2023-06-15T14:15:00' },
-    { id: 7, name: 'Bột mỳ', unit: 'kg', created_at: '2023-06-16T15:30:00', updated_at: '2023-06-16T15:30:00' },
-    { id: 8, name: 'Trứng', unit: 'quả', created_at: '2023-06-17T16:45:00', updated_at: '2023-06-17T16:45:00' },
-    { id: 9, name: 'Sữa', unit: 'lít', created_at: '2023-06-18T17:00:00', updated_at: '2023-06-18T17:00:00' },
-    { id: 10, name: 'Dầu ăn', unit: 'lít', created_at: '2023-06-19T18:15:00', updated_at: '2023-06-19T18:15:00' },
-  ];
-  return ingredients;
-};
-
-const generateMockSuppliers = (): Supplier[] => {
-  return [
-    { id: 1, name: 'Công ty TNHH Thực phẩm Hải Châu', contact: 'Nguyễn Văn A', address: '123 Đường A, Quận 1, TP.HCM', phone: '0901234567' },
-    { id: 2, name: 'Công ty CP Thực phẩm sạch Việt Nam', contact: 'Trần Thị B', address: '456 Đường B, Quận 2, TP.HCM', phone: '0912345678' },
-    { id: 3, name: 'Nhà cung cấp Thực phẩm XYZ', contact: 'Lê Văn C', address: '789 Đường C, Quận 3, TP.HCM', phone: '0923456789' }
-  ];
-};
 
 const NewImportWarehouse: React.FC = () => {
   const [form] = Form.useForm();
@@ -101,9 +77,18 @@ const NewImportWarehouse: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<ImportItem[]>([]);
   
-  // In a real application, this would be fetched from the API
-  const ingredients = generateMockIngredients();
-  const suppliers = generateMockSuppliers();
+  // Get current user
+  const currentUser = use$(auth$.user);
+  
+  // Fetch ingredients from API
+  const { data: ingredientsData, isLoading: ingredientsLoading } = useList<Ingredient>({
+    resource: 'ingredients',
+    pagination: { mode: 'off' }
+  });
+  
+  const { mutate: createEnterIngredient, isLoading: isCreating } = useCreate();
+  
+  const ingredients = ingredientsData?.data || [];
   
   // Calculate total price for all items
   const totalPrice = items.reduce((sum, item) => sum + (item.total_price || 0), 0);
@@ -111,11 +96,12 @@ const NewImportWarehouse: React.FC = () => {
   // Add a new empty item
   const addItem = () => {
     const newItem: ImportItem = {
-      key: Date.now().toString(), // Unique key for the row
+      key: Date.now().toString(),
       ingredient_id: 0,
       quantity: 1,
       unit_price: 0,
-      total_price: 0
+      total_price: 0,
+      supplier_name: ''
     };
     setItems([...items, newItem]);
   };
@@ -126,7 +112,7 @@ const NewImportWarehouse: React.FC = () => {
   };
   
   // Update an item property
-  const updateItem = (key: string, field: keyof ImportItem, value: any) => {
+  const updateItem = (key: string, field: keyof ImportItem, value: string | number) => {
     const newItems = items.map(item => {
       if (item.key === key) {
         const updatedItem = { ...item, [field]: value };
@@ -137,14 +123,6 @@ const NewImportWarehouse: React.FC = () => {
           if (selectedIngredient) {
             updatedItem.ingredient_name = selectedIngredient.name;
             updatedItem.unit = selectedIngredient.unit;
-          }
-        }
-        
-        // Update the supplier name if supplier_id changes
-        if (field === 'supplier_id') {
-          const selectedSupplier = suppliers.find(sup => sup.id === value);
-          if (selectedSupplier) {
-            updatedItem.supplier_name = selectedSupplier.name;
           }
         }
         
@@ -162,41 +140,46 @@ const NewImportWarehouse: React.FC = () => {
   };
   
   // Submit the import form
-  const handleSubmit = async (values: ImportFormValues) => {
+  const handleSubmit = async (values: { note?: string }) => {
     if (items.length === 0) {
       message.error('Vui lòng thêm ít nhất một nguyên liệu');
       return;
     }
     
+    // Validate items
+    const invalidItems = items.filter(item => 
+      !item.ingredient_id || 
+      item.quantity <= 0 || 
+      item.unit_price <= 0 || 
+      !item.supplier_name.trim()
+    );
+    
+    if (invalidItems.length > 0) {
+      message.error('Vui lòng điền đầy đủ thông tin cho tất cả nguyên liệu');
+      return;
+    }
+    
     try {
-      setLoading(true);
+      const submitData: ImportFormValues = {
+        total_amount: Math.round(totalPrice), // Convert to integer as required by backend
+        note: values.note,
+        details: items.map(item => ({
+          ingredient_id: item.ingredient_id,
+          quantity: Math.round(item.quantity), // Convert to integer
+          unit_price: Math.round(item.unit_price), // Convert to integer
+          supplier_name: item.supplier_name.trim()
+        }))
+      };
       
-      // In a real app, you would save this data to the server
-      // await createImport({
-      //   resource: 'import-warehouse',
-      //   values: {
-      //     note: values.note,
-      //     created_at: values.created_at,
-      //     total_amount: totalPrice,
-      //     items: items.map(item => ({
-      //       ingredient_id: item.ingredient_id,
-      //       quantity: item.quantity,
-      //       unit_price: item.unit_price,
-      //       supplier_id: item.supplier_id
-      //     }))
-      //   },
-      // });
-      
-      // Show success message
-      message.success('Nhập kho thành công');
-      
-      // Redirect to ingredient management
-      navigate('/admin/warehouse/ingredient');
-    } catch (error) {
-      console.error('Error submitting import form:', error);
-      message.error('Có lỗi xảy ra khi lưu phiếu nhập kho');
-    } finally {
-      setLoading(false);
+      await createEnterIngredient({
+        resource: 'enter-ingredients',
+        values: submitData,
+      });
+      navigate('/admin/warehouse/import');
+    } catch (error: unknown) {
+      console.error('Error creating import:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo phiếu nhập kho';
+      message.error(errorMessage);
     }
   };
   
@@ -209,43 +192,46 @@ const NewImportWarehouse: React.FC = () => {
       render: (_text, _record, index) => index + 1,
     },
     {
-      title: 'Tên hàng',
+      title: 'Tên nguyên liệu',
       key: 'ingredient',
       render: (_, record) => (
         <Select
-          placeholder="--Nguyên liệu--"
-          style={{ width: '100%' }}
+          placeholder="Chọn nguyên liệu"
+          style={{ width: '100%', minWidth: '200px' }}
           value={record.ingredient_id || undefined}
           onChange={(value) => updateItem(record.key, 'ingredient_id', value)}
+          showSearch
+          optionFilterProp="children"
+          filterOption={(input, option) =>
+            (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+          }
         >
           {ingredients.map(ing => (
-            <Option key={ing.id} value={ing.id}>{ing.name}</Option>
+            <Option key={ing.id} value={ing.id}>
+              {ing.name} ({ing.unit})
+            </Option>
           ))}
         </Select>
       ),
     },
     {
       title: 'Nhà cung cấp',
-      key: 'supplier',
+      key: 'supplier_name',
       render: (_, record) => (
-        <Select
-          placeholder="--Nhà cung cấp--"
-          style={{ width: '100%' }}
-          value={record.supplier_id || undefined}
-          onChange={(value) => updateItem(record.key, 'supplier_id', value)}
-        >
-          {suppliers.map(sup => (
-            <Option key={sup.id} value={sup.id}>{sup.name}</Option>
-          ))}
-        </Select>
+        <Input
+          placeholder="Tên nhà cung cấp"
+          style={{ width: '100%', minWidth: '180px' }}
+          value={record.supplier_name}
+          onChange={(e) => updateItem(record.key, 'supplier_name', e.target.value)}
+        />
       ),
     },
     {
-      title: 'Đơn vị tính',
+      title: 'Đơn vị',
       dataIndex: 'unit',
       key: 'unit',
-      width: '100px',
-      render: (text) => text || '-',
+      width: '80px',
+      render: (text) => <span className="text-gray-600">{text || '-'}</span>,
     },
     {
       title: 'Số lượng',
@@ -257,46 +243,49 @@ const NewImportWarehouse: React.FC = () => {
           step={0.1}
           style={{ width: '100%' }}
           value={record.quantity}
-          onChange={(value) => updateItem(record.key, 'quantity', value)}
+          onChange={(value) => updateItem(record.key, 'quantity', value || 0)}
+          placeholder="0"
         />
       ),
     },
     {
-      title: 'Đơn giá',
+      title: 'Đơn giá (VNĐ)',
       key: 'unit_price',
       width: '150px',
       render: (_, record) => (
         <InputNumber
           min={0}
+          step={1000}
           style={{ width: '100%' }}
           formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
           parser={(value) => Number(value?.replace(/\$\s?|(,*)/g, ''))}
           value={record.unit_price || 0}
           onChange={(value) => updateItem(record.key, 'unit_price', value || 0)}
-          addonAfter="VNĐ"
+          placeholder="0"
         />
       ),
     },
     {
-      title: 'Thành tiền',
+      title: 'Thành tiền (VNĐ)',
       key: 'total_price',
       width: '150px',
       render: (_, record) => (
-        <span className="font-semibold">
-          {record.total_price.toLocaleString('vi-VN')} VNĐ
+        <span className="font-semibold text-orange-600">
+          {record.total_price.toLocaleString('vi-VN')}
         </span>
       ),
     },
     {
       title: '',
       key: 'action',
-      width: '70px',
+      width: '50px',
       render: (_, record) => (
         <Button 
           type="text" 
           danger 
           icon={<DeleteOutlined />} 
           onClick={() => removeItem(record.key)}
+          disabled={items.length === 1}
         />
       ),
     },
@@ -310,46 +299,63 @@ const NewImportWarehouse: React.FC = () => {
   }, []);
   
   return (
-    <div className="p-4">
-      <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item href="/admin/warehouse/ingredient">Quản lý kho</Breadcrumb.Item>
-          <Breadcrumb.Item>Thêm phiếu nhập</Breadcrumb.Item>
-        </Breadcrumb>
+    <CanAccess resource='enter-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-6">
+      <Card className="shadow-sm">
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: <a href="/admin/warehouse/import">Lịch sử nhập kho</a>,
+            },
+            {
+              title: 'Tạo phiếu nhập',
+            },
+          ]}
+        />
         
-        <Title level={4} className="mb-4">
-          <ShoppingCartOutlined className="mr-2" />
-          Thêm phiếu nhập
+        <Title level={3} className="mb-6 flex items-center">
+          <ShoppingCartOutlined className="mr-3 text-orange-500" />
+          Tạo phiếu nhập kho
         </Title>
         
-        <Spin spinning={loading}>
+        <Spin spinning={ingredientsLoading || isCreating}>
           <Form
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            initialValues={{
-              created_at: dayjs(),
-            }}
+            className="space-y-4"
           >
-            <Row gutter={16}>
+            <Row gutter={24}>
               <Col xs={24} md={12}>
-                <Form.Item label={<span><UserOutlined /> Người lập phiếu</span>}>
-                  <Input value="Võ Thanh Hiếu" disabled />
+                <Form.Item label={
+                  <span className="flex items-center">
+                    <UserOutlined className="mr-2" />
+                    Người tạo phiếu
+                  </span>
+                }>
+                  <Input 
+                    value={currentUser?.name || 'N/A'} 
+                    disabled 
+                    className="bg-gray-50"
+                  />
                 </Form.Item>
               </Col>
               
               <Col xs={24} md={12}>
-                <Form.Item 
-                  name="created_at" 
-                  label={<span><CalendarOutlined /> Thời gian lập</span>}
-                  rules={[{ required: true, message: 'Vui lòng chọn ngày lập' }]}
-                >
-                  <DatePicker 
-                    style={{ width: '100%' }} 
-                    format="DD/MM/YYYY HH:mm"
-                    showTime={{ format: 'HH:mm' }}
-                    placeholder="dd/mm/yyyy --:--"
+                <Form.Item label={
+                  <span className="flex items-center">
+                    <CalendarOutlined className="mr-2" />
+                    Thời gian tạo
+                  </span>
+                }>
+                  <Input 
+                    value={dayjs().format('DD/MM/YYYY HH:mm')} 
+                    disabled 
+                    className="bg-gray-50"
                   />
                 </Form.Item>
               </Col>
@@ -357,49 +363,71 @@ const NewImportWarehouse: React.FC = () => {
             
             <Form.Item 
               name="note" 
-              label={<span><FileTextOutlined /> Nội dung</span>}
+              label={
+                <span className="flex items-center">
+                  <FileTextOutlined className="mr-2" />
+                  Ghi chú (tùy chọn)
+                </span>
+              }
             >
-              <Input.TextArea rows={4} placeholder="Nhập nội dung phiếu nhập (nếu có)" />
+              <Input.TextArea 
+                rows={3} 
+                placeholder="Nhập ghi chú cho phiếu nhập kho..."
+                maxLength={255}
+                showCount
+              />
             </Form.Item>
             
-            <Divider orientation="left">Dữ liệu nhập hàng</Divider>
+            <Divider orientation="left" className="text-lg font-semibold">
+              Chi tiết nhập kho
+            </Divider>
             
-            <Table
-              columns={columns}
-              dataSource={items}
-              pagination={false}
-              rowKey="key"
-              className="mb-4"
-              footer={() => (
-                <div className="flex justify-between items-center">
-                  <Button 
-                    type="dashed" 
-                    icon={<PlusOutlined />} 
-                    onClick={addItem}
-                  >
-                    Thêm hàng
-                  </Button>
-                  <div className="text-right font-bold text-lg">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <Table
+                columns={columns}
+                dataSource={items}
+                pagination={false}
+                rowKey="key"
+                className="mb-4"
+                scroll={{ x: 1000 }}
+                bordered
+                size="middle"
+              />
+              
+              <div className="flex justify-between items-center mt-4">
+                <Button 
+                  type="dashed" 
+                  icon={<PlusOutlined />} 
+                  onClick={addItem}
+                  className="border-orange-300 text-orange-600 hover:border-orange-500 hover:text-orange-700"
+                >
+                  Thêm nguyên liệu
+                </Button>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-red-600">
                     Tổng tiền: {totalPrice.toLocaleString('vi-VN')} VNĐ
                   </div>
                 </div>
-              )}
-            />
+              </div>
+            </div>
             
-            <div className="flex justify-end mt-4">
-              <Space>
+            <div className="flex justify-end mt-6 pt-4 border-t">
+              <Space size="middle">
                 <Button 
                   icon={<RollbackOutlined />} 
-                  onClick={() => navigate('/admin/warehouse/ingredient')}
+                  onClick={() => navigate('/admin/warehouse')}
+                  size="large"
                 >
-                  Trở về
+                  Hủy bỏ
                 </Button>
                 <Button 
                   type="primary" 
                   icon={<SaveOutlined />} 
                   htmlType="submit"
+                  loading={isCreating}
+                  size="large"
                 >
-                  Lưu phiếu nhập
+                  Tạo phiếu nhập
                 </Button>
               </Space>
             </div>
@@ -407,6 +435,7 @@ const NewImportWarehouse: React.FC = () => {
         </Spin>
       </Card>
     </div>
+    </CanAccess>
   );
 };
 

@@ -13,182 +13,120 @@ import {
   Breadcrumb,
   Tooltip,
   Modal,
-  Badge
+  Badge,
+  Spin,
+  message
 } from 'antd';
 import {
   PlusOutlined,
   SearchOutlined,
   EyeOutlined,
   PrinterOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import { useGo } from '@refinedev/core';
+import { CanAccess, useGo, useList } from '@refinedev/core';
+import { NoPermission } from '@/components/NoPermission';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-// Interface definitions
-interface ImportWarehouse {
+// Interface definitions based on backend API
+interface EnterIngredient {
   id: number;
-  staff_name: string;
+  creator_id: number;
   total_amount: number;
-  note: string;
-  create_at: string;
-  item_count: number;
-  status: 'completed' | 'pending' | 'cancelled';
+  note?: string;
+  created_at: string;
+  updated_at: string;
+  creator?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  details?: EnterIngredientDetail[];
+  details_count?: number;
 }
 
-interface ImportDetail {
+interface EnterIngredientDetail {
   id: number;
-  ingredient_name: string;
-  unit: string;
+  enter_ingredient_id: number;
+  ingredient_id: number;
   quantity: number;
   unit_price: number;
-  total_price: number;
   supplier_name: string;
+  ingredient?: {
+    id: number;
+    name: string;
+    unit: string;
+  };
 }
-
-// Mock data for demonstration
-const generateMockImports = (): ImportWarehouse[] => {
-  return [
-    {
-      id: 1001,
-      staff_name: 'Võ Thanh Hiếu',
-      total_amount: 3500000,
-      note: 'Nhập hàng đầu tháng',
-      create_at: '2023-06-10T08:00:00',
-      item_count: 5,
-      status: 'completed'
-    },
-    {
-      id: 1002,
-      staff_name: 'Nguyễn Văn A',
-      total_amount: 2800000,
-      note: 'Nhập hàng bổ sung',
-      create_at: '2023-06-15T10:30:00',
-      item_count: 3,
-      status: 'completed'
-    },
-    {
-      id: 1003,
-      staff_name: 'Trần Thị B',
-      total_amount: 4200000,
-      note: 'Nhập hàng theo kế hoạch',
-      create_at: '2023-06-20T14:15:00',
-      item_count: 7,
-      status: 'completed'
-    },
-    {
-      id: 1004,
-      staff_name: 'Lê Văn C',
-      total_amount: 1500000,
-      note: 'Nhập hàng khẩn cấp',
-      create_at: '2023-06-25T16:45:00',
-      item_count: 2,
-      status: 'completed'
-    },
-    {
-      id: 1005,
-      staff_name: 'Võ Thanh Hiếu',
-      total_amount: 5100000,
-      note: 'Nhập hàng cuối tháng',
-      create_at: '2023-06-30T09:20:00',
-      item_count: 8,
-      status: 'completed'
-    }
-  ];
-};
-
-const generateMockImportDetails = (importId: number): ImportDetail[] => {
-  // Example details for import ID 1001
-  if (importId === 1001) {
-    return [
-      {
-        id: 1,
-        ingredient_name: 'Gạo',
-        unit: 'kg',
-        quantity: 50,
-        unit_price: 20000,
-        total_price: 1000000,
-        supplier_name: 'Công ty TNHH Thực phẩm Hải Châu'
-      },
-      {
-        id: 2,
-        ingredient_name: 'Thịt bò',
-        unit: 'kg',
-        quantity: 10,
-        unit_price: 180000,
-        total_price: 1800000,
-        supplier_name: 'Công ty CP Thực phẩm sạch Việt Nam'
-      },
-      {
-        id: 3,
-        ingredient_name: 'Ớt',
-        unit: 'kg',
-        quantity: 5,
-        unit_price: 40000,
-        total_price: 200000,
-        supplier_name: 'Nhà cung cấp Thực phẩm XYZ'
-      },
-      {
-        id: 4,
-        ingredient_name: 'Tỏi',
-        unit: 'kg',
-        quantity: 3,
-        unit_price: 60000,
-        total_price: 180000,
-        supplier_name: 'Nhà cung cấp Thực phẩm XYZ'
-      },
-      {
-        id: 5,
-        ingredient_name: 'Cà chua',
-        unit: 'kg',
-        quantity: 8,
-        unit_price: 40000,
-        total_price: 320000,
-        supplier_name: 'Công ty TNHH Thực phẩm Hải Châu'
-      }
-    ];
-  }
-  
-  // Default empty array for other import IDs
-  return [];
-};
 
 const ManageImportWarehouse: React.FC = () => {
   const navigate = useNavigate();
+  const go = useGo();
+  
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
-  const [selectedImport, setSelectedImport] = useState<ImportWarehouse | null>(null);
+  const [selectedImport, setSelectedImport] = useState<EnterIngredient | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [importDetails, setImportDetails] = useState<EnterIngredientDetail[]>([]);
 
-  const go = useGo();
+  // Fetch enter ingredients from API
+  const { data: enterIngredientsData, isLoading, refetch } = useList<EnterIngredient>({
+    resource: 'enter-ingredients',
+    pagination: {
+      pageSize: 50,
+    },
+    sorters: [
+      {
+        field: 'created_at',
+        order: 'desc'
+      }
+    ],
+  });
 
-  // Mock data
-  const imports = generateMockImports();
+  const enterIngredients = enterIngredientsData?.data || [];
   
   // Filter imports based on search text and date range
-  const filteredImports = imports.filter(item => {
+  const filteredImports = enterIngredients.filter(item => {
     const matchesSearch = 
       item.id.toString().includes(searchText) ||
-      item.staff_name.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.note.toLowerCase().includes(searchText.toLowerCase());
+      (item.creator?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (item.note || '').toLowerCase().includes(searchText.toLowerCase());
     
     const matchesDateRange = !dateRange || (
-      dayjs(item.create_at).isAfter(dateRange[0], 'day') && 
-      dayjs(item.create_at).isBefore(dateRange[1], 'day')
+      dayjs(item.created_at).isAfter(dateRange[0].startOf('day')) && 
+      dayjs(item.created_at).isBefore(dateRange[1].endOf('day'))
     );
     
     return matchesSearch && matchesDateRange;
   });
   
   // Handle view details
-  const handleViewDetails = (record: ImportWarehouse) => {
+  const handleViewDetails = async (record: EnterIngredient) => {
     setSelectedImport(record);
     setIsDetailModalVisible(true);
+    
+    if (record.details && record.details.length > 0) {
+      setImportDetails(record.details);
+    } else {
+      // Fetch details if not included
+      setDetailLoading(true);
+      try {
+        // In a real app, you might have a separate endpoint for details
+        // For now, we'll assume details are included in the main response
+        setImportDetails([]);
+      } catch (error) {
+        console.error('Error fetching details:', error);
+      } finally {
+        setDetailLoading(false);
+      }
+    }
   };
   
   // Handle create new import
@@ -198,66 +136,364 @@ const ManageImportWarehouse: React.FC = () => {
     });
   };
   
-  // Get status tag color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'pending':
-        return 'processing';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
+  // Handle print
+  const handlePrint = (record: EnterIngredient) => {
+    const printContent = generatePrintContent(record, record.details || []);
+    const printWindow = window.open('', '_blank');
+    
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.print();
+      };
     }
   };
-  
-  // Get status display text
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Hoàn thành';
-      case 'pending':
-        return 'Đang xử lý';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
+
+  // Handle export to Excel
+  const handleExportExcel = (record: EnterIngredient) => {
+    try {
+      const currentDetails = record.details || [];
+      
+      // Prepare data for Excel
+      const excelData = [
+        ['PHIẾU NHẬP KHO'],
+        ['Mã phiếu:', `#${record.id}`],
+        ['Người lập:', record.creator?.name || 'N/A'],
+        ['Ngày lập:', dayjs(record.created_at).format('DD/MM/YYYY HH:mm')],
+        ['Tổng tiền:', `${Number(record.total_amount).toLocaleString('vi-VN')} VNĐ`],
+        ['Ghi chú:', record.note || 'Không có'],
+        [], // Empty row
+        ['STT', 'Tên nguyên liệu', 'Số lượng', 'Đơn vị', 'Đơn giá (VNĐ)', 'Thành tiền (VNĐ)', 'Nhà cung cấp'],
+        ...currentDetails.map((detail, index) => [
+          index + 1,
+          detail.ingredient?.name || 'N/A',
+          detail.quantity,
+          detail.ingredient?.unit || 'N/A',
+          detail.unit_price,
+          detail.quantity * detail.unit_price,
+          detail.supplier_name
+        ]),
+        [], // Empty row
+        ['', '', '', '', 'TỔNG TIỀN:', record.total_amount, '']
+      ];
+
+      // Create worksheet
+      const ws = document.createElement('table');
+      ws.innerHTML = excelData.map(row => 
+        `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+      ).join('');
+
+      // Create and download
+      const csvContent = excelData.map(row => 
+        row.map(cell => `"${cell}"`).join(',')
+      ).join('\n');
+      
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `phieu_nhap_kho_${record.id}_${dayjs().format('DDMMYYYY')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      message.success('Đã tải xuống phiếu nhập kho thành công!');
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Có lỗi xảy ra khi xuất phiếu nhập kho');
     }
+  };
+
+
+
+  // Generate print content HTML
+  const generatePrintContent = (record: EnterIngredient, details: EnterIngredientDetail[]) => {
+    const currentDetails = details.length > 0 ? details : record.details || [];
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Phiếu nhập kho #${record.id}</title>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              margin: 0;
+              padding: 20px;
+              font-size: 14px;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              color: #333;
+              margin-bottom: 5px;
+            }
+            .document-title {
+              font-size: 20px;
+              font-weight: bold;
+              color: #e67e22;
+              margin: 15px 0;
+            }
+            .info-section {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+              gap: 40px;
+            }
+            .info-group {
+              flex: 1;
+            }
+            .info-row {
+              margin-bottom: 8px;
+              display: flex;
+            }
+            .info-label {
+              font-weight: bold;
+              min-width: 120px;
+              color: #333;
+            }
+            .info-value {
+              flex: 1;
+            }
+            .table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            .table th,
+            .table td {
+              border: 1px solid #ddd;
+              padding: 12px 8px;
+              text-align: left;
+            }
+            .table th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+              text-align: center;
+            }
+            .table tr:nth-child(even) {
+              background-color: #f8f9fa;
+            }
+            .text-center {
+              text-align: center;
+            }
+            .text-right {
+              text-align: right;
+            }
+            .text-bold {
+              font-weight: bold;
+            }
+            .total-section {
+              margin-top: 20px;
+              padding-top: 15px;
+              border-top: 2px solid #333;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              font-size: 18px;
+              font-weight: bold;
+              color: #e67e22;
+            }
+            .signature-section {
+              margin-top: 50px;
+              display: flex;
+              justify-content: space-between;
+            }
+            .signature-box {
+              text-align: center;
+              flex: 1;
+            }
+            .signature-title {
+              font-weight: bold;
+              margin-bottom: 60px;
+            }
+            .signature-line {
+              border-top: 1px solid #333;
+              margin-top: 60px;
+              padding-top: 5px;
+            }
+            .note-section {
+              margin-top: 30px;
+              padding: 15px;
+              background-color: #f8f9fa;
+              border-left: 4px solid #e67e22;
+            }
+            .print-info {
+              margin-top: 30px;
+              text-align: center;
+              color: #666;
+              font-size: 12px;
+              border-top: 1px solid #ddd;
+              padding-top: 15px;
+            }
+            @media print {
+              body { margin: 0; }
+              .print-info { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">NHÀ HÀNG BAMBOO SÔNG CHANH</div>
+            <div class="document-title">PHIẾU NHẬP KHO</div>
+            <div style="font-size: 16px; color: #666;">Số: ${record.id.toString().padStart(6, '0')}</div>
+          </div>
+
+          <div class="info-section">
+            <div class="info-group">
+              <div class="info-row">
+                <span class="info-label">Người lập phiếu:</span>
+                <span class="info-value">${record.creator?.name || 'N/A'}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Ngày lập:</span>
+                <span class="info-value">${dayjs(record.created_at).format('DD/MM/YYYY')}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Giờ lập:</span>
+                <span class="info-value">${dayjs(record.created_at).format('HH:mm:ss')}</span>
+              </div>
+            </div>
+            <div class="info-group">
+              <div class="info-row">
+                <span class="info-label">Mã phiếu:</span>
+                <span class="info-value text-bold">#${record.id}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Trạng thái:</span>
+                <span class="info-value" style="color: #27ae60; font-weight: bold;">Hoàn thành</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Số mặt hàng:</span>
+                <span class="info-value text-bold">${currentDetails.length}</span>
+              </div>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">STT</th>
+                <th>Tên nguyên liệu</th>
+                <th style="width: 100px;">Số lượng</th>
+                <th style="width: 80px;">Đơn vị</th>
+                <th style="width: 120px;">Đơn giá (VNĐ)</th>
+                <th style="width: 130px;">Thành tiền (VNĐ)</th>
+                <th>Nhà cung cấp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${currentDetails.map((detail, index) => {
+                const totalPrice = detail.quantity * detail.unit_price;
+                return `
+                  <tr>
+                    <td class="text-center">${index + 1}</td>
+                    <td>${detail.ingredient?.name || 'N/A'}</td>
+                    <td class="text-center text-bold">${Number(detail.quantity).toLocaleString('vi-VN')}</td>
+                    <td class="text-center">${detail.ingredient?.unit || 'N/A'}</td>
+                    <td class="text-right">${Number(detail.unit_price).toLocaleString('vi-VN')}</td>
+                    <td class="text-right text-bold">${Number(totalPrice).toLocaleString('vi-VN')}</td>
+                    <td>${detail.supplier_name}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              <span>TỔNG TIỀN:</span>
+              <span>${Number(record.total_amount).toLocaleString('vi-VN')} VNĐ</span>
+            </div>
+          </div>
+
+          ${record.note ? `
+            <div class="note-section">
+              <div style="font-weight: bold; margin-bottom: 10px;">Ghi chú:</div>
+              <div>${record.note}</div>
+            </div>
+          ` : ''}
+
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-title">Người lập phiếu</div>
+              <div class="signature-line">${record.creator?.name || 'N/A'}</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-title">Thủ kho</div>
+              <div class="signature-line">........................</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-title">Người phê duyệt</div>
+              <div class="signature-line">........................</div>
+            </div>
+          </div>
+
+          <div class="print-info">
+            In lúc: ${dayjs().format('DD/MM/YYYY HH:mm:ss')} | 
+            Hệ thống quản lý nhà hàng
+          </div>
+        </body>
+      </html>
+    `;
   };
   
   // Import history table columns
-  const columns: ColumnsType<ImportWarehouse> = [
+  const columns: ColumnsType<EnterIngredient> = [
     {
       title: 'Mã phiếu',
       dataIndex: 'id',
       key: 'id',
       width: '100px',
       render: (id: number) => (
-        <span className="font-medium">#{id}</span>
+        <span className="font-medium text-blue-600">#{id}</span>
       ),
     },
     {
       title: 'Người lập',
-      dataIndex: 'staff_name',
-      key: 'staff_name',
+      key: 'creator_name',
       width: '150px',
+      render: (_, record) => (
+        <span>{record.creator?.name || 'N/A'}</span>
+      ),
     },
     {
       title: 'Ngày lập',
-      dataIndex: 'create_at',
-      key: 'create_at',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: '150px',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
-      sorter: (a, b) => dayjs(a.create_at).unix() - dayjs(b.create_at).unix(),
+      render: (date: string) => (
+        <div className="text-sm">
+          <div>{dayjs(date).format('DD/MM/YYYY')}</div>
+          <div className="text-gray-500">{dayjs(date).format('HH:mm')}</div>
+        </div>
+      ),
+      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
     {
       title: 'Số mặt hàng',
-      dataIndex: 'item_count',
       key: 'item_count',
       width: '120px',
-      render: (count: number) => (
-        <Badge count={count} showZero color="#52c41a" overflowCount={99} />
+      render: (_, record) => (
+        <Badge 
+          count={record.details?.length || record.details_count || 0} 
+          showZero 
+          color="#52c41a" 
+          overflowCount={99} 
+        />
       ),
     },
     {
@@ -267,7 +503,7 @@ const ManageImportWarehouse: React.FC = () => {
       width: '150px',
       render: (amount: number) => (
         <span className="font-semibold text-orange-600">
-          {amount.toLocaleString('vi-VN')} VNĐ
+          {Number(amount).toLocaleString('vi-VN')} VNĐ
         </span>
       ),
       sorter: (a, b) => a.total_amount - b.total_amount,
@@ -277,22 +513,20 @@ const ManageImportWarehouse: React.FC = () => {
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
+      render: (note: string) => note || <span className="text-gray-400">Không có</span>,
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
       key: 'status',
       width: '120px',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {getStatusText(status)}
-        </Tag>
+      render: () => (
+        <Tag color="success">Hoàn thành</Tag>
       ),
     },
     {
       title: 'Thao tác',
       key: 'action',
-      width: '120px',
+      width: '160px',
       render: (_, record) => (
         <Space>
           <Tooltip title="Xem chi tiết">
@@ -307,8 +541,16 @@ const ManageImportWarehouse: React.FC = () => {
             <Button
               type="text"
               icon={<PrinterOutlined />}
-              onClick={() => console.log('Print import', record.id)}
+              onClick={() => handlePrint(record)}
               className="text-green-500 hover:text-green-600"
+            />
+          </Tooltip>
+          <Tooltip title="Tải Excel">
+            <Button
+              type="text"
+              icon={<DownloadOutlined />}
+              onClick={() => handleExportExcel(record)}
+              className="text-purple-500 hover:text-purple-600"
             />
           </Tooltip>
         </Space>
@@ -317,7 +559,7 @@ const ManageImportWarehouse: React.FC = () => {
   ];
   
   // Detail modal columns
-  const detailColumns: ColumnsType<ImportDetail> = [
+  const detailColumns: ColumnsType<EnterIngredientDetail> = [
     {
       title: 'STT',
       key: 'index',
@@ -326,38 +568,47 @@ const ManageImportWarehouse: React.FC = () => {
     },
     {
       title: 'Tên nguyên liệu',
-      dataIndex: 'ingredient_name',
       key: 'ingredient_name',
-    },
-    {
-      title: 'Đơn vị',
-      dataIndex: 'unit',
-      key: 'unit',
-      width: '80px',
+      render: (_, record) => (
+        <span>{record.ingredient?.name || 'N/A'}</span>
+      ),
     },
     {
       title: 'Số lượng',
       dataIndex: 'quantity',
       key: 'quantity',
       width: '100px',
+      render: (quantity: number) => (
+        <span className="font-medium">{quantity.toLocaleString('vi-VN')}</span>
+      ),
+    },
+    {
+      title: 'Đơn vị',
+      key: 'unit',
+      width: '80px',
+      render: (_, record) => (
+        <span className="text-gray-600">{record.ingredient?.unit || 'N/A'}</span>
+      ),
     },
     {
       title: 'Đơn giá',
       dataIndex: 'unit_price',
       key: 'unit_price',
       width: '120px',
-      render: (price: number) => `${price.toLocaleString('vi-VN')} VNĐ`,
+      render: (price: number) => `${Number(price).toLocaleString('vi-VN')} VNĐ`,
     },
     {
       title: 'Thành tiền',
-      dataIndex: 'total_price',
       key: 'total_price',
       width: '150px',
-      render: (price: number) => (
-        <span className="font-semibold">
-          {price.toLocaleString('vi-VN')} VNĐ
-        </span>
-      ),
+      render: (_, record) => {
+        const totalPrice = record.quantity * record.unit_price;
+        return (
+          <span className="font-semibold text-blue-600">
+            {totalPrice.toLocaleString('vi-VN')} VNĐ
+          </span>
+        );
+      },
     },
     {
       title: 'Nhà cung cấp',
@@ -368,17 +619,27 @@ const ManageImportWarehouse: React.FC = () => {
   ];
   
   return (
-    <div className="p-4">
-      <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item href="/admin/warehouse/ingredient">Quản lý kho</Breadcrumb.Item>
-          <Breadcrumb.Item>Lịch sử nhập kho</Breadcrumb.Item>
-        </Breadcrumb>
+    <CanAccess resource='enter-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-6">
+      <Card className="shadow-sm">
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: <a href="/admin/warehouse">Quản lý kho</a>,
+            },
+            {
+              title: 'Lịch sử nhập kho',
+            },
+          ]}
+        />
         
-        <div className="flex justify-between items-center mb-4">
-          <Title level={4} className="m-0">
-            <FileTextOutlined className="mr-2" />
+        <div className="flex justify-between items-center mb-6">
+          <Title level={3} className="m-0 flex items-center">
+            <FileTextOutlined className="mr-3 text-orange-500" />
             Lịch sử nhập kho
           </Title>
           
@@ -386,6 +647,7 @@ const ManageImportWarehouse: React.FC = () => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreateImport}
+            size="large"
           >
             Tạo phiếu nhập mới
           </Button>
@@ -398,6 +660,7 @@ const ManageImportWarehouse: React.FC = () => {
               prefix={<SearchOutlined />}
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
+              allowClear
             />
           </Col>
           <Col xs={24} md={8}>
@@ -406,93 +669,147 @@ const ManageImportWarehouse: React.FC = () => {
               onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
               format="DD/MM/YYYY"
               placeholder={['Từ ngày', 'Đến ngày']}
+              allowClear
             />
+          </Col>
+          <Col xs={24} md={8}>
+            <Button 
+              icon={<SearchOutlined />} 
+              onClick={() => refetch()}
+              loading={isLoading}
+            >
+              Làm mới
+            </Button>
           </Col>
         </Row>
         
-        <Table
-          columns={columns}
-          dataSource={filteredImports}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-          bordered
-          scroll={{ x: 1100 }}
-          summary={pageData => {
-            let totalAmount = 0;
-            
-            pageData.forEach(({ total_amount }) => {
-              totalAmount += total_amount;
-            });
-            
-            return (
-              <Table.Summary fixed>
-                <Table.Summary.Row>
-                  <Table.Summary.Cell index={0} colSpan={4}>
-                    <strong>Tổng cộng</strong>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={1}>
-                    <strong className="text-orange-600">
-                      {totalAmount.toLocaleString('vi-VN')} VNĐ
-                    </strong>
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} colSpan={3}></Table.Summary.Cell>
-                </Table.Summary.Row>
-              </Table.Summary>
-            );
-          }}
-        />
+        <Spin spinning={isLoading}>
+          <Table
+            columns={columns}
+            dataSource={filteredImports}
+            rowKey="id"
+            pagination={{ 
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => 
+                `${range[0]}-${range[1]} của ${total} phiếu nhập`,
+            }}
+            bordered
+            scroll={{ x: 1100 }}
+            className="ant-table-striped"
+            rowClassName={(_, index) => index % 2 === 0 ? 'table-row-light' : 'table-row-dark'}
+            summary={pageData => {
+              let totalAmount = 0;
+              
+              pageData.forEach(({ total_amount }) => {
+                totalAmount += total_amount;
+              });
+              
+              return (
+                <Table.Summary fixed>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} colSpan={4}>
+                      <strong>Tổng cộng trang này</strong>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1}>
+                      <strong className="text-orange-600">
+                        {Number(totalAmount).toLocaleString('vi-VN')} VNĐ
+                      </strong>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={2} colSpan={3}></Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              );
+            }}
+          />
+        </Spin>
       </Card>
       
       {/* Detail Modal */}
       <Modal
         title={
-          <span>
-            Chi tiết phiếu nhập #{selectedImport?.id}
-            <Tag 
-              color={selectedImport ? getStatusColor(selectedImport.status) : 'default'}
-              className="ml-2"
-            >
-              {selectedImport ? getStatusText(selectedImport.status) : ''}
-            </Tag>
-          </span>
+          <div className="flex items-center">
+            <FileTextOutlined className="mr-2 text-orange-500" />
+            <span>Chi tiết phiếu nhập #{selectedImport?.id}</span>
+            <Tag color="success" className="ml-2">Hoàn thành</Tag>
+          </div>
         }
         open={isDetailModalVisible}
-        onCancel={() => setIsDetailModalVisible(false)}
+        onCancel={() => {
+          setIsDetailModalVisible(false);
+          setSelectedImport(null);
+          setImportDetails([]);
+        }}
         width={1000}
         footer={[
-          <Button key="print" type="primary" icon={<PrinterOutlined />}>
-            In phiếu nhập
+          <Button 
+            key="print" 
+            icon={<PrinterOutlined />}
+            onClick={() => selectedImport && handlePrint(selectedImport)}
+          >
+            In phiếu
           </Button>,
-          <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
+          <Button 
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={() => selectedImport && handleExportExcel(selectedImport)}
+          >
+            Tải Excel
+          </Button>,
+          <Button 
+            key="close" 
+            onClick={() => {
+              setIsDetailModalVisible(false);
+              setSelectedImport(null);
+              setImportDetails([]);
+            }}
+          >
             Đóng
           </Button>,
         ]}
       >
         {selectedImport && (
-          <>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p><strong>Người lập phiếu:</strong> {selectedImport.staff_name}</p>
-                <p><strong>Ngày lập:</strong> {dayjs(selectedImport.create_at).format('DD/MM/YYYY HH:mm')}</p>
-              </div>
-              <div>
-                <p><strong>Tổng tiền:</strong> {selectedImport.total_amount.toLocaleString('vi-VN')} VNĐ</p>
-                <p><strong>Ghi chú:</strong> {selectedImport.note || 'Không có'}</p>
-              </div>
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <Row gutter={24}>
+                <Col span={12}>
+                  <div className="space-y-2">
+                    <div><strong>Người lập phiếu:</strong> {selectedImport.creator?.name || 'N/A'}</div>
+                    <div><strong>Ngày lập:</strong> {dayjs(selectedImport.created_at).format('DD/MM/YYYY HH:mm')}</div>
+                  </div>
+                </Col>
+                <Col span={12}>
+                  <div className="space-y-2">
+                    <div><strong>Tổng tiền:</strong> 
+                      <span className="text-orange-600 font-semibold ml-2">
+                        {Number(selectedImport.total_amount).toLocaleString('vi-VN')} VNĐ
+                      </span>
+                    </div>
+                    <div><strong>Ghi chú:</strong> {selectedImport.note || 'Không có'}</div>
+                  </div>
+                </Col>
+              </Row>
             </div>
             
-            <Table
-              columns={detailColumns}
-              dataSource={generateMockImportDetails(selectedImport.id)}
-              pagination={false}
-              rowKey="id"
-              bordered
-              size="small"
-            />
-          </>
+            <Spin spinning={detailLoading}>
+              <Table
+                columns={detailColumns}
+                dataSource={importDetails}
+                pagination={false}
+                rowKey="id"
+                bordered
+                size="small"
+                scroll={{ x: 800 }}
+                locale={{ emptyText: 'Không có dữ liệu chi tiết' }}
+              />
+            </Spin>
+          </div>
         )}
       </Modal>
     </div>
+    </CanAccess>
   );
 };
 

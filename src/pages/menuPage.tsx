@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Image, Tag, Tabs, Divider, Rate, Button } from 'antd';
+import { Card, Row, Col, Typography, Image, Tag, Tabs, Divider, Rate, Button, Input } from 'antd';
 import { ShoppingCartOutlined, FireOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
-import type { Dish } from '@/types';
+import type { Dish, DishCategory } from '@/types';
 import { useList, useUpdate } from '@refinedev/core';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -33,14 +32,15 @@ const ItemDish = ({dish}: {dish: Dish}) => {
                 className="w-full h-full object-cover"
                 preview={false}
               />}
-            {/* {dish?.is_featured && (
-              <Tag
-                color='red'
-                className='absolute top-2 right-2'
-              >
-                Nổi bật
-              </Tag>
-            )} */}
+            {dish?.is_featured === 1 && (
+              <div className='absolute top-2 right-2'>
+                <Tag
+                  className='bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 shadow-lg font-semibold px-3 py-1 rounded-full'
+                >
+                  ✨ Nổi bật
+                </Tag>
+              </div>
+            )}
           </div>
         }
         className='h-full'
@@ -95,38 +95,12 @@ const ItemDish = ({dish}: {dish: Dish}) => {
   );
 }
 
-
-// Định nghĩa kiểu dữ liệu cho món ăn
-// interface Dish {
-//   id: number;
-//   creator_id: number;
-//   name: string;
-//   description: string | null;
-//   image_id: number | null;
-//   image_url: string;
-//   price: string;
-//   category_id: number;
-//   category_name: string;
-//   is_active: boolean;
-//   is_featured: boolean;
-//   rating: number;
-//   created_at: string;
-//   updated_at: string;
-// }
-
-// Định nghĩa kiểu dữ liệu cho danh mục món ăn
-interface DishCategory {
-  id: number;
-  name: string;
-  description: string | null;
-  icon: string;
-}
-
 const MenuPage: React.FC = () => {
 //   const [dishes, setDishes] = useState<Dish[]>([]);
 //   const [categories, setCategories] = useState<DishCategory[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [searchText, setSearchText] = useState<string>('');
 
   const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
     resource: 'dish-categories',
@@ -134,15 +108,16 @@ const MenuPage: React.FC = () => {
 
   const { data: listDishes, isLoading: isLoadingList } = useList<Dish>({
     resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
   });
 
   const { mutate: updateDish, isLoading: isUpdating } = useUpdate<Dish>();
-
-//   useEffect(() => {
-//     if (listDishes) {
-//       setDishes(listDishes.data);
-//     }
-//   }, []);
 
   const handleFavoriteClick = (dishId: number) => {
     if (favorites.includes(dishId)) {
@@ -152,17 +127,30 @@ const MenuPage: React.FC = () => {
     }
   };
 
-  const filteredDishes = activeCategory === 'all'
-    ? listDishes?.data
-    : listDishes?.data?.filter(dish => 
-        // activeCategory === 'featured' 
-        //   ? (dish.is_featured || false)
-        //   : 
-          dish.category_id === parseInt(activeCategory));
+  // Filter dishes by category and search text
+  const filteredDishes = listDishes?.data?.filter(dish => {
+    // Filter by search text
+    const matchesSearch = searchText === '' || 
+      dish.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.dish_categories?.name.toLowerCase().includes(searchText.toLowerCase());
+    
+    // Filter by category
+    const matchesCategory = activeCategory === 'all' || dish.category_id === parseInt(activeCategory);
+    
+    return matchesSearch && matchesCategory;
+  });
 
-  // Nhóm món ăn theo danh mục
+  // Nhóm món ăn theo danh mục với tìm kiếm
   const dishesByCategory = listDishCategories?.data?.reduce((acc, category) => {
-    acc[category.id] = listDishes?.data?.filter(dish => dish.category_id === category.id) || [];
+    acc[category.id] = listDishes?.data?.filter(dish => {
+      const matchesSearch = searchText === '' || 
+        dish.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        dish.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        dish.dish_categories?.name.toLowerCase().includes(searchText.toLowerCase());
+      
+      return dish.category_id === category.id && matchesSearch;
+    }) || [];
     return acc;
   }, {} as Record<number, Dish[]>) || {};
 
@@ -185,21 +173,21 @@ const MenuPage: React.FC = () => {
           </div>
 
           {/* Featured dishes */}
-          {/* <div className="mb-12">
+          <div className="mb-12">
             <div className="flex items-center justify-between mb-6">
               <Title level={2} className="!mb-0">
                 <FireOutlined className="text-red-500 mr-2" /> Món ăn nổi bật
               </Title>
             </div>
             <Row gutter={[16, 16]}>
-              {dishes.filter(dish => dish.is_featured).slice(0, 4).map(dish => (
+              {listDishes?.data?.filter(dish => dish.is_featured).slice(0, 4).map(dish => (
                 <Col xs={24} sm={12} md={8} lg={6} key={dish.id}>
                   <Card
                     hoverable
                     cover={
                       <div className="relative h-48 overflow-hidden">
-                        {dish.image_url ? <Image 
-                          src={dish.image_url} 
+                        {dish.image?.path ? <Image 
+                          src={`${API_URL}/storage/${dish.image?.path}`} 
                           alt={dish.name}
                           className="w-full h-full object-cover"
                           preview={false}
@@ -210,9 +198,11 @@ const MenuPage: React.FC = () => {
                           preview={false}
                         />}
                         {dish.is_featured && (
-                          <Tag color="red" className="absolute top-2 right-2">
-                            Nổi bật
-                          </Tag>
+                          <div className="absolute top-2 right-2">
+                            <Tag className="bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 shadow-lg font-semibold px-3 py-1 rounded-full">
+                              ✨ Nổi bật
+                            </Tag>
+                          </div>
                         )}
                       </div>
                     }
@@ -221,7 +211,7 @@ const MenuPage: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <Title level={5} className="!mb-1">{dish.name}</Title>
-                        <Text type="secondary" className="block mb-2">{dish.category_name}</Text>
+                        <Text type="secondary" className="block mb-2">{dish.dish_categories?.name}</Text>
                       </div>
                       <Button
                         type="text"
@@ -234,51 +224,73 @@ const MenuPage: React.FC = () => {
                     </Paragraph>
                     <div className="flex justify-between items-center">
                       <Text strong className="text-lg text-red-600">
-                        {parseInt(dish.price).toLocaleString('vi-VN')}đ
+                        {dish.price.toLocaleString('vi-VN')}đ
                       </Text>
-                      <Rate disabled defaultValue={dish.rating} className="text-sm" />
+                      {/* <Rate disabled defaultValue={dish.rating} className="text-sm" /> */}
                     </div>
                   </Card>
                 </Col>
               ))}
             </Row>
-          </div> */}
+          </div>
 
-          {/* Menu tabs */}
-          <Title level={2} className="mb-6">Thực đơn đầy đủ</Title>
+          {/* Search and Menu tabs */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <Title level={2} className="!mb-0">Thực đơn đầy đủ</Title>
+              <Input.Search
+                placeholder="Tìm kiếm món ăn, danh mục..."
+                allowClear
+                size="large"
+                style={{ width: 300 }}
+                value={searchText}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+                onSearch={(value: string) => setSearchText(value)}
+                className="shadow-sm"
+              />
+            </div>
+          </div>
           <Tabs 
             defaultActiveKey="all" 
             onChange={setActiveCategory}
             tabPosition="top"
             className="menu-tabs"
-          >
-            <TabPane tab="Tất cả" key="all">
-              <Row gutter={[16, 16]}>
-                {filteredDishes?.map(dish => (
-                  <ItemDish dish={dish} key={dish.id} />
-                ))}
-              </Row>
-            </TabPane>
-
-            {/* <TabPane tab="Món nổi bật" key="featured">
-              <Row gutter={[16, 16]}>
-                {filteredDishes.map(dish => (
-                  <ItemDish dish={dish} key={dish.id} />
-                ))}
-              </Row>
-            </TabPane> */}
-
-            {/* Category tabs */}
-            {listDishCategories?.data.map(category => (
-              <TabPane tab={`${category.name}`} key={category.id.toString()}>
-                <Row gutter={[16, 16]}>
-                  {dishesByCategory?.[category.id]?.map(dish => (
-                    <ItemDish dish={dish} key={dish.id} />
-                  ))}
-                </Row>
-              </TabPane>
-            ))}
-          </Tabs>
+            items={[
+              {
+                label: 'Tất cả',
+                key: 'all',
+                children: (
+                  <Row gutter={[16, 16]}>
+                    {filteredDishes?.map(dish => (
+                      <ItemDish dish={dish} key={dish.id} />
+                    ))}
+                  </Row>
+                ),
+              },
+              // {
+              //   label: 'Món nổi bật',
+              //   key: 'featured',
+              //   children: (
+              //     <Row gutter={[16, 16]}>
+              //       {filteredDishes?.map(dish => (
+              //         <ItemDish dish={dish} key={dish.id} />
+              //       ))}
+              //     </Row>
+              //   ),
+              // },
+              ...listDishCategories?.data.map(category => ({
+                label: category.name,
+                key: category.id.toString(),
+                children: (
+                  <Row gutter={[16, 16]}>
+                    {dishesByCategory?.[category.id]?.map(dish => (
+                      <ItemDish dish={dish} key={dish.id} />
+                    ))}
+                  </Row>
+                ),
+              })) || [],
+            ]}
+          />
           
           {/* Nội dung khác có thể thêm vào đây */}
           <Divider />

@@ -17,7 +17,7 @@
       "buttons": {
         "submit": "Login",
         "forgotPassword": "Forgot password?",
-        "noAccount": "Don’t have an account?",
+        "noAccount": "Don't have an account?",
         "rememberMe": "Remember me"
       }
     },
@@ -113,6 +113,7 @@
     "clone": "Clone"
   },
   "dashboard": {
+    "dashboard": "Dashboard",
     "title": "Dashboard"
   },
   "posts": {
@@ -135,6 +136,150 @@
       "edit": "Edit Post",
       "list": "Posts",
       "show": "Show Post"
+    }
+  },
+  "dishes": {
+    "dishes": "Dishes",
+    "titles": {
+      "create": "Create Dish",
+      "edit": "Edit Dish",
+      "list": "Dishes",
+      "show": "Show Dish"
+    }
+  },
+  "dish-categories": {
+    "dish-categories": "Dish Categories",
+    "titles": {
+      "create": "Create Category",
+      "edit": "Edit Category",
+      "list": "Categories",
+      "show": "Show Category"
+    }
+  },
+  "tables": {
+    "tables": "Tables",
+    "titles": {
+      "create": "Create Table",
+      "edit": "Edit Table",
+      "list": "Tables",
+      "show": "Show Table"
+    }
+  },
+  "bills": {
+    "bills": "Bills",
+    "titles": {
+      "create": "Create Bill",
+      "edit": "Edit Bill",
+      "list": "Bills",
+      "show": "Show Bill"
+    }
+  },
+  "orders": {
+    "orders": "Orders",
+    "titles": {
+      "create": "Create Order",
+      "edit": "Edit Order",
+      "list": "Orders",
+      "show": "Show Order"
+    }
+  },
+  "customers": {
+    "customers": "Customers",
+    "titles": {
+      "create": "Create Customer",
+      "edit": "Edit Customer",
+      "list": "Customers",
+      "show": "Show Customer"
+    }
+  },
+  "staffs": {
+    "staffs": "Staff",
+    "titles": {
+      "create": "Create Staff",
+      "edit": "Edit Staff",
+      "list": "Staff",
+      "show": "Show Staff"
+    }
+  },
+  "reservations": {
+    "reservations": "Reservations",
+    "titles": {
+      "create": "Create Reservation",
+      "edit": "Edit Reservation",
+      "list": "Reservations",
+      "show": "Show Reservation"
+    }
+  },
+  "promotions": {
+    "promotions": "Promotions",
+    "titles": {
+      "create": "Create Promotion",
+      "edit": "Edit Promotion",
+      "list": "Promotions",
+      "show": "Show Promotion"
+    }
+  },
+  "promotion_codes": {
+    "promotion_codes": "Promotion Codes",
+    "titles": {
+      "create": "Create Promotion Code",
+      "edit": "Edit Promotion Code",
+      "list": "Promotion Codes",
+      "show": "Show Promotion Code"
+    }
+  },
+  "permissions": {
+    "permissions": "Permissions",
+    "titles": {
+      "create": "Create Permission",
+      "edit": "Edit Permission",
+      "list": "Permissions",
+      "show": "Show Permission"
+    }
+  },
+  "role": {
+    "role": "Role",
+    "titles": {
+      "create": "Create Role",
+      "edit": "Edit Role",
+      "list": "Roles",
+      "show": "Show Role"
+    }
+  },
+  "upload-image": {
+    "upload-image": "Upload Image",
+    "titles": {
+      "create": "Upload Image",
+      "edit": "Edit Image",
+      "list": "Images",
+      "show": "Show Image"
+    }
+  },
+  "users": {
+    "users": "Users",
+    "titles": {
+      "create": "Create User",
+      "edit": "Edit User",
+      "list": "Users",
+      "show": "Show User"
+    }
+  },
+  "products": {
+    "products": "Products",
+    "titles": {
+      "create": "Create Product",
+      "edit": "Edit Product",
+      "list": "Products",
+      "show": "Show Product"
+    }
+  },
+  "collections": {
+    "collections": "Collections",
+    "titles": {
+      "create": "Create Collection",
+      "edit": "Edit Collection",
+      "list": "Collections",
+      "show": "Show Collection"
     }
   },
   "table": {

@@ -13,178 +13,88 @@ import {
   Breadcrumb,
   Tooltip,
   Modal,
-  Badge
+  Badge,
+  Spin,
+  message
 } from 'antd';
 import {
   PlusOutlined,
   SearchOutlined,
   EyeOutlined,
   PrinterOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  DownloadOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import { PageLoader } from '@/components/ui/loader';
+import { CanAccess, useList } from '@refinedev/core';
+import { NoPermission } from '@/components/NoPermission';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
-// Interface definitions
-interface ExportWarehouse {
+// Interface definitions matching backend structure
+interface ExportIngredient {
   id: number;
-  staff_name: string;
-  total_amount: number;
-  note: string;
-  create_at: string;
-  item_count: number;
-  status: 'completed' | 'pending' | 'cancelled';
-  export_type: 'production' | 'damage' | 'transfer' | 'other';
+  creator_id: number;
+  note?: string;
+  created_at: string;
+  updated_at: string;
+  creator?: {
+    id: number;
+    name: string;
+  };
+  details?: ExportIngredientDetail[];
 }
 
-interface ExportDetail {
+interface ExportIngredientDetail {
   id: number;
-  ingredient_name: string;
-  unit: string;
+  export_ingredient_id: number;
+  ingredient_id: number;
   quantity: number;
-  unit_price: number;
-  total_price: number;
-  reason: string;
+  ingredient?: {
+    id: number;
+    name: string;
+    unit: string;
+  };
 }
-
-// Mock data for demonstration
-const generateMockExports = (): ExportWarehouse[] => {
-  return [
-    {
-      id: 2001,
-      staff_name: 'Võ Thanh Hiếu',
-      total_amount: 1500000,
-      note: 'Xuất nguyên liệu cho sản xuất',
-      create_at: '2023-06-12T09:30:00',
-      item_count: 4,
-      status: 'completed',
-      export_type: 'production'
-    },
-    {
-      id: 2002,
-      staff_name: 'Nguyễn Văn A',
-      total_amount: 800000,
-      note: 'Xuất nguyên liệu hỏng',
-      create_at: '2023-06-16T11:45:00',
-      item_count: 2,
-      status: 'completed',
-      export_type: 'damage'
-    },
-    {
-      id: 2003,
-      staff_name: 'Trần Thị B',
-      total_amount: 1200000,
-      note: 'Xuất nguyên liệu cho chi nhánh 2',
-      create_at: '2023-06-21T15:20:00',
-      item_count: 3,
-      status: 'completed',
-      export_type: 'transfer'
-    },
-    {
-      id: 2004,
-      staff_name: 'Lê Văn C',
-      total_amount: 600000,
-      note: 'Xuất nguyên liệu cho đối tác',
-      create_at: '2023-06-26T14:10:00',
-      item_count: 1,
-      status: 'completed',
-      export_type: 'other'
-    },
-    {
-      id: 2005,
-      staff_name: 'Võ Thanh Hiếu',
-      total_amount: 2100000,
-      note: 'Xuất nguyên liệu cho sản xuất đặc biệt',
-      create_at: '2023-06-30T10:15:00',
-      item_count: 5,
-      status: 'completed',
-      export_type: 'production'
-    }
-  ];
-};
-
-const generateMockExportDetails = (exportId: number): ExportDetail[] => {
-  // Example details for export ID 2001
-  if (exportId === 2001) {
-    return [
-      {
-        id: 1,
-        ingredient_name: 'Gạo',
-        unit: 'kg',
-        quantity: 20,
-        unit_price: 20000,
-        total_price: 400000,
-        reason: 'Sản xuất món cơm chiên'
-      },
-      {
-        id: 2,
-        ingredient_name: 'Thịt bò',
-        unit: 'kg',
-        quantity: 5,
-        unit_price: 180000,
-        total_price: 900000,
-        reason: 'Sản xuất món bò xào'
-      },
-      {
-        id: 3,
-        ingredient_name: 'Ớt',
-        unit: 'kg',
-        quantity: 2,
-        unit_price: 40000,
-        total_price: 80000,
-        reason: 'Gia vị cho các món'
-      },
-      {
-        id: 4,
-        ingredient_name: 'Tỏi',
-        unit: 'kg',
-        quantity: 2,
-        unit_price: 60000,
-        total_price: 120000,
-        reason: 'Gia vị cho các món'
-      }
-    ];
-  }
-  
-  // Default empty array for other export IDs
-  return [];
-};
 
 const ManageExportWarehouse: React.FC = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
-  const [selectedExport, setSelectedExport] = useState<ExportWarehouse | null>(null);
+  const [selectedExport, setSelectedExport] = useState<ExportIngredient | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [exportDetails, setExportDetails] = useState<ExportIngredientDetail[]>([]);
   
-  // Mock data
-  const exports = generateMockExports();
+  // API calls
+  const { data: exports, isLoading, refetch } = useList<ExportIngredient>({
+    resource: 'export-ingredients',
+    meta: {
+      populate: ['creator', 'details.ingredient']
+    }
+  });
   
   // Filter exports based on search text and date range
-  const filteredExports = exports.filter(item => {
+  const filteredExports = exports?.data.filter(item => {
     const matchesSearch = 
       item.id.toString().includes(searchText) ||
-      item.staff_name.toLowerCase().includes(searchText.toLowerCase()) ||
-      item.note.toLowerCase().includes(searchText.toLowerCase()) ||
-      getExportTypeText(item.export_type).toLowerCase().includes(searchText.toLowerCase());
+      (item.creator?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (item.note || '').toLowerCase().includes(searchText.toLowerCase());
     
     const matchesDateRange = !dateRange || (
-      dayjs(item.create_at).isAfter(dateRange[0], 'day') && 
-      dayjs(item.create_at).isBefore(dateRange[1], 'day')
+      dayjs(item.created_at).isAfter(dateRange[0], 'day') && 
+      dayjs(item.created_at).isBefore(dateRange[1], 'day')
     );
     
     return matchesSearch && matchesDateRange;
-  });
+  }) || [];
   
   // Handle view details
-  const handleViewDetails = (record: ExportWarehouse) => {
+  const handleViewDetails = (record: ExportIngredient) => {
     setSelectedExport(record);
+    setExportDetails(record.details || []);
     setIsDetailModalVisible(true);
   };
   
@@ -193,68 +103,294 @@ const ManageExportWarehouse: React.FC = () => {
     navigate('/admin/warehouse/export/new');
   };
   
-  // Get status tag color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'pending':
-        return 'processing';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
+  // Handle print
+  const handlePrint = (record: ExportIngredient) => {
+    const printContent = generatePrintContent(record);
+    const printWindow = window.open('', '_blank');
+    
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      printWindow.onload = () => {
+        printWindow.print();
+      };
     }
   };
-  
-  // Get status display text
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Hoàn thành';
-      case 'pending':
-        return 'Đang xử lý';
-      case 'cancelled':
-        return 'Đã hủy';
-      default:
-        return status;
+
+  // Handle export to Excel
+  const handleExportExcel = (record: ExportIngredient) => {
+    try {
+      const currentDetails = record.details || [];
+      
+      // Prepare data for Excel
+      const excelData = [
+        ['PHIẾU XUẤT KHO'],
+        ['Mã phiếu:', `#${record.id}`],
+        ['Người lập:', record.creator?.name || 'N/A'],
+        ['Ngày lập:', dayjs(record.created_at).format('DD/MM/YYYY HH:mm')],
+        ['Ghi chú:', record.note || 'Không có'],
+        [], // Empty row
+        ['STT', 'Tên nguyên liệu', 'Số lượng', 'Đơn vị'],
+        ...currentDetails.map((detail, index) => [
+          index + 1,
+          detail.ingredient?.name || 'N/A',
+          detail.quantity,
+          detail.ingredient?.unit || 'N/A'
+        ]),
+        [], // Empty row
+        ['', `Tổng số loại nguyên liệu: ${currentDetails.length}`, '', ''],
+        ['', `Tổng số lượng: ${currentDetails.reduce((sum, item) => sum + item.quantity, 0)}`, '', '']
+      ];
+
+      // Create and download
+      const csvContent = excelData.map(row => 
+        row.map(cell => `"${cell}"`).join(',')
+      ).join('\n');
+      
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `phieu_xuat_kho_${record.id}_${dayjs().format('DDMMYYYY')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      message.success('Đã tải xuống phiếu xuất kho thành công!');
+    } catch (error) {
+      console.error('Export error:', error);
+      message.error('Có lỗi xảy ra khi xuất phiếu xuất kho');
     }
   };
-  
-  // Get export type text
-  const getExportTypeText = (type: string) => {
-    switch (type) {
-      case 'production':
-        return 'Sản xuất';
-      case 'damage':
-        return 'Hàng hỏng';
-      case 'transfer':
-        return 'Chuyển kho';
-      case 'other':
-        return 'Khác';
-      default:
-        return type;
+
+  // Generate print content HTML
+  const generatePrintContent = (record: ExportIngredient) => {
+    const currentDetails = record.details || [];
+    
+    // Create table rows
+    const tableRows = currentDetails.map((detail, index) => {
+      const ingredientName = detail.ingredient?.name || 'N/A';
+      const quantity = Number(detail.quantity).toLocaleString('vi-VN');
+      const unit = detail.ingredient?.unit || 'N/A';
+      
+      return `
+        <tr>
+          <td class="text-center">${index + 1}</td>
+          <td>${ingredientName}</td>
+          <td class="text-center text-bold">${quantity}</td>
+          <td class="text-center">${unit}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Format dates safely
+    const createdDate = dayjs(record.created_at).format('DD/MM/YYYY');
+    const createdTime = dayjs(record.created_at).format('HH:mm:ss');
+    const printTime = dayjs().format('DD/MM/YYYY HH:mm:ss');
+    const exportId = record.id.toString().padStart(6, '0');
+    const creatorName = record.creator?.name || 'N/A';
+    
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Phiếu xuất kho #${record.id}</title>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.6;
     }
-  };
-  
-  // Get export type color
-  const getExportTypeColor = (type: string) => {
-    switch (type) {
-      case 'production':
-        return 'blue';
-      case 'damage':
-        return 'red';
-      case 'transfer':
-        return 'purple';
-      case 'other':
-        return 'default';
-      default:
-        return 'default';
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 20px;
     }
+    .company-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .document-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #e67e22;
+      margin: 15px 0;
+    }
+    .info-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      gap: 40px;
+    }
+    .info-group {
+      flex: 1;
+    }
+    .info-row {
+      margin-bottom: 8px;
+      display: flex;
+    }
+    .info-label {
+      font-weight: bold;
+      min-width: 120px;
+      color: #333;
+    }
+    .info-value {
+      flex: 1;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .table th,
+    .table td {
+      border: 1px solid #ddd;
+      padding: 12px 8px;
+      text-align: left;
+    }
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+    }
+    .table tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .text-bold {
+      font-weight: bold;
+    }
+    .signature-section {
+      margin-top: 50px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .signature-box {
+      text-align: center;
+      flex: 1;
+    }
+    .signature-title {
+      font-weight: bold;
+      margin-bottom: 60px;
+    }
+    .signature-line {
+      border-top: 1px solid #333;
+      margin-top: 60px;
+      padding-top: 5px;
+    }
+    .note-section {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #e67e22;
+    }
+    .print-info {
+      margin-top: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+    @media print {
+      body { margin: 0; }
+      .print-info { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">NHÀ HÀNG BAMBOO SÔNG CHANH</div>
+    <div class="document-title">PHIẾU XUẤT KHO</div>
+    <div style="font-size: 16px; color: #666;">Số: ${exportId}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-group">
+      <div class="info-row">
+        <span class="info-label">Người lập phiếu:</span>
+        <span class="info-value">${creatorName}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Ngày lập:</span>
+        <span class="info-value">${createdDate}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Giờ lập:</span>
+        <span class="info-value">${createdTime}</span>
+      </div>
+    </div>
+    <div class="info-group">
+      <div class="info-row">
+        <span class="info-label">Mã phiếu:</span>
+        <span class="info-value text-bold">#${record.id}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Trạng thái:</span>
+        <span class="info-value" style="color: #27ae60; font-weight: bold;">Hoàn thành</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Số mặt hàng:</span>
+        <span class="info-value text-bold">${currentDetails.length}</span>
+      </div>
+    </div>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width: 50px;">STT</th>
+        <th>Tên nguyên liệu</th>
+        <th style="width: 100px;">Số lượng</th>
+        <th style="width: 80px;">Đơn vị</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+    </tbody>
+  </table>
+
+  ${record.note ? `
+  <div class="note-section">
+    <div style="font-weight: bold; margin-bottom: 10px;">Ghi chú:</div>
+    <div>${record.note}</div>
+  </div>
+  ` : ''}
+
+  <div class="signature-section">
+    <div class="signature-box">
+      <div class="signature-title">Người lập phiếu</div>
+      <div class="signature-line">${creatorName}</div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-title">Thủ kho</div>
+      <div class="signature-line">........................</div>
+    </div>
+    <div class="signature-box">
+      <div class="signature-title">Người phê duyệt</div>
+      <div class="signature-line">........................</div>
+    </div>
+  </div>
+
+  <div class="print-info">
+    In lúc: ${printTime} | Hệ thống quản lý nhà hàng
+  </div>
+</body>
+</html>`;
   };
   
   // Export history table columns
-  const columns: ColumnsType<ExportWarehouse> = [
+  const columns: ColumnsType<ExportIngredient> = [
     {
       title: 'Mã phiếu',
       dataIndex: 'id',
@@ -266,78 +402,50 @@ const ManageExportWarehouse: React.FC = () => {
     },
     {
       title: 'Người lập',
-      dataIndex: 'staff_name',
-      key: 'staff_name',
+      key: 'creator',
       width: '150px',
+      render: (_, record) => record.creator?.name || 'N/A',
     },
     {
       title: 'Ngày lập',
-      dataIndex: 'create_at',
-      key: 'create_at',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: '150px',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm'),
-      sorter: (a, b) => dayjs(a.create_at).unix() - dayjs(b.create_at).unix(),
-    },
-    {
-      title: 'Loại xuất',
-      dataIndex: 'export_type',
-      key: 'export_type',
-      width: '120px',
-      render: (type: string) => (
-        <Tag color={getExportTypeColor(type)}>
-          {getExportTypeText(type)}
-        </Tag>
-      ),
-      filters: [
-        { text: 'Sản xuất', value: 'production' },
-        { text: 'Hàng hỏng', value: 'damage' },
-        { text: 'Chuyển kho', value: 'transfer' },
-        { text: 'Khác', value: 'other' },
-      ],
-      onFilter: (value, record) => record.export_type === value,
+      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
     },
     {
       title: 'Số mặt hàng',
-      dataIndex: 'item_count',
       key: 'item_count',
       width: '120px',
-      render: (count: number) => (
-        <Badge count={count} showZero color="#52c41a" overflowCount={99} />
+      render: (_, record) => (
+        <Badge 
+          count={record.details?.length || 0} 
+          showZero 
+          color="#52c41a" 
+          overflowCount={99} 
+        />
       ),
-    },
-    {
-      title: 'Tổng tiền',
-      dataIndex: 'total_amount',
-      key: 'total_amount',
-      width: '150px',
-      render: (amount: number) => (
-        <span className="font-semibold text-orange-600">
-          {amount.toLocaleString('vi-VN')} VNĐ
-        </span>
-      ),
-      sorter: (a, b) => a.total_amount - b.total_amount,
     },
     {
       title: 'Ghi chú',
       dataIndex: 'note',
       key: 'note',
       ellipsis: true,
+      render: (note: string) => note || <span className="text-gray-400">Không có</span>,
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
       key: 'status',
       width: '120px',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {getStatusText(status)}
-        </Tag>
+      render: () => (
+        <Tag color="success">Hoàn thành</Tag>
       ),
     },
     {
       title: 'Thao tác',
       key: 'action',
-      width: '120px',
+      width: '160px',
       render: (_, record) => (
         <Space>
           <Tooltip title="Xem chi tiết">
@@ -352,8 +460,16 @@ const ManageExportWarehouse: React.FC = () => {
             <Button
               type="text"
               icon={<PrinterOutlined />}
-              onClick={() => console.log('Print export', record.id)}
+              onClick={() => handlePrint(record)}
               className="text-green-500 hover:text-green-600"
+            />
+          </Tooltip>
+          <Tooltip title="Tải Excel">
+            <Button
+              type="text"
+              icon={<DownloadOutlined />}
+              onClick={() => handleExportExcel(record)}
+              className="text-purple-500 hover:text-purple-600"
             />
           </Tooltip>
         </Space>
@@ -362,7 +478,7 @@ const ManageExportWarehouse: React.FC = () => {
   ];
   
   // Detail modal columns
-  const detailColumns: ColumnsType<ExportDetail> = [
+  const detailColumns: ColumnsType<ExportIngredientDetail> = [
     {
       title: 'STT',
       key: 'index',
@@ -371,59 +487,52 @@ const ManageExportWarehouse: React.FC = () => {
     },
     {
       title: 'Tên nguyên liệu',
-      dataIndex: 'ingredient_name',
       key: 'ingredient_name',
+      render: (_, record) => record.ingredient?.name || 'N/A',
     },
     {
       title: 'Đơn vị',
-      dataIndex: 'unit',
       key: 'unit',
       width: '80px',
+      render: (_, record) => record.ingredient?.unit || 'N/A',
     },
     {
       title: 'Số lượng',
       dataIndex: 'quantity',
       key: 'quantity',
       width: '100px',
-    },
-    {
-      title: 'Đơn giá',
-      dataIndex: 'unit_price',
-      key: 'unit_price',
-      width: '120px',
-      render: (price: number) => `${price.toLocaleString('vi-VN')} VNĐ`,
-    },
-    {
-      title: 'Thành tiền',
-      dataIndex: 'total_price',
-      key: 'total_price',
-      width: '150px',
-      render: (price: number) => (
-        <span className="font-semibold">
-          {price.toLocaleString('vi-VN')} VNĐ
-        </span>
+      render: (quantity: number) => (
+        <span className="font-medium">{Number(quantity).toLocaleString('vi-VN')}</span>
       ),
-    },
-    {
-      title: 'Lý do xuất',
-      dataIndex: 'reason',
-      key: 'reason',
-      ellipsis: true,
     },
   ];
 
   if (isLoading) {
-    return <PageLoader text="Đang tải dữ liệu..." />;
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <Spin size="large" />
+      </div>
+    );
   }
   
   return (
-    <div className="p-4">
+    <CanAccess resource='export-ingredient' action='create' fallback={<NoPermission />}>
+      <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb className="mb-4">
-          <Breadcrumb.Item href="/admin">Dashboard</Breadcrumb.Item>
-          <Breadcrumb.Item href="/admin/warehouse/ingredient">Quản lý kho</Breadcrumb.Item>
-          <Breadcrumb.Item>Lịch sử xuất kho</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          className="mb-4"
+          items={[
+            {
+              title: <a href="/admin">Dashboard</a>,
+            },
+            {
+              title: <a href="/admin/warehouse">Quản lý kho</a>,
+            },
+            {
+              title: 'Lịch sử xuất kho',
+            },
+          ]}
+        />
         
         <div className="flex justify-between items-center mb-4">
           <Title level={4} className="m-0">
@@ -457,6 +566,11 @@ const ManageExportWarehouse: React.FC = () => {
               placeholder={['Từ ngày', 'Đến ngày']}
             />
           </Col>
+          <Col xs={24} md={8}>
+            <Button onClick={() => refetch()}>
+              Làm mới
+            </Button>
+          </Col>
         </Row>
         
         <Table
@@ -465,24 +579,20 @@ const ManageExportWarehouse: React.FC = () => {
           rowKey="id"
           pagination={{ pageSize: 10 }}
           bordered
-          scroll={{ x: 1100 }}
+          scroll={{ x: 1000 }}
+          locale={{ emptyText: 'Chưa có phiếu xuất nào' }}
           summary={pageData => {
-            let totalAmount = 0;
-            
-            pageData.forEach(({ total_amount }) => {
-              totalAmount += total_amount;
-            });
+            const totalExports = pageData.length;
+            const totalItems = pageData.reduce((sum, record) => sum + (record.details?.length || 0), 0);
             
             return (
               <Table.Summary fixed>
                 <Table.Summary.Row>
-                  <Table.Summary.Cell index={0} colSpan={5}>
-                    <strong>Tổng cộng</strong>
+                  <Table.Summary.Cell index={0} colSpan={3}>
+                    <strong>Tổng số phiếu: {totalExports}</strong>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={1}>
-                    <strong className="text-orange-600">
-                      {totalAmount.toLocaleString('vi-VN')} VNĐ
-                    </strong>
+                    <strong>Tổng mặt hàng: {totalItems}</strong>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={2} colSpan={3}></Table.Summary.Cell>
                 </Table.Summary.Row>
@@ -497,26 +607,29 @@ const ManageExportWarehouse: React.FC = () => {
         title={
           <span>
             Chi tiết phiếu xuất #{selectedExport?.id}
-            <Tag 
-              color={selectedExport ? getExportTypeColor(selectedExport.export_type) : 'default'}
-              className="ml-2"
-            >
-              {selectedExport ? getExportTypeText(selectedExport.export_type) : ''}
-            </Tag>
-            <Tag 
-              color={selectedExport ? getStatusColor(selectedExport.status) : 'default'}
-              className="ml-2"
-            >
-              {selectedExport ? getStatusText(selectedExport.status) : ''}
+            <Tag color="success" className="ml-2">
+              Hoàn thành
             </Tag>
           </span>
         }
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
-        width={1000}
+        width={800}
         footer={[
-          <Button key="print" type="primary" icon={<PrinterOutlined />}>
-            In phiếu xuất
+          <Button 
+            key="print" 
+            icon={<PrinterOutlined />}
+            onClick={() => selectedExport && handlePrint(selectedExport)}
+          >
+            In phiếu
+          </Button>,
+          <Button 
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={() => selectedExport && handleExportExcel(selectedExport)}
+          >
+            Tải Excel
           </Button>,
           <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
             Đóng
@@ -527,27 +640,43 @@ const ManageExportWarehouse: React.FC = () => {
           <>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p><strong>Người lập phiếu:</strong> {selectedExport.staff_name}</p>
-                <p><strong>Ngày lập:</strong> {dayjs(selectedExport.create_at).format('DD/MM/YYYY HH:mm')}</p>
+                <p><strong>Người lập phiếu:</strong> {selectedExport.creator?.name || 'N/A'}</p>
+                <p><strong>Ngày lập:</strong> {dayjs(selectedExport.created_at).format('DD/MM/YYYY HH:mm')}</p>
               </div>
               <div>
-                <p><strong>Tổng tiền:</strong> {selectedExport.total_amount.toLocaleString('vi-VN')} VNĐ</p>
+                <p><strong>Số mặt hàng:</strong> {exportDetails.length}</p>
                 <p><strong>Ghi chú:</strong> {selectedExport.note || 'Không có'}</p>
               </div>
             </div>
             
             <Table
               columns={detailColumns}
-              dataSource={generateMockExportDetails(selectedExport.id)}
+              dataSource={exportDetails}
               pagination={false}
               rowKey="id"
               bordered
               size="small"
+              locale={{ emptyText: 'Không có chi tiết' }}
+              summary={() => (
+                <Table.Summary fixed>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} colSpan={3}>
+                      <strong>Tổng cộng</strong>
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1}>
+                      <strong>
+                        {exportDetails.reduce((sum, item) => sum + item.quantity, 0).toLocaleString('vi-VN')}
+                      </strong>
+                    </Table.Summary.Cell>
+                  </Table.Summary.Row>
+                </Table.Summary>
+              )}
             />
           </>
         )}
       </Modal>
-    </div>
+      </div>
+    </CanAccess>
   );
 };
 

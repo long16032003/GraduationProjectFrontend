@@ -22,7 +22,8 @@
 
     "declaration": true,
     "declarationMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "include": ["vite.config.ts"]
 }

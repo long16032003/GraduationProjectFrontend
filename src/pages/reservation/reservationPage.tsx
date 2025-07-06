@@ -5,11 +5,11 @@ import {
   Input, 
   Button, 
   DatePicker, 
-  TimePicker, 
-  InputNumber, 
+  TimePicker,
+  InputNumber,
   message, 
-  Typography, 
-  Result, 
+  Typography,
+  Result,
   Steps,
   Row,
   Col,
@@ -35,6 +35,7 @@ import dayjs from 'dayjs';
 import type { Reservation, TableModel } from '@/types';
 import { useCreate, useList } from '@refinedev/core';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
+import { areas } from '@/utils/constant';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -217,16 +218,15 @@ const ReservationPage: React.FC = () => {
       console.log("Data to be sent:", reservationData);
       
       // Gọi API đặt bàn
-      await createReservation({
+      const result = await createReservation({
         resource: "reservations",
         values: reservationData
       });
       
-      setTimeout(() => {
-        setReservationSuccess(true);
-        setCurrentStep(3);
-        setLoading(false);
-      }, 1500);
+      // Cập nhật state ngay sau khi API thành công
+      setReservationSuccess(true);
+      setCurrentStep(3);
+      setLoading(false);
     } catch (error) {
       console.error("Reservation error:", error);
       message.error('Có lỗi xảy ra khi đặt bàn');
@@ -241,13 +241,6 @@ const ReservationPage: React.FC = () => {
     setAvailableTables([]);
     setCurrentStep(0);
     setReservationSuccess(false);
-  };
-
-  const areas = {
-    '1st floor' : 'Tầng 1',
-    '2nd floor' : 'Tầng 2', 
-    '3rd floor' : 'Tầng 3', 
-    'rooftop' : 'Sân thượng'
   };
 
   const columns = [
@@ -578,7 +571,7 @@ const ReservationPage: React.FC = () => {
               </Form>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 3 && reservationSuccess && (
               <Result
                 status='success'
                 title='Đặt bàn thành công!'

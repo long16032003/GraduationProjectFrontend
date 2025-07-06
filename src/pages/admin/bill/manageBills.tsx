@@ -1,79 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Button, Space, Card, Input, Modal, Tag, DatePicker, Select, Tooltip, Statistic, Row, Col, Form, InputNumber, message } from 'antd';
-import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined, FilterOutlined, PlusOutlined, ShoppingCartOutlined, CheckOutlined } from '@ant-design/icons';
-import { useList, useOne } from '@refinedev/core';
+import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined, FilterOutlined, PlusOutlined, ShoppingCartOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CanAccess, useList, useOne, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { tax_percentage, type Bill, type BillItem } from '@/types';
+import { type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
 import { useNavigate } from 'react-router';
+import { tax_percentage } from '@/utils/constant';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 type RangeValue = [Dayjs, Dayjs] | null;
-
-// Fake data for bills
-const generateFakeBills = (): Bill[] => {
-  const paymentMethods: Bill['payment_method'][] = ['cash', 'bank_transfer'];
-  const statuses: Bill['status'][] = ['paid', 'unpaid', 'cancelled'];
-  
-  const bills: Bill[] = [];
-  
-  for (let i = 1; i <= 50; i++) {
-    const items: BillItem[] = [];
-    // Với những hóa đơn đã thanh toán, mới có danh sách món ăn
-    if (i % 3 !== 0) {
-      const itemCount = Math.floor(Math.random() * 5) + 1;
-      
-      for (let j = 1; j <= itemCount; j++) {
-        items.push({
-          dish_id: j,
-          dish_name: `Món ăn ${j}`,
-          quantity: Math.floor(Math.random() * 3) + 1,
-          unit_price: Math.floor(Math.random() * 100000) + 50000
-        });
-      }
-    }
-    
-    // Chỉ tính tiền với những đơn đã thanh toán
-    let total = 0;
-    let discount = 0;
-    let tax = 0;
-    let status = statuses[Math.floor(Math.random() * statuses.length)];
-    let payment_method = null;
-    
-    if (status === 'paid') {
-      total = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-      discount = Math.random() > 0.7 ? Math.floor(total * 0.1) : 0;
-      tax = Math.floor(total * tax_percentage);
-      payment_method = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-    } else {
-      // Nếu chưa thanh toán, để trống phương thức thanh toán
-      status = 'unpaid';
-      payment_method = null;
-    }
-    
-    bills.push({
-      id: i,
-      creator_id: Math.floor(Math.random() * 10) + 1,
-      customer_id: Math.floor(Math.random() * 100) + 1,
-      customer_name: `Khách hàng ${i}`,
-      customer_phone: Math.random() > 0.5 ? `090${Math.floor(1000000 + Math.random() * 9000000)}` : undefined,
-      table_id: Math.floor(Math.random() * 20) + 1,
-      table_number: Math.floor(Math.random() * 20) + 1,
-      total_amount: status === 'paid' ? total + tax - discount : 0,
-      created_at: dayjs().subtract(Math.floor(Math.random() * 30), 'day').format(),
-      payment_method: payment_method,
-      status: status,
-      items: items.length > 0 ? items : undefined,
-      discount_amount: discount > 0 ? discount : undefined,
-      notes: Math.random() > 0.7 ? 'Ghi chú cho hóa đơn này' : undefined,
-      has_new_orders: Math.random() > 0.7 && status === 'unpaid'
-    });
-  }
-  
-  return bills;
-};
 
 // Form values type
 interface CreateBillFormValues {
@@ -97,14 +35,22 @@ const ManageBills: React.FC = () => {
     paymentMethod: 'all',
   });
 
-/**====================================START MOCK DATA========================================= */
-  // Generate fake bills
-  const allBills = useMemo(() => generateFakeBills(), []);
-  const isLoadingList = false;
+  const { data: billsData, isLoading: isLoadingList } = useList({
+    resource: 'bills',
+    pagination: {
+      pageSize: 10,
+    },
+  });
+
+  const { mutate: updateBill } = useUpdate();
+
+  const { data: tablesData, isLoading: isLoadingTables } = useList<TableModel>({
+    resource: 'tables',
+  });
   
   // Filter bills based on filter criteria
   const bills = useMemo(() => {
-    let filteredBills = [...allBills];
+    let filteredBills = [...billsData?.data || []];
     
     // Filter by status
     if (filters.status !== 'all') {
@@ -129,15 +75,14 @@ const ManageBills: React.FC = () => {
     if (searchText) {
       const searchLower = searchText.toLowerCase();
       filteredBills = filteredBills.filter(bill => 
-        bill.id.toString().includes(searchLower) || 
+        bill.id?.toString().includes(searchLower) || 
         (bill.customer_name && bill.customer_name.toLowerCase().includes(searchLower)) ||
         (bill.customer_phone && bill.customer_phone.includes(searchLower))
       );
     }
     
     return filteredBills;
-  }, [allBills, filters, searchText]);
-/**====================================END MOCK DATA========================================= */
+  }, [billsData, filters, searchText]);
 
   const handleViewDetails = (record: Bill) => {
     setSelectedBill(record);
@@ -152,6 +97,32 @@ const ManageBills: React.FC = () => {
   const handleCloseModal = () => {
     setIsDetailModalVisible(false);
     setSelectedBill(null);
+  };
+
+  const handleCancelBill = (record: Bill) => {
+    Modal.confirm({
+      title: 'Xác nhận hủy hóa đơn',
+      icon: <ExclamationCircleOutlined />,
+      content: `Bạn có chắc muốn hủy hóa đơn #${record.id}? Hành động này không thể hoàn tác.`,
+      okText: 'Xác nhận hủy',
+      cancelText: 'Đóng',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          // Gọi API để cập nhật status thành cancelled
+          await updateBill({
+            resource: 'bills',
+            id: record.id,
+            values: { status: 'cancelled' },
+          });
+          message.success('Hủy hóa đơn thành công');
+          // Refresh data ở đây nếu cần
+        } catch (error) {
+          message.error('Có lỗi xảy ra khi hủy hóa đơn');
+          console.error('Cancel bill error:', error);
+        }
+      },
+    });
   };
 
   const handleOpenFilter = () => {
@@ -199,10 +170,14 @@ const ManageBills: React.FC = () => {
   };
 
   // Calculate summary statistics
-  const totalBills = bills.length;
-  const totalRevenue = bills.reduce((sum: number, bill: Bill) => sum + (bill.total_amount || 0), 0);
-  const paidBills = bills.filter((bill: Bill) => bill.status === 'paid').length;
-  const unpaidBills = bills.filter((bill: Bill) => bill.status === 'unpaid').length;
+  const billsArray = bills as Bill[];
+  const totalBills = billsArray?.length || 0;
+  const totalRevenue: number = billsArray ? billsArray.reduce((sum: number, bill: Bill) => {
+    const amount = Number(bill.total_amount) || 0;
+    return sum + amount;
+  }, 0) : 0;
+  const paidBills = billsArray ? billsArray.filter((bill: Bill) => bill.status === 'paid').length : 0;
+  const unpaidBills = billsArray ? billsArray.filter((bill: Bill) => bill.status === 'unpaid').length : 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -229,20 +204,22 @@ const ManageBills: React.FC = () => {
       dataIndex: 'customer_name',
       key: 'customer_name',
       width: '15%',
+      render: (customer_name: string) => customer_name ? customer_name : '(Khách vãng lai)',
     },
     {
       title: 'Bàn',
-      dataIndex: 'table_number',
-      key: 'table_number',
+      dataIndex: 'table',
+      key: 'table',
       width: '8%',
+      render: (table: TableModel) => table ? table.name : '-----',
     },
     {
       title: 'Tổng tiền',
       dataIndex: 'total_amount',
       key: 'total_amount',
       width: '12%',
-      render: (amount: number) => amount ? `${amount.toLocaleString('vi-VN')} VNĐ` : '-',
-      sorter: (a: Bill, b: Bill) => (a.total_amount || 0) - (b.total_amount || 0),
+      render: (total_amount: number) => total_amount ? `${Number(total_amount).toLocaleString('vi-VN')} VNĐ` : '-----',
+      sorter: (a: Bill, b: Bill) => (Number(a.total_amount) || 0) - (Number(b.total_amount) || 0),
     },
     {
       title: 'Ngày tạo',
@@ -258,7 +235,7 @@ const ManageBills: React.FC = () => {
       key: 'payment_method',
       width: '15%',
       render: (method: string | null) => {
-        if (!method) return '-';
+        if (!method) return '-----';
         
         const methodDisplay: Record<string, string> = {
           cash: 'Tiền mặt',
@@ -297,7 +274,7 @@ const ManageBills: React.FC = () => {
       width: '15%',
       render: (_: unknown, record: Bill) => (
         <Space size='small'>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="Xem chi tiết" color='black'>
             <Button 
               icon={<EyeOutlined />} 
               onClick={() => handleViewDetails(record)}
@@ -305,17 +282,8 @@ const ManageBills: React.FC = () => {
             />
           </Tooltip>
           {record.status === 'unpaid' && (
-            <>
-              <Tooltip title="Gọi món">
-                <Button 
-                  icon={<ShoppingCartOutlined />} 
-                  onClick={() => handleCreateOrder(record.id)}
-                  type="primary"
-                  ghost
-                  size="small"
-                />
-              </Tooltip>
-              <Tooltip title="Thanh toán">
+            <CanAccess resource='bill' action='update'>
+              <Tooltip title="Thanh toán" color='black' className='mr-2'>
                 <Button 
                   icon={<CheckOutlined />} 
                   onClick={() => handleCheckout(record.id)}
@@ -323,10 +291,18 @@ const ManageBills: React.FC = () => {
                   size="small"
                 />
               </Tooltip>
-            </>
+              <Tooltip title="Hủy hóa đơn" color='black'>
+                <Button 
+                  icon={<CloseOutlined />} 
+                  onClick={() => handleCancelBill(record)}
+                  danger
+                  size="small"
+                />
+              </Tooltip>
+            </CanAccess>
           )}
           {record.status === 'paid' && (
-            <Tooltip title="In hóa đơn">
+            <Tooltip title="In hóa đơn" color='black'>
               <Button 
                 icon={<PrinterOutlined />} 
                 onClick={() => handlePrintBill(record)}
@@ -334,13 +310,26 @@ const ManageBills: React.FC = () => {
               />
             </Tooltip>
           )}
+
         </Space>
       ),
     },
   ];
 
+  const getTotalAmountDish = (bill: Bill) => {
+    return bill.orders?.reduce((total: number, order: Order) => {
+      return total + (order.order_dishes?.reduce((orderSum: number, dish: OrderDish) => 
+        orderSum + ((dish.quantity || 0) * (dish.price_at_order_time || 0)), 0) || 0);
+    }, 0);
+  }
+
   return (
-    <Card title='Quản lý hóa đơn' className='m-4'>
+    <CanAccess 
+      resource='bill'
+      action='create'
+      fallback={<div>Bạn không có quyền truy cập trang này</div>}
+    >
+      <Card title='Quản lý hóa đơn' className='m-4'>
       {/* Summary Statistics */}
       <Row gutter={16} className="mb-6">
         <Col span={6}>
@@ -360,7 +349,7 @@ const ManageBills: React.FC = () => {
               valueStyle={{ color: '#3f8600' }}
               suffix="VNĐ"
               precision={0}
-              formatter={(value) => `${value.toLocaleString('vi-VN')}`}
+              formatter={(value) => `${(value as number).toLocaleString('vi-VN')}`}
             />
           </Card>
         </Col>
@@ -411,7 +400,7 @@ const ManageBills: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={bills}
+        dataSource={billsArray}
         loading={isLoadingList}
         rowKey='id'
         pagination={{
@@ -467,7 +456,7 @@ const ManageBills: React.FC = () => {
               <div>
                 <p><strong>Khách hàng:</strong> {selectedBill.customer_name}</p>
                 <p><strong>Số điện thoại:</strong> {selectedBill.customer_phone || 'N/A'}</p>
-                <p><strong>Bàn số:</strong> {selectedBill.table_number}</p>
+                <p><strong>Bàn số:</strong> {selectedBill.table?.name || 'N/A'}</p>
               </div>
               <div>
                 <p><strong>Ngày tạo:</strong> {dayjs(selectedBill.created_at).format('HH:mm:ss DD/MM/YYYY')}</p>
@@ -490,92 +479,107 @@ const ManageBills: React.FC = () => {
               </div>
             </div>
 
-            {selectedBill.items && selectedBill.items.length > 0 ? (
-              <Table
-                columns={[
-                  {
-                    title: 'Món ăn',
-                    dataIndex: 'dish_name',
-                    key: 'dish_name',
-                  },
-                  {
-                    title: 'Số lượng',
-                    dataIndex: 'quantity',
-                    key: 'quantity',
-                    width: '15%',
-                  },
-                  {
-                    title: 'Đơn giá',
-                    dataIndex: 'unit_price',
-                    key: 'unit_price',
-                    width: '20%',
-                    render: (price: number) => `${price.toLocaleString('vi-VN')} VNĐ`,
-                  },
-                  {
-                    title: 'Thành tiền',
-                    dataIndex: 'total_price',
-                    key: 'total_price',
-                    width: '20%',
-                    render: (_: unknown, record: BillItem) => 
-                      `${(record.quantity * record.unit_price).toLocaleString('vi-VN')} VNĐ`,
-                  },
-                ]}
-                dataSource={selectedBill.items}
-                pagination={false}
-                rowKey="dish_id"
-                summary={(pageData) => {
-                  if (selectedBill.status !== 'paid') return null;
+            {selectedBill.orders && selectedBill.orders.length > 0 ? (
+              <div>
+                {selectedBill.orders.map((order: any, orderIndex: number) => (
+                  <div key={order.id || orderIndex} className="mb-6">
+                    <div className="mb-3">
+                      <h4 className="text-lg font-semibold">
+                        Đơn gọi món #{order.id} - {dayjs(order.created_at).format('HH:mm DD/MM/YYYY')}
+                      </h4>
+                      {order.note && (
+                        <p className="text-gray-600 text-sm">Ghi chú: {order.note}</p>
+                      )}
+                    </div>
+                    
+                    {order.order_dishes && order.order_dishes.length > 0 ? (
+                      <Table
+                        columns={[
+                          {
+                            title: 'Món ăn',
+                            dataIndex: ['dish', 'name'],
+                            key: 'dish_name',
+                            render: (dishName: string, record: any) => 
+                              dishName || record.dish_name || 'Món ăn không xác định',
+                          },
+                          {
+                            title: 'Số lượng',
+                            dataIndex: 'quantity',
+                            key: 'quantity',
+                            width: '15%',
+                          },
+                          {
+                            title: 'Đơn giá',
+                            dataIndex: 'price_at_order_time',
+                            key: 'price_at_order_time',
+                            width: '20%',
+                            render: (price: number) => `${price?.toLocaleString('vi-VN')} VNĐ`,
+                          },
+                          {
+                            title: 'Thành tiền',
+                            key: 'total_price',
+                            width: '20%',
+                            render: (_: unknown, record: any) => 
+                              `${((record.quantity || 0) * (record.price_at_order_time || 0)).toLocaleString('vi-VN')} VNĐ`,
+                          },
+                        ]}
+                        dataSource={order.order_dishes}
+                        pagination={false}
+                        rowKey={(record: any) => `${order.id}-${record.dish_id}`}
+                        size="small"
+                        summary={(pageData) => {
+                          const orderTotal = pageData.reduce(
+                            (sum: number, item: any) => sum + ((item.quantity || 0) * (item.price_at_order_time || 0)),
+                            0,
+                          );
+                          
+                          return (
+                            <Table.Summary.Row>
+                              <Table.Summary.Cell index={0} colSpan={3}>
+                                <strong>Tổng tiền đơn này</strong>
+                              </Table.Summary.Cell>
+                              <Table.Summary.Cell index={1}>
+                                <strong>{orderTotal.toLocaleString('vi-VN')} VNĐ</strong>
+                              </Table.Summary.Cell>
+                            </Table.Summary.Row>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <p className="text-gray-500 italic">Đơn này không có món ăn nào.</p>
+                    )}
+                  </div>
+                ))}
+                
+                {/* Tổng cộng tất cả đơn */}
+                {selectedBill.status === 'paid' && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">Tổng tiền tất cả món ăn:</span>
+                      <span className="font-bold">
+                        {Number(getTotalAmountDish(selectedBill)).toLocaleString('vi-VN')} VNĐ
+                      </span>
+                    </div>
 
-                  const total = pageData.reduce(
-                    (sum, item) => sum + (item.quantity * item.unit_price),
-                    0,
-                  );
-                  
-                  const discount = selectedBill.discount_amount || 0;
-                  const tax = Math.floor(total * tax_percentage);
-                  const finalTotal = total + tax - discount;
-                  
-                  return (
-                    <>
-                      <Table.Summary.Row>
-                        <Table.Summary.Cell index={0} colSpan={3}>Tổng tiền món ăn</Table.Summary.Cell>
-                        <Table.Summary.Cell index={1}>
-                          <strong>{total.toLocaleString('vi-VN')} VNĐ</strong>
-                        </Table.Summary.Cell>
-                      </Table.Summary.Row>
-                      
-                      {discount > 0 && (
-                        <Table.Summary.Row>
-                          <Table.Summary.Cell index={0} colSpan={3}>Giảm giá</Table.Summary.Cell>
-                          <Table.Summary.Cell index={1}>
-                            <strong>-{discount.toLocaleString('vi-VN')} VNĐ</strong>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      )}
-                      
-                      {tax > 0 && (
-                        <Table.Summary.Row>
-                          <Table.Summary.Cell index={0} colSpan={3}>Thuế VAT</Table.Summary.Cell>
-                          <Table.Summary.Cell index={1}>
-                            <strong>{tax.toLocaleString('vi-VN')} VNĐ</strong>
-                          </Table.Summary.Cell>
-                        </Table.Summary.Row>
-                      )}
-                      
-                      <Table.Summary.Row>
-                        <Table.Summary.Cell index={0} colSpan={3}>
-                          <strong>Tổng cộng</strong>
-                        </Table.Summary.Cell>
-                        <Table.Summary.Cell index={1}>
-                          <strong style={{ fontSize: '16px', color: '#f5222d' }}>
-                            {finalTotal.toLocaleString('vi-VN')} VNĐ
-                          </strong>
-                        </Table.Summary.Cell>
-                      </Table.Summary.Row>
-                    </>
-                  );
-                }}
-              />
+                    {(selectedBill.discount_amount || 0) > 0 && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span>Giảm giá:</span>
+                        <span className="text-red-600">-{(Number(selectedBill.discount_amount) || 0).toLocaleString('vi-VN')} VNĐ</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center mb-2">
+                      <span>Thuế VAT ({(tax_percentage * 100).toFixed(0)}%):</span>
+                      <span>{Number(Math.round((Number(getTotalAmountDish(selectedBill)) - (Number(selectedBill.discount_amount) || 0)) * tax_percentage)).toLocaleString('vi-VN')} VNĐ</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
+                      <span>Tổng cộng:</span>
+                      <span className="text-red-600">{Number(selectedBill.total_amount).toLocaleString('vi-VN')} VNĐ</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="text-center p-8 bg-gray-50 rounded-md">
                 <p className="text-gray-500">
@@ -675,9 +679,54 @@ const ManageBills: React.FC = () => {
           <Form.Item
             name="table_number"
             label="Bàn số"
-            rules={[{ required: true, message: 'Vui lòng chọn số bàn' }]}
+            rules={[{ required: true, message: 'Vui lòng chọn bàn' }]}
           >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="Chọn số bàn" />
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Chọn bàn trống"
+              loading={isLoadingTables}
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+              notFoundContent={isLoadingTables ? "Đang tải..." : "Không có bàn trống"}
+            >
+              {tablesData?.data
+                ?.filter(table => {
+                  // Loại bỏ bàn đang bảo trì
+                  if (table.status === 'maintenance') return false;
+                  
+                  // Tìm hóa đơn chưa thanh toán của bàn này
+                  const bill = bills?.find(bill => 
+                    bill.table_id === table.id && bill.status === 'unpaid'
+                  );
+                  
+                  // Bàn trống: available hoặc (occupied nhưng không có hóa đơn unpaid)
+                  if (table.status === 'available') {
+                    return true;
+                  } else if (table.status === 'occupied' && !bill) {
+                    return true;
+                  }
+                  
+                  return false;
+                })
+                ?.map(table => {
+                  // Kiểm tra xem bàn có thực sự trống không
+                  const bill = bills?.find(bill => 
+                    bill.table_id === table.id && bill.status === 'unpaid'
+                  );
+                  const isEmpty = table.status === 'available' || (table.status === 'occupied' && !bill);
+                  
+                  return (
+                    <Option key={table.id} value={table.id}>
+                      {table.name} - {table.area} ({table.capacity} chỗ)
+                      {isEmpty ? ' - Trống' : ''}
+                    </Option>
+                  );
+                })
+              }
+            </Select>
           </Form.Item>
 
           <Form.Item
@@ -717,6 +766,7 @@ const ManageBills: React.FC = () => {
         </Form>
       </Modal>
     </Card>
+    </CanAccess>
   );
 };
 

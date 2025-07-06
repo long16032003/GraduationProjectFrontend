@@ -4,111 +4,13 @@ import { ShoppingCartOutlined, EyeOutlined, PlusOutlined, ClockCircleOutlined, C
 import { useNavigate } from 'react-router';
 import { useMediaQuery } from 'react-responsive';
 import dayjs from 'dayjs';
-import { type TableModel, type Bill, type Order, type OrderDish, type Dish } from '@/types';
+import { type TableModel, type Bill, type Order, type OrderDish, type Dish, type DishCategory } from '@/types';
+import { useList } from '@refinedev/core';
+import { caculateTotalAmount } from '@/utils/caculateTotalAmountBill';
+import { areas } from '@/utils/constant';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-
-// Fake data for tables
-const generateFakeTables = (): TableModel[] => {
-  const areas: TableModel['area'][] = ['1st floor', '2nd floor', '3rd floor', 'rooftop'];
-  const statuses: TableModel['status'][] = ['available', 'occupied', 'reserved', 'maintenance'];
-  
-  const tables: TableModel[] = [];
-  
-  for (let i = 1; i <= 20; i++) {
-    tables.push({
-      id: i,
-      creator_id: 1,
-      name: `Bàn ${i}`,
-      capacity: Math.floor(Math.random() * 6) + 2,
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      area: areas[Math.floor(Math.random() * areas.length)],
-      created_at: dayjs().subtract(Math.floor(Math.random() * 30), 'day').format(),
-      updated_at: dayjs().subtract(Math.floor(Math.random() * 7), 'day').format(),
-    });
-  }
-  
-  return tables;
-};
-
-// Fake data for dishes
-const generateFakeDishes = (): Dish[] => {
-  return [
-    { id: 1, creator_id: 1, name: 'Phở bò tái', description: 'Phở bò tái truyền thống', image_id: null, price: 65000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 2, creator_id: 1, name: 'Bún chả', description: 'Bún chả Hà Nội', image_id: null, price: 55000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 3, creator_id: 1, name: 'Cơm tấm sườn', description: 'Cơm tấm sườn nướng', image_id: null, price: 45000, category_id: 2, is_active: true, created_at: '', updated_at: '' },
-    { id: 4, creator_id: 1, name: 'Bánh mì thịt nướng', description: 'Bánh mì thịt nướng đặc biệt', image_id: null, price: 25000, category_id: 3, is_active: true, created_at: '', updated_at: '' },
-    { id: 5, creator_id: 1, name: 'Gỏi cuốn tôm thịt', description: 'Gỏi cuốn tôm thịt tươi', image_id: null, price: 35000, category_id: 4, is_active: true, created_at: '', updated_at: '' },
-    { id: 6, creator_id: 1, name: 'Chả cá Lã Vọng', description: 'Chả cá Lã Vọng truyền thống', image_id: null, price: 85000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 7, creator_id: 1, name: 'Bún bò Huế', description: 'Bún bò Huế cay nồng', image_id: null, price: 60000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 8, creator_id: 1, name: 'Cao lầu', description: 'Cao lầu Hội An', image_id: null, price: 50000, category_id: 1, is_active: true, created_at: '', updated_at: '' },
-    { id: 9, creator_id: 1, name: 'Nước cam tươi', description: 'Nước cam tươi vắt', image_id: null, price: 20000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-    { id: 10, creator_id: 1, name: 'Trà đá', description: 'Trà đá truyền thống', image_id: null, price: 5000, category_id: 5, is_active: true, created_at: '', updated_at: '' },
-  ];
-};
-
-// Fake data for bills with orders
-const generateFakeBillsWithOrders = (): Record<number, Bill> => {
-  const bills: Record<number, Bill> = {};
-  const dishes = generateFakeDishes();
-  
-  // Tạo hóa đơn cho các bàn đã có khách
-  const occupiedTables = [2, 5, 8, 12, 15, 18];
-  
-  occupiedTables.forEach(tableId => {
-    const ordersCount = Math.floor(Math.random() * 3) + 1; // 1-3 đơn gọi món
-    const orders: Order[] = [];
-    let totalAmount = 0;
-    
-    for (let i = 0; i < ordersCount; i++) {
-      const orderDishes: OrderDish[] = [];
-      const dishCount = Math.floor(Math.random() * 4) + 1; // 1-4 món mỗi đơn
-      
-      for (let j = 0; j < dishCount; j++) {
-        const dish = dishes[Math.floor(Math.random() * dishes.length)];
-        const quantity = Math.floor(Math.random() * 3) + 1;
-        
-        orderDishes.push({
-          dish_id: dish.id,
-          order_id: 1000 + tableId * 10 + i,
-          quantity: quantity,
-          price_at_order_time: dish.price,
-          dish: dish
-        });
-        
-        totalAmount += quantity * dish.price;
-      }
-      
-      orders.push({
-        id: 1000 + tableId * 10 + i,
-        bill_id: 1000 + tableId,
-        creator_id: 1,
-        order_time: dayjs().subtract(Math.floor(Math.random() * 120), 'minute').format(),
-        note: Math.random() > 0.7 ? 'Ghi chú đặc biệt' : undefined,
-        status: ['pending', 'preparing', 'ready', 'served'][Math.floor(Math.random() * 4)] as Order['status'],
-        order_dishes: orderDishes
-      });
-    }
-    
-    bills[tableId] = {
-      id: 1000 + tableId,
-      creator_id: 1,
-      customer_id: tableId,
-      customer_name: `Khách bàn ${tableId}`,
-      customer_phone: `090${Math.floor(1000000 + Math.random() * 9000000)}`,
-      table_id: tableId,
-      table_number: tableId,
-      total_amount: totalAmount,
-      created_at: dayjs().subtract(Math.floor(Math.random() * 3), 'hour').format(),
-      payment_method: null,
-      status: 'unpaid' as const,
-      orders: orders
-    };
-  });
-  
-  return bills;
-};
 
 const ManageOrder: React.FC = () => {
   const navigate = useNavigate();
@@ -118,24 +20,47 @@ const ManageOrder: React.FC = () => {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
 
+  //API call
+  const { data: listDishCategories, isLoading: isLoadingListDishCategories } = useList<DishCategory>({
+    resource: 'dish-categories',
+  });
+
+  const { data: listDishes, isLoading: isLoadingListDishes } = useList<Dish>({
+    resource: 'dishes',
+    filters: [
+      {
+        field: 'is_active',
+        operator: 'eq',
+        value: 1,
+      },
+    ],
+  });
+
+  const { data: listTables, isLoading: isLoadingListTables } = useList<TableModel>({
+    resource: 'tables',
+  });
+
+  const { data: listBills, isLoading: isLoadingListBills } = useList<Bill>({
+    resource: 'bills',
+  });
+
   // Responsive breakpoints
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const isTablet = useMediaQuery({ minWidth: 768, maxWidth: 1023 });
 
-  // Mock data
-  const tables = useMemo(() => generateFakeTables(), []);
-  const billsWithOrders = useMemo(() => generateFakeBillsWithOrders(), []);
+  const tables = listTables?.data;
+  const billsWithOrders = listBills?.data;
 
   // Filter tables
   const filteredTables = useMemo(() => {
     let filtered = tables;
     
     if (selectedArea !== 'all') {
-      filtered = filtered.filter(table => table.area === selectedArea);
+      filtered = filtered?.filter(table => table.area === selectedArea);
     }
     
     if (searchText) {
-      filtered = filtered.filter(table => 
+      filtered = filtered?.filter(table => 
         table.name.toLowerCase().includes(searchText.toLowerCase())
       );
     }
@@ -145,15 +70,17 @@ const ManageOrder: React.FC = () => {
 
   const handleTableClick = (table: TableModel) => {
     setSelectedTable(table);
-    const bill = billsWithOrders[table.id];
+    const bill = billsWithOrders?.find(bill => bill.table_id === table.id && bill.status === 'unpaid');
     
     if (bill) {
       // Bàn đã có hóa đơn - hiển thị chi tiết
       setSelectedBill(bill);
       setIsDetailModalVisible(true);
     } else {
-      // Bàn chưa có hóa đơn - tạo hóa đơn mới và gọi món
-      navigate(`/admin/order/table/${table.id}/new-bill`);
+      if(table.status === 'occupied') {
+        // Bàn chưa có hóa đơn - tạo hóa đơn mới và gọi món
+        navigate(`/admin/order/table/${table.id}/new-bill`);
+      }
     }
   };
 
@@ -182,19 +109,20 @@ const ManageOrder: React.FC = () => {
     }
   };
 
-  const getTableStatusText = (status: TableModel['status']) => {
-    switch (status) {
-      case 'available':
-        return 'Trống';
-      case 'occupied':
-        return 'Có khách';
-      case 'reserved':
-        return 'Đã đặt';
-      case 'maintenance':
-        return 'Bảo trì';
-      default:
-        return status;
+  const getTableStatusText = (status: TableModel['status'], bill: Bill) => {
+    // Có khách và hóa đơn chưa thanh toán
+    if(status === 'occupied' && bill && bill.status === 'unpaid') {
+      return 'Có khách';
     }
+    // Có khách và không có hóa đơn chưa thanh toán
+    else if(status === 'occupied' && !bill) {
+      return 'Trống';
+    }
+    // Bảo trì
+    else if(status === 'maintenance') {
+      return 'Bảo trì';
+    }
+    return status;
   };
 
   const getStatusColor = (status: TableModel['status']) => {
@@ -214,15 +142,15 @@ const ManageOrder: React.FC = () => {
 
   const getOrderStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'pending':
+      case 'init':
         return 'orange';
-      case 'preparing':
+      case 'processing':
         return 'blue';
-      case 'ready':
+      case 'finished process':
         return 'green';
-      case 'served':
+      case 'not completed':
         return 'default';
-      case 'cancelled':
+      case 'done':
         return 'red';
       default:
         return 'default';
@@ -231,15 +159,15 @@ const ManageOrder: React.FC = () => {
 
   const getOrderStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'pending':
+      case 'init':
         return 'Chờ xử lý';
-      case 'preparing':
+      case 'processing':
         return 'Đang chuẩn bị';
-      case 'ready':
+      case 'finished process':
         return 'Sẵn sàng';
-      case 'served':
+      case 'not completed':
         return 'Đã phục vụ';
-      case 'cancelled':
+      case 'done':
         return 'Đã hủy';
       default:
         return status;
@@ -305,25 +233,21 @@ const ManageOrder: React.FC = () => {
         </div>
 
         <Row gutter={[16, 16]}>
-          {filteredTables.map(table => {
-            const bill = billsWithOrders[table.id];
+          {filteredTables?.map((table: TableModel) => {
+            const bill = billsWithOrders?.find(bill => bill.table_id === table.id && bill.status === 'unpaid');
             const hasOrders = bill && bill.orders && bill.orders.length > 0;
-            const pendingOrders = bill?.orders?.filter(order => order.status === 'pending').length || 0;
+            const pendingOrders = bill?.orders?.filter(order => order.status === 'init').length || 0;
             
             return (
               <Col xs={12} sm={8} md={6} lg={4} xl={4} key={table.id}>
                 <Badge.Ribbon 
-                  text={getTableStatusText(table.status)} 
+                  text={getTableStatusText(table.status, bill!)} 
                   color={getTableStatusColor(table.status)}
                 >
                   <Card
                     hoverable
                     className="text-center cursor-pointer transition-all duration-300 hover:shadow-lg"
                     onClick={() => handleTableClick(table)}
-                    bodyStyle={{ 
-                      padding: isMobile ? '16px' : '20px',
-                      background: hasOrders ? 'linear-gradient(135deg, #fff7e6 0%, #fff2d9 100%)' : '#ffffff'
-                    }}
                     style={{
                       borderRadius: '12px',
                       border: hasOrders ? '2px solid #faad14' : '1px solid #d9d9d9',
@@ -399,7 +323,7 @@ const ManageOrder: React.FC = () => {
                           padding: '2px 8px'
                         }}
                       >
-                        {table.area}
+                        {areas[table.area as keyof typeof areas]}
                       </Tag>
                     </div>
                     
@@ -437,7 +361,7 @@ const ManageOrder: React.FC = () => {
                             color: '#d46b08'
                           }}
                         >
-                          💰 {bill.total_amount.toLocaleString('vi-VN')} VNĐ
+                          💰 {caculateTotalAmount(bill).toLocaleString('vi-VN')} VNĐ
                         </div>
                       </div>
                     )}
@@ -504,7 +428,7 @@ const ManageOrder: React.FC = () => {
                   <br />
                   <Text strong>Tổng tiền hiện tại:</Text> 
                   <Text strong style={{ color: '#f5222d', marginLeft: 8 }}>
-                    {selectedBill.total_amount.toLocaleString('vi-VN')} VNĐ
+                    {caculateTotalAmount(selectedBill).toLocaleString('vi-VN')} VNĐ
                   </Text>
                 </Col>
               </Row>
@@ -519,7 +443,7 @@ const ManageOrder: React.FC = () => {
                 <Timeline.Item
                   key={order.id}
                   color={getOrderStatusColor(order.status)}
-                  dot={order.status === 'served' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+                  dot={order.status === 'finished process' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
                 >
                   <div className="mb-2">
                     <div className="flex flex-wrap gap-2 items-center">
@@ -565,7 +489,7 @@ const ManageOrder: React.FC = () => {
                         width: isMobile ? 80 : '20%',
                         render: (price: number) => isMobile 
                           ? `${(price / 1000).toFixed(0)}k`
-                          : `${price.toLocaleString('vi-VN')} VNĐ`,
+                          : `${Number(price).toLocaleString('vi-VN')} VNĐ`,
                       },
                       {
                         title: 'Thành tiền',

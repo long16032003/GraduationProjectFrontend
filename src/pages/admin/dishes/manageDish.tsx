@@ -12,15 +12,21 @@ import {
   message,
   Tag,
   Upload,
+  Switch,
 } from 'antd';
-import { PlusOutlined, ExclamationCircleOutlined, LoadingOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  ExclamationCircleOutlined,
+  LoadingOutlined,
+  DeleteOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import type { TableProps, ColumnsType } from 'antd/es/table';
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { DishCategory, Dish, Media } from '@/types';
-
 
 const ManageDish: React.FC = () => {
   const [form] = Form.useForm();
@@ -53,7 +59,7 @@ const ManageDish: React.FC = () => {
     message: string;
     data: Media;
   }
-  
+
   const { mutate: uploadImage, isLoading: isUploading } = useCreate();
 
   // Sử dụng biến môi trường VITE_APP_URL
@@ -65,9 +71,7 @@ const ManageDish: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       width: '20%',
-      render: (text: string) => (
-        <span className="font-medium text-gray-800">{text}</span>
-      ),
+      render: (text: string) => <span className='font-medium text-gray-800'>{text}</span>,
     },
     {
       title: 'Ảnh',
@@ -75,16 +79,16 @@ const ManageDish: React.FC = () => {
       key: 'image',
       width: '120px',
       render: (image: Media | null) => (
-        <div className="w-20 h-20">
+        <div className='w-20 h-20'>
           {image ? (
             <img
               src={`${API_URL}/storage/${image.path}`}
-              alt="Món ăn"
-              className="w-full h-full object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+              alt='Món ăn'
+              className='w-full h-full object-cover rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200'
             />
           ) : (
-            <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-              <span className="text-gray-400 text-sm">No image</span>
+            <div className='w-full h-full bg-gray-100 rounded-lg flex items-center justify-center'>
+              <span className='text-gray-400 text-sm'>No image</span>
             </div>
           )}
         </div>
@@ -95,14 +99,20 @@ const ManageDish: React.FC = () => {
       dataIndex: ['dish_categories', 'name'],
       key: 'category',
       width: '15%',
-      filters: categoriesData?.data.map((category: DishCategory) => ({ text: category.name, value: category.id })),
+      filters: categoriesData?.data.map((category: DishCategory) => ({
+        text: category.name,
+        value: category.id,
+      })),
       onFilter: (value, record: Dish) => {
         // Convert value to number for comparison
         const numValue = typeof value === 'string' ? parseInt(value) : Number(value);
         return record.category_id === numValue;
       },
       render: (text: string) => (
-        <Tag color="blue" className="px-3 py-1">
+        <Tag
+          color=''
+          className='px-3 py-1'
+        >
           {text}
         </Tag>
       ),
@@ -115,9 +125,9 @@ const ManageDish: React.FC = () => {
       sorter: (a: Dish, b: Dish) => a.price - b.price,
       render: (price: number) => (
         <span className='text-orange-600 font-bold'>
-          {new Intl.NumberFormat('vi-VN', { 
-            style: 'currency', 
-            currency: 'VND' 
+          {new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
           }).format(price)}
         </span>
       ),
@@ -126,28 +136,43 @@ const ManageDish: React.FC = () => {
       title: 'Trạng thái',
       dataIndex: 'is_active',
       key: 'is_active',
-      width: '15%',
+      width: '12%',
       render: (isActive: boolean) => (
-        <Tag 
+        <Tag
           color={isActive ? 'success' : 'error'}
-          className="px-3 py-1"
+          className='px-3 py-1'
         >
           {isActive ? 'Đang kinh doanh' : 'Ngừng kinh doanh'}
         </Tag>
       ),
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: '15%',
-      sorter: (a: Dish, b: Dish) => dayjs(a.created_at).diff(dayjs(b.created_at)),
-      render: (date: string) => (
-        <span className="text-gray-500">
-          {dayjs(date).format('DD/MM/YYYY HH:mm')}
-        </span>
+      title: 'Nổi bật',
+      dataIndex: 'is_featured',
+      key: 'is_featured',
+      width: '10%',
+      render: (isFeatured: boolean | number, record: Dish) => (
+        <div className='flex items-center justify-center'>
+          <Switch
+            checked={Boolean(isFeatured)}
+            onChange={(checked) => handleToggleFeatured(record.id, checked)}
+            checkedChildren='✨'
+            unCheckedChildren=''
+            className={isFeatured ? 'bg-gradient-to-r from-red-500 to-pink-500' : ''}
+          />
+        </div>
       ),
     },
+    // {
+    //   title: 'Ngày tạo',
+    //   dataIndex: 'created_at',
+    //   key: 'created_at',
+    //   width: '15%',
+    //   sorter: (a: Dish, b: Dish) => dayjs(a.created_at).diff(dayjs(b.created_at)),
+    //   render: (date: string) => (
+    //     <span className='text-gray-500'>{dayjs(date).format('HH:mm DD/MM/YYYY')}</span>
+    //   ),
+    // },
     {
       title: 'Hành động',
       key: 'action',
@@ -155,13 +180,13 @@ const ManageDish: React.FC = () => {
       render: (_: unknown, record: Dish) => (
         <Space>
           <Button
-            type="text"
+            type='text'
             icon={<EditOutlined />}
-            className="text-blue-500 hover:text-blue-600"
+            className='text-blue-500 hover:text-blue-600'
             onClick={() => handleEdit(record)}
           />
           <Button
-            type="text"
+            type='text'
             danger
             icon={<DeleteOutlined />}
             onClick={() => showDeleteConfirm(record)}
@@ -182,7 +207,7 @@ const ManageDish: React.FC = () => {
   const handleEdit = (record: Dish) => {
     setEditingDish(record);
     setImageFile(record.image || null);
-    
+
     // Set fileList if we have an image
     if (record.image) {
       setFileList([
@@ -191,18 +216,19 @@ const ManageDish: React.FC = () => {
           name: record.image.title || 'image.png',
           status: 'done',
           url: `${API_URL}/storage/${record.image.path}`,
-        }
+        },
       ]);
     } else {
       setFileList([]);
     }
-    
+
     form.setFieldsValue({
       name: record.name,
       category_id: record.category_id,
       price: record.price,
       description: record.description,
       is_active: record.is_active,
+      is_featured: record.is_featured === 1,
     });
     setIsModalVisible(true);
   };
@@ -228,63 +254,74 @@ const ManageDish: React.FC = () => {
     });
   };
 
+  const handleToggleFeatured = async (dishId: number, isFeatured: boolean) => {
+    try {
+      await updateDish({
+        resource: 'dishes',
+        id: dishId,
+        values: { is_featured: isFeatured ? 1 : 0 },
+      });
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi cập nhật trạng thái nổi bật');
+    }
+  };
+
   const beforeUpload = async (file: RcFile) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
     const isLt2M = file.size / 1024 / 1024 < 2;
-  
+
     if (!isJpgOrPng) {
       message.error('Chỉ chấp nhận JPG/PNG!');
       return false;
     }
-  
+
     if (!isLt2M) {
       message.error('Ảnh phải nhỏ hơn 2MB!');
       return false;
     }
-  
+
     try {
       setUploadLoading(true);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'dishes');
-      
+
       // Sử dụng callback thay vì await
       uploadImage(
         {
           resource: 'upload-image',
-          values: formData
+          values: formData,
         },
         {
           onSuccess: (response) => {
-            console.log("Upload success:", response);
+            console.log('Upload success:', response);
             if (response?.data) {
               // Truy cập trực tiếp vào data từ response
               const imageData = response.data;
-              console.log("Image data:", imageData);
+              console.log('Image data:', imageData);
               setImageFile(imageData as unknown as Media);
               form.setFieldValue('image', imageData);
               message.success('Tải ảnh thành công');
             } else {
-              console.error("Invalid response structure:", response);
+              console.error('Invalid response structure:', response);
               message.error('Lỗi định dạng dữ liệu từ server');
             }
             setUploadLoading(false);
           },
           onError: (error) => {
-            console.error("Upload error:", error);
+            console.error('Upload error:', error);
             message.error('Lỗi khi upload: ' + error.message);
             setUploadLoading(false);
-          }
-        }
+          },
+        },
       );
     } catch (error) {
       message.error('Lỗi khi upload: ' + (error as Error).message);
       setUploadLoading(false);
     }
-  
+
     return false; // Không upload mặc định, vì bạn đã xử lý tay
   };
-  
 
   const handleChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
     setFileList(info.fileList.slice(-1)); // Chỉ giữ file mới nhất
@@ -320,13 +357,11 @@ const ManageDish: React.FC = () => {
           id: editingDish.id,
           values: data,
         });
-        message.success('Cập nhật món ăn thành công');
       } else {
         await createDish({
           resource: 'dishes',
           values: data,
         });
-        message.success('Thêm món ăn thành công');
       }
 
       // Close modal and reset state
@@ -343,22 +378,33 @@ const ManageDish: React.FC = () => {
     }
   };
 
-  console.log("dishes: ", dishes);
+  // Filter dishes based on search text
+  const filteredDishes = dishes?.data?.filter(
+    (dish) =>
+      dish.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+      dish.dish_categories?.name?.toLowerCase().includes(searchText.toLowerCase()),
+  );
+
+  console.log('dishes: ', dishes);
 
   return (
     <Card
       title={
-        <div className="flex items-center space-x-2">
-          <span className="text-lg font-medium">Quản lý thực đơn</span>
-          <Tag color="orange" className="uppercase">
+        <div className='flex items-center space-x-2'>
+          <span className='text-lg font-medium'>Quản lý thực đơn</span>
+          <Tag
+            color='orange'
+            className='uppercase'
+          >
             {dishes?.data?.length || 0} món
           </Tag>
         </div>
       }
-      className="m-4 shadow-md"
+      className='m-4 shadow-md'
       extra={
         <Button
-          type="primary"
+          type='primary'
           icon={<PlusOutlined />}
           onClick={handleAdd}
         >
@@ -366,31 +412,33 @@ const ManageDish: React.FC = () => {
         </Button>
       }
     >
-      <div className="mb-4 flex justify-between items-center">
+      <div className='mb-4 flex justify-between items-center'>
         <Input.Search
-          placeholder="Tìm kiếm món ăn..."
+          placeholder='Tìm kiếm món ăn, mô tả, danh mục...'
           allowClear
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
           onSearch={(value) => setSearchText(value)}
-          style={{ width: 300 }}
-          className="shadow-sm"
+          style={{ width: 400 }}
+          className='shadow-sm'
         />
       </div>
 
       <Table
         columns={columns}
-        dataSource={dishes?.data}
+        dataSource={filteredDishes}
         loading={isLoadingDishes || isCreating || isUpdating || isDeleting}
-        rowKey="id"
+        rowKey='id'
         pagination={{
-          total: dishes?.total,
+          total: filteredDishes?.length,
           pageSize: 10,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total) => `Tổng số ${total} món`,
-          className: "pagination-table"
+          className: 'pagination-table',
         }}
-        className="shadow-sm"
-        rowClassName="hover:bg-gray-50 transition-colors duration-200"
+        className='shadow-sm'
+        rowClassName='hover:bg-gray-50 transition-colors duration-200'
       />
 
       <Modal
@@ -468,16 +516,16 @@ const ManageDish: React.FC = () => {
             <Input.TextArea rows={4} />
           </Form.Item>
 
-          <Form.Item
-            name='is_active'
-            label='Trạng thái'
-            initialValue={true}
-          >
-            <Select>
-              <Select.Option value={true}>Đang bán</Select.Option>
-              <Select.Option value={false}>Ngừng bán</Select.Option>
-            </Select>
-          </Form.Item>
+                     <Form.Item
+             name='is_active'
+             label='Trạng thái'
+             initialValue={true}
+           >
+             <Select>
+               <Select.Option value={true}>Đang bán</Select.Option>
+               <Select.Option value={false}>Ngừng bán</Select.Option>
+             </Select>
+           </Form.Item>
 
           <Form.Item
             label='Ảnh món ăn'

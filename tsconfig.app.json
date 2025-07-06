@@ -26,10 +26,11 @@
     "declaration": true,
     "declarationMap": true,
     "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
         "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "src/**/*.ts", "src/**/*.tsx"]
 }

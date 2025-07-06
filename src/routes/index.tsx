@@ -1,7 +1,7 @@
 // import { Home } from '@/pages';
 import { Root } from '@/components/Root.tsx';
 import type { RouteObject } from 'react-router';
-import { routes as auth_routes } from '@/routes/auth.tsx';
+import { routes as auth_routes } from '@/routes/admin/auth/auth';
 import { routes as admin_routes } from '@/routes/admin';
 import { ErrorPage404 } from '@/pages/error';
 import { routes as post_routes } from '@/routes/post';
@@ -34,6 +34,18 @@ export const routes: RouteObject[] = [
       ...menu_routes,
       ...promotion_routes,
       ...history_reservation_routes,
+      {
+        path: 'print-bill/:billId',
+        lazy: {
+          Component: async () => (await import('@/pages/admin/bill/printBill')).default,
+        },
+      },
+      {
+        path: 'vnpay-return',
+        lazy: {
+          Component: async () => (await import('@/pages/admin/bill/vnpay-return')).default,
+        },
+      },
     ],
   },
 ];

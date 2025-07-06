@@ -1,130 +1,56 @@
-import { createForm } from '@formily/core';
-import { Form, Submit } from '@formily/antd-v5/esm';
-import {
-  type OpenNotificationParams,
-  type RefineError,
-  type SuccessNotificationResponse, useCreate,
-  useGo, 
-  useNotification, usePermissions,
-} from '@refinedev/core';
-import { useMemo } from 'react';
+import { Form } from '@formily/antd-v5/esm';
+import type { Form as FormType } from '@formily/core';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import type { RoleFormValues } from '@/pages/admin/role/types.ts';
-import { schema as defaultSchema, updateSchema, SchemaField } from '@/pages/admin/role/.form/schema.ts';
-import { FormButtonGroup, FormTab, Reset } from '@formily/antd-v5/esm';
+import {
+  schema as defaultSchema,
+  updateSchema,
+  SchemaField,
+} from '@/pages/admin/role/.form/schema.ts';
+import { FormTab } from '@formily/antd-v5/esm';
 import type { PermissionsResponse } from '@/types.ts';
-import type { ISchema, Schema } from '@formily/react';
+import type { ISchema } from '@formily/react';
 
+export interface RoleFormProps {
+  values?: RoleFormValues;
+  permissions?: PermissionsResponse | undefined,
+  form: FormType
+}
 
-// https://core.formilyjs.org/api/models/form
-const form = createForm({
-  validateFirst: true,
-});
-const formTab = FormTab.createFormTab();
+const RoleForm = (props: RoleFormProps) => {
+  const { form, permissions } = props;
 
-const RoleForm = () => {
-  const { mutate, isLoading: isSubmiting } = useCreate<RoleFormValues>({
-    resource: 'role',
-  });
-  const { close, open } = useNotification();
-  const go = useGo();
+  const formTab = useMemo(() => FormTab.createFormTab(), []);
 
-  const { data, isLoading } = usePermissions<PermissionsResponse>();
+  const [schema, setSchema] = useState(defaultSchema);
 
-  const schema = useMemo(() => {
-    if (!data?.tree) {
-      return defaultSchema;
+  useLayoutEffect(() => {
+    if (permissions?.tree) {
+      const prevPermissions = form.getValuesIn('permissions'); // Get the permissions field graph
+      form.clearFormGraph('permissions'); // Clear the permissions field graph
+
+      //Can be obtained asynchronously
+      setSchema(updateSchema(defaultSchema, permissions?.tree || {}) as ISchema);
+      // Restore the previous permissions values
+      form.setValuesIn('permissions', prevPermissions);
     }
-    return updateSchema(defaultSchema, data?.tree);
-  }, [data]);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  const handleSubmit = (values: RoleFormValues) => {
-    mutate({
-      values: values,
-    }, {
-      // onSuccess: async ({ success, redirectTo, error, successNotification }) => {
-      //   // close?.("login-error");
-      //   // if (success) {
-      //   //   form.setValues(defaultValues)
-      //   //   if (successNotification) {
-      //   //     open?.(buildSuccessNotification(successNotification));
-      //   //   }
-      //   // }
-      //   //
-      //   // if (error || !success) {
-      //   //   if (error instanceof FetchError) {
-      //   //     if (error.statusCode === HttpStatusCodes.UNPROCESSABLE_ENTITY) {
-      //   //       // 422: Validation error
-      //   //       showRemoteValidationErrors(form, error);
-      //   //     }
-      //   //     if (error.statusCode === HttpStatusCodes.FORBIDDEN) {
-      //   //       // 403: Already logged in
-      //   //       open?.(buildNotification({
-      //   //         name: "Login Error",
-      //   //         message: "Already logged in",
-      //   //       }));
-      //   //     }
-      //   //   } else {
-      //   //     open?.(buildNotification(error));
-      //   //   }
-      //   // }
-      //   //
-      //   // if (success) {
-      //   //   go({ to: '/admin', type: "replace" });
-      //   // }
-      // },
-    });
-  };
+  }, [permissions, form]);
 
   return (
-    <div className="grid gap-3">
-      <Form
-        form={form}
-        layout="vertical"
-        feedbackLayout="terse"
-        onAutoSubmit={console.log}
-        onAutoSubmitFailed={console.log}
-        className="max-w-screen-sm"
-      >
-        <SchemaField schema={schema as ISchema} scope={{ formTab }} />
-        <FormButtonGroup.Sticky align="center">
-          <FormButtonGroup>
-            <Reset>Reset</Reset>
-            <Submit
-              loading={isSubmiting}
-              onSubmit={handleSubmit}
-              block
-            >Create</Submit>
-          </FormButtonGroup>
-        </FormButtonGroup.Sticky>
-      </Form>
-    </div>
+    <Form
+      form={form}
+      // layout='vertical'
+      labelCol={6}
+      wrapperCol={18}
+      // layout='horizontal'
+      feedbackLayout="terse"
+    >
+      <SchemaField
+        schema={schema as ISchema}
+        scope={{ formTab }}
+      />
+    </Form>
   );
-};
-
-const buildNotification = (
-  error?: Error | RefineError,
-): OpenNotificationParams => {
-  return {
-    message: error?.name || 'Login Error',
-    description: error?.message || 'Invalid credentials',
-    key: 'login-error',
-    type: 'error',
-  };
-};
-
-const buildSuccessNotification = (
-  successNotification: SuccessNotificationResponse,
-): OpenNotificationParams => {
-  return {
-    message: successNotification.message,
-    description: successNotification.description,
-    key: 'login-success',
-    type: 'success',
-  };
 };
 
 export default RoleForm;

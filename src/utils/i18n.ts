@@ -10,13 +10,18 @@ i18n
   .use(detector)
   .use(initReactI18next)
   .init({
-    supportedLngs: ['en', 'vi'],
+    supportedLngs: ['vi', 'en'],
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json', // locale files path
     },
-    ns: ['common'],
+    ns: ['common', 'table'],
     defaultNS: 'common',
-    fallbackLng: ['en'],
+    fallbackLng: ['vi'],
+    lng: 'vi', // Set Vietnamese as default language
+    detection: {
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      caches: ['localStorage']
+    }
   });
 
 export default i18n;

@@ -13,6 +13,8 @@ import { routes as statistic_routes } from '@/routes/admin/statistic';
 import { routes as order_routes } from '@/routes/admin/order';
 import { routes as warehouse_routes } from '@/routes/admin/warehouse';
 import { routes as customer_routes } from '@/routes/admin/customer';
+import queryClient from '@/utils/queryClient';
+import { loader } from '@/pages/admin/loader';
 // https://remix.run/blog/lazy-loading-routes
 // https://reactrouter.com/start/data/route-object#lazy
 // https://github.com/remix-run/react-router/blob/main/CHANGELOG.md#v750
@@ -22,10 +24,7 @@ export const routes: RouteObject[] = [
   {
     path: 'admin',
     Component: Admin,
-    // loader: async () => {
-    //   const response = await httpClient('/api/admin/dashboard');
-    //   return response;
-    // },
+    loader: loader(queryClient),
     children: [
       {
         index: true,

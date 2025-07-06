@@ -12,7 +12,8 @@ import LoginForm from './.form/LoginForm.tsx';
 // https://github.com/shadcn-ui/ui/tree/main/apps/www/registry/default/blocks/login-03
 export default function LoginPage() {
   return (
-    <div className='flex w-full max-w-sm flex-col gap-6'>
+    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+      <div className='flex w-full max-w-sm flex-col gap-6'>
       <div className='flex justify-center'>
         <Link to='/'>
           <div className='flex items-center gap-4 group'>
@@ -50,6 +51,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
+    </div>
     </div>
   );
 }

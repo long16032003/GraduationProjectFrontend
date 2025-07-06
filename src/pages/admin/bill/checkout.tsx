@@ -14,6 +14,8 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Checkout: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -235,17 +237,64 @@ const Checkout: React.FC = () => {
     if (values.payment_method === 'vnpay') {
       // Xử lý thanh toán VNPay
       await createVNPayPaymentHandler();
-    } else {
-      // Xử lý các phương thức thanh toán khác (cash, bank_transfer, etc.)
+    } else if (values.payment_method === 'momo') {
+
+      const paymentData = {
+        bill_id: parseInt(id as string),
+        amount: total,
+        discount_amount: couponDiscount > 0 ? couponDiscount : 0,
+        // redirectUrl: `${import.meta.env.VITE_API_URL}/momo/return`,
+      };
+
+      const requestBody = await httpClient(`${API_URL}/momo/create-payment`, {
+        method: 'POST',
+        body: paymentData
+      });
+
+      window.location.href = requestBody.payUrl;
+
+    } else if(values.payment_method === 'bank_transfer') {
       try {
         setIsProcessingPayment(true);
         
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        /** Demo thử API SePay xem có chạy được không */
+        const paymentData = {
+          "id": 92704,                              // ID giao dịch trên SePay
+          "gateway":"Vietcombank",                  // Brand name của ngân hàng
+          "transactionDate":"2023-03-25 14:02:37",  // Thời gian xảy ra giao dịch phía ngân hàng
+          "accountNumber":"0123499999",              // Số tài khoản ngân hàng
+          "code":null,                               // Mã code thanh toán (sepay tự nhận diện dựa vào cấu hình tại Công ty -> Cấu hình chung)
+          "content":"chuyen tien mua iphone",        // Nội dung chuyển khoản
+          "transferType":"in",                       // Loại giao dịch. in là tiền vào, out là tiền ra
+          "transferAmount":2277000,                  // Số tiền giao dịch
+          "accumulated":19077000,                    // Số dư tài khoản (lũy kế)
+          "subAccount":null,                         // Tài khoản ngân hàng phụ (tài khoản định danh),
+          "referenceCode":"MBVCB.3278907687",         // Mã tham chiếu của tin nhắn sms
+          "description":""                           // Toàn bộ nội dung tin nhắn sms
+      }
+
+        const result = await httpClient(`${API_URL}/hooks/sepay-payment`, {
+          method: 'POST',
+          body: paymentData
+        });
+
+        console.log(result)
+
+      } catch (error) {
+        console.error('Payment failed:', error);
+        message.error('Có lỗi xảy ra khi xử lý thanh toán');
+      } finally {
+        setIsProcessingPayment(false);
+      }
+    } else{
+      // Xử lý các phương thức thanh toán khác (cash, etc.)
+      try {
+        setIsProcessingPayment(true);
         
         const paymentData = {
           bill_id: parseInt(id as string),
           payment_method: values.payment_method,
-          amount_paid: values.payment_method === 'bank_transfer' ? total : values.amount_paid,
+          amount_paid: values.amount_paid,
           notes: values.notes,
           discount_amount: couponDiscount,
           coupon_code: appliedCoupon?.code || null,
@@ -258,13 +307,8 @@ const Checkout: React.FC = () => {
         });
 
         if (result.success) {
-          if (values.payment_method === 'bank_transfer') {
-            message.success('Đã tạo yêu cầu thanh toán chuyển khoản! Vui lòng thực hiện chuyển khoản theo QR code. SePay sẽ tự động xác nhận khi nhận được tiền.');
-            // Không redirect ngay, để khách hàng có thể chuyển khoản
-          } else {
-            message.success('Thanh toán thành công!');
-            window.location.href = '/admin/bills';
-          }
+          message.success('Thanh toán thành công!');
+          navigate('/admin/bills');
         } else {
           message.error(result.message || 'Có lỗi xảy ra khi thanh toán');
         }
@@ -488,6 +532,7 @@ const Checkout: React.FC = () => {
                 <Select>
                   <Option value="cash">Tiền mặt</Option>
                   <Option value="bank_transfer">Chuyển khoản</Option>
+                  <Option value="momo">MoMo</Option>
                   <Option value="vnpay">VNPay</Option>
                 </Select>
               </Form.Item>
@@ -574,6 +619,19 @@ const Checkout: React.FC = () => {
                         <Alert
                           message="Thanh toán VNPay"
                           description="Bạn sẽ được chuyển hướng đến trang thanh toán VNPay để hoàn tất giao dịch."
+                          type="info"
+                          showIcon
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (paymentMethod === 'momo') {
+                    return (
+                      <div className="mb-4">
+                        <Alert
+                          message="Thanh toán MoMo"
+                          description="Bạn sẽ được chuyển hướng đến ứng dụng MoMo để hoàn tất giao dịch."
                           type="info"
                           showIcon
                         />
@@ -762,6 +820,15 @@ const Checkout: React.FC = () => {
           <Alert
             message="Lưu ý"
             description="Bạn sẽ được chuyển hướng đến trang thanh toán VNPay. Vui lòng hoàn tất thanh toán trên VNPay."
+            type="warning"
+            showIcon
+            className="mt-3"
+          />
+        )}
+        {form.getFieldValue('payment_method') === 'momo' && (
+          <Alert
+            message="Lưu ý"
+            description="Bạn sẽ được chuyển hướng đến ứng dụng MoMo. Vui lòng hoàn tất thanh toán trên MoMo."
             type="warning"
             showIcon
             className="mt-3"

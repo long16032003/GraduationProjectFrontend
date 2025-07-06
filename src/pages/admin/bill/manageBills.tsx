@@ -240,6 +240,7 @@ const ManageBills: React.FC = () => {
         const methodDisplay: Record<string, string> = {
           cash: 'Tiền mặt',
           credit_card: 'Thẻ tín dụng',
+          momo: 'MoMo',
           vnpay: 'VNPay',
           bank_transfer: 'Chuyển khoản',
         };
@@ -462,6 +463,7 @@ const ManageBills: React.FC = () => {
                 <p><strong>Phương thức thanh toán:</strong> {selectedBill.payment_method ? {
                   cash: 'Tiền mặt',
                   credit_card: 'Thẻ tín dụng',
+                  momo: 'MoMo',
                   vnpay: 'VNPay',
                   bank_transfer: 'Chuyển khoản',
                 }[selectedBill.payment_method] || selectedBill.payment_method : '-'}</p>

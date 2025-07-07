@@ -28,8 +28,10 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
-import type { Promotion, Customer, PromotionCode } from '@/types';
-import { useList, useCreate, useGetIdentity, useOne, useUpdate } from '@refinedev/core';
+import type { Promotion, Customer, PromotionCode, Staff } from '@/types';
+import { useList, useCreate, useUpdate, useCustom } from '@refinedev/core';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -39,11 +41,18 @@ const PromotionPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Get current customer info
-  const { data: identity, refetch: refetchIdentity } = useGetIdentity<Customer>();
-  const currentCustomer = identity;
-
-  // const currentCustomer = auth$.user.get()
+  // Get current user from auth store
+  const currentUser = use$(auth$.user);
+  const isAuthenticated = use$(auth$.isAuthenticated);
+  const guard = use$(auth$.guard);
+  
+  // Type guard to check if user is a customer
+  const isCustomer = (user: Customer | Staff | null): user is Customer => {
+    return !!user && guard === 'customer' && 'point' in user;
+  };
+  
+  const currentCustomer = isCustomer(currentUser) ? currentUser : null;
+  console.log("currentCustomer: ", currentCustomer)
 
   // Fetch promotions
   const { data: promotionsData, isLoading, refetch: refetchPromotions } = useList<Promotion>({
@@ -91,7 +100,7 @@ const PromotionPage: React.FC = () => {
   const promotions = promotionsData?.data || [];
   const myCodes = myCodesData?.data || [];
   const customerWithPoints = currentCustomer;
-  console.log(currentCustomer)
+  console.log("customerWithPoints: ", customerWithPoints)
 
   // Filter promotions by status
   const activePromotions = promotions.filter(promo => {
@@ -182,11 +191,10 @@ const PromotionPage: React.FC = () => {
          }
        });
 
-       // Refetch data để cập nhật số lượng promotion codes, mã của tôi và điểm khách hàng
+       // Refetch data để cập nhật số lượng promotion codes và mã của tôi
        await Promise.all([
          refetchPromotions(),
-         refetchMyCodes(),
-         refetchIdentity()
+         refetchMyCodes()
        ]);
 
        message.success('Đổi ưu đãi thành công! Mã ưu đãi đã được thêm vào tài khoản của bạn.');
@@ -314,11 +322,11 @@ const PromotionPage: React.FC = () => {
           </div>
 
           <div className="flex gap-2">
-            {isActive ? (
+            {isActive && isCustomer(currentUser) ? (
               <Button
                 type="primary"
                 size="large"
-                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 border-0 rounded-lg font-semibold"
+                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 rounded-lg font-semibold"
                 icon={<GiftOutlined />}
                 onClick={() => handleExchange(promotion)}
                 disabled={!canExchange || !isAvailable}
@@ -328,7 +336,7 @@ const PromotionPage: React.FC = () => {
                   !canExchange ? 'Không đủ điểm' : 
                   !isAvailable ? 'Hết mã' : 'Đổi ngay'}
               </Button>
-            ) : (
+            ) : (!isActive &&
               <Button
                 size="large"
                 className="flex-1 rounded-lg"

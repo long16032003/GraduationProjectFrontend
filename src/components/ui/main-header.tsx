@@ -1,13 +1,14 @@
 import { Link, useLocation } from 'react-router';
 import { Button, Layout, Menu, Drawer, Dropdown } from 'antd';
-import { UserOutlined, MenuOutlined, HomeOutlined, ReadOutlined, ShopOutlined, ContactsOutlined, LogoutOutlined, GiftOutlined } from '@ant-design/icons';
+import { UserOutlined, MenuOutlined, HomeOutlined, ReadOutlined, ShopOutlined, ContactsOutlined, LogoutOutlined } from '@ant-design/icons';
 import { theme } from '@/config/theme';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { MainNav } from '@/pages';
 import { UserNav } from '../app/app-header';
 import { useState } from 'react';
-import { CalendarCheck, FileText, UtensilsCrossed } from 'lucide-react';
+import { CalendarCheck, FileText, Tag, UtensilsCrossed } from 'lucide-react';
+import { useSiteSettingsContext } from '@/providers/SiteSettingsProvider';
 
 const { Header } = Layout;
 const { token } = theme;
@@ -20,7 +21,7 @@ const menuItems = [
   },
   {
     key: '/promotions',
-    icon: <GiftOutlined />,
+    icon: <Tag />,
     label: 'Ưu đãi',
   },
   {
@@ -33,12 +34,18 @@ const menuItems = [
     icon: <CalendarCheck />,
     label: 'Đặt bàn',
   },
+  {
+    key: '/info-user',
+    icon: <UserOutlined />,
+    label: 'Thông tin tài khoản',
+  },
 ];
 
 export const MainHeader = () => {
   const user = use$(auth$.user);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { getSetting, getJsonSetting } = useSiteSettingsContext();
 
   const handleLogout = () => {
     // Xử lý đăng xuất ở đây
@@ -62,13 +69,21 @@ export const MainHeader = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo - Always visible */}
           <Link to="/" className="flex items-center gap-4">
-            <img 
-              src="/logo_restaurant.jpg" 
-              alt="Logo" 
-              className="h-10 w-10 rounded-full object-cover border-2 border-orange-600 p-0.5 bg-white shadow-sm"
-            />
-            <span className="text-xl font-semibold text-orange-700 hidden sm:block">
-              BamBoo Sông Chanh
+            {(() => {
+              const logoData = getJsonSetting('logo');
+              const logoSrc = logoData && logoData.length > 0 && logoData[0].url 
+                ? logoData[0].url 
+                : '/logo_restaurant.jpg';
+              return (
+                <img 
+                  src={logoSrc} 
+                  alt="Logo" 
+                  className="h-10 w-10 rounded-full object-cover border-2 site-primary-bg p-0.5 bg-white shadow-sm"
+                />
+              );
+            })()}
+            <span className="text-xl font-semibold site-primary-color hidden sm:block">
+              {getSetting('site_name', 'BamBoo Sông Chanh')}
             </span>
           </Link>
 
@@ -87,22 +102,14 @@ export const MainHeader = () => {
                   <Button 
                     type="primary"
                     icon={<UserOutlined />}
-                    style={{
-                      backgroundColor: '#ea580c',
-                      borderColor: '#ea580c'
-                    }}
-                    className="hover:bg-orange-700 border-none"
+                    className="site-btn-primary"
                   >
                     Đăng nhập
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button 
-                    style={{
-                      borderColor: '#ea580c',
-                      color: '#ea580c'
-                    }}
-                    className="hover:bg-orange-50"
+                    className="site-btn-secondary"
                   >
                     Đăng ký
                   </Button>
@@ -125,13 +132,21 @@ export const MainHeader = () => {
       <Drawer
         title={
           <div className="flex items-center gap-3">
-            <img 
-              src="/logo_restaurant.jpg" 
-              alt="Logo" 
-              className="h-8 w-8 rounded-full object-cover"
-            />
-            <span className="text-lg font-semibold text-orange-700">
-              BamBoo Sông Chanh
+            {(() => {
+              const logoData = getJsonSetting('logo');
+              const logoSrc = logoData && logoData.length > 0 && logoData[0].url 
+                ? logoData[0].url 
+                : '/logo_restaurant.jpg';
+              return (
+                <img 
+                  src={logoSrc} 
+                  alt="Logo" 
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              );
+            })()}
+            <span className="text-lg font-semibold site-primary-color">
+              {getSetting('site_name', 'BamBoo Sông Chanh')}
             </span>
           </div>
         }
@@ -168,16 +183,12 @@ export const MainHeader = () => {
           </div>
         ) : (
           <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
-            <Link to="/login">
+            <Link to="/login-customer">
               <Button 
                 type="primary" 
                 block
                 icon={<UserOutlined />}
-                style={{
-                  backgroundColor: '#ea580c',
-                  borderColor: '#ea580c'
-                }}
-                className="hover:bg-orange-700 border-none"
+                className="site-btn-primary"
               >
                 Đăng nhập
               </Button>
@@ -185,11 +196,7 @@ export const MainHeader = () => {
             <Link to="/register">
               <Button 
                 block
-                style={{
-                  borderColor: '#ea580c',
-                  color: '#ea580c'
-                }}
-                className="hover:bg-orange-50"
+                className="site-btn-secondary"
               >
                 Đăng ký
               </Button>

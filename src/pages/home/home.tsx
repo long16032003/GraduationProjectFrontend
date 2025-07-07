@@ -7,6 +7,7 @@ import { useList } from '@refinedev/core';
 import type { Dish } from '@/types';
 import type { CarouselRef } from 'antd/es/carousel';
 import { Testimonials } from '@/components/home/Testimonials';
+import { useSiteSettingsContext } from '@/providers/SiteSettingsProvider';
 
 const { Title, Text } = Typography;
 
@@ -14,12 +15,15 @@ const HomePage: React.FC = () => {
   // Ref for carousel control
   const carouselRef = useRef<CarouselRef>(null);
   
-  // Mock data cho các sections
-  const bannerImages = [
+  // Get site settings
+  const { settings, getSetting, getJsonSetting, isLoading: settingsLoading } = useSiteSettingsContext();
+  
+  // Get banner images from settings or use default
+  const bannerImages = getJsonSetting('banner_images', [
     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
     'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200',
     'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200',
-  ];
+  ]);
 
   const {data: dishes, isLoading: isLoadingDishes} = useList<Dish>({
     resource: 'dishes',
@@ -36,7 +40,7 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen ">
       {/* Hero Section với Carousel */} 
       <Carousel autoplay effect="fade" className="h-[600px] hero-carousel">
-        {bannerImages.map((image, index) => (
+        {bannerImages.map((image: string, index: number) => (
           <div key={index}>
             <div 
               className="h-[600px] bg-cover bg-center relative"
@@ -47,11 +51,10 @@ const HomePage: React.FC = () => {
                 <div className="text-center text-white p-8 max-w-4xl mx-auto">
                   <div className="animate-fade-in-up">
                     <Title level={1} className="text-white mb-6 !text-6xl font-bold leading-tight">
-                      Nhà Hàng <span className="text-orange-400">Bamboo</span><br/>
-                      Sông Chanh
+                      {getSetting('site_name', 'Nhà Hàng Bamboo Sông Chanh')}
                     </Title>
                     <Text className="text-2xl block mb-4 text-white/95 font-light">
-                      Tinh hoa ẩm thực Quảng Yên
+                      {getSetting('site_tagline', 'Tinh hoa ẩm thực Quảng Yên')}
                     </Text>
                     <Text className="text-lg block mb-8 text-white/80 max-w-2xl mx-auto leading-relaxed">
                       Khám phá hương vị đặc sắc của vùng đất Quảng Ninh với không gian ấm cúng bên dòng sông thơ mộng
@@ -60,14 +63,14 @@ const HomePage: React.FC = () => {
                       <Button 
                         type="primary" 
                         size="large"
-                        className="bg-orange-600 border-orange-600 hover:bg-orange-700 px-8 py-6 h-auto text-lg font-semibold rounded-full"
+                        className="site-btn-primary px-8 py-6 h-auto text-lg font-semibold rounded-full"
                         onClick={() => window.location.href = '/reservation'}
                       >
                         Đặt bàn ngay
                       </Button>
                       <Button 
                         size="large"
-                        className="border-white text-orange-600 hover:bg-gray-100 hover:text-orange-600 px-8 py-6 h-auto text-lg font-semibold rounded-full"
+                        className="border-white text-white hover:bg-white hover:text-gray-800 px-8 py-6 h-auto text-lg font-semibold rounded-full"
                         onClick={() => window.location.href = '/menu'}
                       >
                         Xem thực đơn
@@ -98,8 +101,10 @@ const HomePage: React.FC = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <PhoneOutlined className="text-3xl text-white" />
                 </div>
-                <Title level={4} className="!text-orange-700 mb-3">Hotline</Title>
-                <Text className="text-gray-600 text-lg font-medium">033 328 3999</Text>
+                <Title level={4} className="site-primary-color mb-3">Hotline</Title>
+                <Text className="text-gray-600 text-lg font-medium">
+                  {getSetting('contact_phone', '033 328 3999')}
+                </Text>
                 <Text className="block text-sm text-gray-500 mt-2">Phục vụ 24/7</Text>
               </Card>
             </Col>
@@ -108,9 +113,10 @@ const HomePage: React.FC = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <EnvironmentOutlined className="text-3xl text-white" />
                 </div>
-                <Title level={4} className="!text-blue-700 mb-3">Địa chỉ</Title>
-                <Text className="text-gray-600">Bắc Cầu sông Chanh phường Quảng Yên</Text>
-                <Text className="block text-sm text-gray-500 mt-2">T.X Quảng Yên, Quảng Ninh</Text>
+                <Title level={4} className="site-secondary-color mb-3">Địa chỉ</Title>
+                <Text className="text-gray-600">
+                  {getSetting('address', 'Bắc Cầu sông Chanh phường Quảng Yên, T.X Quảng Yên, Quảng Ninh')}
+                </Text>
               </Card>
             </Col>
             <Col xs={24} sm={8}>
@@ -118,8 +124,10 @@ const HomePage: React.FC = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
                   <ClockCircleOutlined className="text-3xl text-white" />
                 </div>
-                <Title level={4} className="!text-green-700 mb-3">Giờ mở cửa</Title>
-                <Text className="text-gray-600 text-lg font-medium">10:00 - 22:30</Text>
+                <Title level={4} className="site-accent-color mb-3">Giờ mở cửa</Title>
+                <Text className="text-gray-600 text-lg font-medium">
+                  {getSetting('opening_hours', '10:00 - 22:30')}
+                </Text>
                 <Text className="block text-sm text-gray-500 mt-2">Tất cả các ngày trong tuần</Text>
               </Card>
             </Col>
@@ -130,7 +138,7 @@ const HomePage: React.FC = () => {
       {/* Món ăn nổi bật */}
       <div className="py-16">
         <div className="container mx-auto px-4">
-          <Title level={2} className="text-center mb-12 !text-orange-700">
+          <Title level={2} className="text-center mb-12 site-primary-color">
             Món Ăn Nổi Bật
           </Title>
           <div className="relative">
@@ -146,7 +154,7 @@ const HomePage: React.FC = () => {
                 shape="circle"
                 icon={<LeftOutlined />}
                 onClick={() => carouselRef.current?.prev()}
-                className="absolute left-[-20px] top-1/2 transform -translate-y-1/2 z-10 bg-orange-600 border-orange-600 hover:bg-orange-700 shadow-lg"
+                className="absolute left-[-20px] top-1/2 transform -translate-y-1/2 z-10 site-btn-primary shadow-lg"
                 style={{ width: '40px', height: '40px' }}
               />
               <Button
@@ -154,7 +162,7 @@ const HomePage: React.FC = () => {
                 shape="circle"
                 icon={<RightOutlined />}
                 onClick={() => carouselRef.current?.next()}
-                className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 z-10 bg-orange-600 border-orange-600 hover:bg-orange-700 shadow-lg"
+                className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 z-10 site-btn-primary shadow-lg"
                 style={{ width: '40px', height: '40px' }}
               />
               

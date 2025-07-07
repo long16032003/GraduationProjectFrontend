@@ -38,7 +38,6 @@ import type { Customer } from '@/types';
 import { useList } from '@refinedev/core';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 // Mock data for demonstration
 // const generateMockCustomers = (): Customer[] => {
@@ -423,39 +422,54 @@ const ManageCustomer: React.FC = () => {
         width={700}
       >
         {modalMode === 'view' && selectedCustomer && (
-          <Tabs defaultActiveKey="info">
-            <TabPane tab="Thông tin cá nhân" key="info">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p><strong>ID:</strong> {selectedCustomer.id}</p>
-                  <p><strong>UUID:</strong> {selectedCustomer.uuid}</p>
-                  <p><strong>Họ tên:</strong> {selectedCustomer.name}</p>
-                  <p><strong>Số điện thoại:</strong> {selectedCustomer.phone}</p>
-                </div>
-                <div>
-                  <p><strong>Email:</strong> {selectedCustomer.email}</p>
-                  <p>
-                    <strong>Điểm tích lũy:</strong> {selectedCustomer.point} điểm
-                    <Tag color={getPointLevelColor(selectedCustomer.point)} className="ml-2">
-                      {getPointLevelText(selectedCustomer.point)}
-                    </Tag>
-                  </p>
-                  <p><strong>Ngày đăng ký:</strong> {dayjs(selectedCustomer.created_at).format('DD/MM/YYYY HH:mm')}</p>
-                  <p><strong>Cập nhật lần cuối:</strong> {dayjs(selectedCustomer.updated_at).format('DD/MM/YYYY HH:mm')}</p>
-                </div>
-              </div>
-            </TabPane>
-            <TabPane tab="Lịch sử đơn hàng" key="orders">
-              <div className="text-center py-8">
-                <Text type="secondary">Chức năng đang phát triển</Text>
-              </div>
-            </TabPane>
-            <TabPane tab="Lịch sử điểm thưởng" key="points">
-              <div className="text-center py-8">
-                <Text type="secondary">Chức năng đang phát triển</Text>
-              </div>
-            </TabPane>
-          </Tabs>
+          <Tabs 
+            defaultActiveKey="info"
+            items={[
+              {
+                key: 'info',
+                label: 'Thông tin cá nhân',
+                children: (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p><strong>ID:</strong> {selectedCustomer.id}</p>
+                      <p><strong>UUID:</strong> {selectedCustomer.uuid}</p>
+                      <p><strong>Họ tên:</strong> {selectedCustomer.name}</p>
+                      <p><strong>Số điện thoại:</strong> {selectedCustomer.phone}</p>
+                    </div>
+                    <div>
+                      <p><strong>Email:</strong> {selectedCustomer.email}</p>
+                      <p>
+                        <strong>Điểm tích lũy:</strong> {selectedCustomer.point} điểm
+                        <Tag color={getPointLevelColor(selectedCustomer.point)} className="ml-2">
+                          {getPointLevelText(selectedCustomer.point)}
+                        </Tag>
+                      </p>
+                      <p><strong>Ngày đăng ký:</strong> {dayjs(selectedCustomer.created_at).format('DD/MM/YYYY HH:mm')}</p>
+                      <p><strong>Cập nhật lần cuối:</strong> {dayjs(selectedCustomer.updated_at).format('DD/MM/YYYY HH:mm')}</p>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                key: 'orders',
+                label: 'Lịch sử đơn hàng',
+                children: (
+                  <div className="text-center py-8">
+                    <Text type="secondary">Chức năng đang phát triển</Text>
+                  </div>
+                )
+              },
+              {
+                key: 'points',
+                label: 'Lịch sử điểm thưởng',
+                children: (
+                  <div className="text-center py-8">
+                    <Text type="secondary">Chức năng đang phát triển</Text>
+                  </div>
+                )
+              }
+            ]}
+          />
         )}
         
         {(modalMode === 'edit' || modalMode === 'add') && (

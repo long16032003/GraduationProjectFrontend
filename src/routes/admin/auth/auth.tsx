@@ -21,7 +21,6 @@ export const routes: RouteObject[] = [
       { path: 'register', Component: RegisterPage },
       { path: 'forgot-password', Component: ForgotPassword },
       { path: 'update-password', Component: UpdatePassword },
-      { path: 'info-user', Component: InfoUserPage },
     ],
   },
 ];

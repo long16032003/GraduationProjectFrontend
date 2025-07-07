@@ -3,7 +3,7 @@ import { Link } from "@refinedev/core";
 
 export default function CustomerPasswordLabel () {
   return (
-    <div className='b-formily-item-label justify-between'>
+    <div className='b-formily-item-labe'>
       <div className='b-formily-item-label-content flex justify-between w-full'>
         <div className='flex items-center flex-row'>
           <label>Mật khẩu</label>

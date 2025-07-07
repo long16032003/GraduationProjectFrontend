@@ -9,6 +9,7 @@ import { routes as reservation_routes } from '@/routes/reservation';
 import { routes as menu_routes } from '@/routes/menu';
 import { routes as promotion_routes } from '@/routes/promotion';
 import { routes as history_reservation_routes } from '@/routes/historyReservation';
+import { routes as info_user_routes } from '@/routes/infoUser';
 // import { HydrateFallback } from '@/components/HydrateFallback.tsx';
 
 // https://reactrouter.com/start/data/custom#3-lazy-loading
@@ -34,6 +35,7 @@ export const routes: RouteObject[] = [
       ...menu_routes,
       ...promotion_routes,
       ...history_reservation_routes,
+      ...info_user_routes,
       {
         path: 'print-bill/:billId',
         lazy: {

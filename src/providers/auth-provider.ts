@@ -2,7 +2,7 @@ import { httpClient } from '@/utils/http';
 import type { AuthActionResponse, AuthProvider, CheckResponse, IdentityResponse, OnErrorResponse, PermissionResponse } from '@refinedev/core';
 import { FetchError } from 'ofetch';
 import auth$ from '@/stores/auth.ts';
-import type { LoginFormValues, PermissionsResponse, RegisterFormValues, Staff } from '@/types';
+import type { Customer, LoginFormValues, PermissionsResponse, RegisterFormValues, Staff } from '@/types';
 import HttpStatusCode from '@/utils/http-status-codes.ts';
 import { message } from 'antd';
 import { DEFAULT_ERROR_MESSAGES } from '@/utils/error-handler';

@@ -27,6 +27,16 @@ import { Column, Pie, Line } from '@ant-design/plots';
 import { CanAccess, useList } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Bill, Order, OrderDish, Dish, Customer } from '@/types';
+
+// Interface for warehouse data
+interface EnterIngredient {
+  id: number;
+  creator_id: number;
+  total_amount: number;
+  note?: string;
+  created_at: string;
+  updated_at: string;
+}
 import { NoPermission } from '@/components/NoPermission';
 
 const { Title, Text } = Typography;
@@ -43,6 +53,8 @@ interface RevenueData {
   revenue: number;
   orders: number;
   customers: number;
+  warehouse_expense: number;
+  warehouse_entries: number;
 }
 
 interface TopDishData {
@@ -105,6 +117,9 @@ export function DashboardPage() {
     meta: {
       populate: ['customer', 'orders.order_dishes.dish.dish_categories', 'table'],
     },
+    queryOptions: {
+      queryKey: ['bills', selectedPeriod, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')],
+    },
   });
 
   // Fetch orders data
@@ -128,14 +143,40 @@ export function DashboardPage() {
     meta: {
       populate: ['order_dishes.dish.dish_categories', 'bill'],
     },
+    queryOptions: {
+      queryKey: ['orders', selectedPeriod, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')],
+    },
+  });
+
+  // Fetch enter ingredients data for warehouse statistics
+  const { data: enterIngredientsData, isLoading: enterIngredientsLoading } = useList<EnterIngredient>({
+    resource: 'enter-ingredients',
+    filters: [
+      {
+        field: 'created_at',
+        operator: 'gte',
+        value: startDate.format('YYYY-MM-DD 00:00:00'),
+      },
+      {
+        field: 'created_at',
+        operator: 'lte',
+        value: endDate.format('YYYY-MM-DD 23:59:59'),
+      },
+    ],
+    pagination: {
+      mode: 'off',
+    },
+    queryOptions: {
+      queryKey: ['enter-ingredients', selectedPeriod, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')],
+    },
   });
 
   // Process data when fetched
   useEffect(() => {
-    if (billsData?.data && ordersData?.data) {
+    if (billsData?.data && ordersData?.data && enterIngredientsData?.data) {
       processStatisticsData();
     }
-  }, [billsData, ordersData, selectedPeriod]);
+  }, [billsData, ordersData, enterIngredientsData, selectedPeriod]);
 
   const processStatisticsData = () => {
     setLoading(true);
@@ -143,6 +184,7 @@ export function DashboardPage() {
     try {
       const bills = billsData?.data || [];
       const orders = ordersData?.data || [];
+      const enterIngredients = enterIngredientsData?.data || [];
 
       // Debug: Log date range and raw data
       console.log('Date Range Debug:', {
@@ -152,17 +194,23 @@ export function DashboardPage() {
         today: dayjs().format('YYYY-MM-DD HH:mm:ss'),
         billsCount: bills.length,
         ordersCount: orders.length,
+        enterIngredientsCount: enterIngredients.length,
         billsSample: bills.slice(0, 3).map((b) => ({
           id: b.id,
           created_at: b.created_at,
           total_amount: b.total_amount,
           status: b.status,
         })),
+        enterIngredientsSample: enterIngredients.slice(0, 3).map((e) => ({
+          id: e.id,
+          created_at: e.created_at,
+          total_amount: e.total_amount,
+        })),
       });
 
       // Process revenue data by date
       const revenueByDate: {
-        [key: string]: { revenue: number; orders: number; customers: Set<number> };
+        [key: string]: { revenue: number; orders: number; customers: Set<number>; warehouse_expense: number; warehouse_entries: number };
       } = {};
 
       bills.forEach((bill) => {
@@ -187,6 +235,8 @@ export function DashboardPage() {
             revenue: 0,
             orders: 0,
             customers: new Set(),
+            warehouse_expense: 0,
+            warehouse_entries: 0,
           };
         }
 
@@ -197,12 +247,54 @@ export function DashboardPage() {
         }
       });
 
+      // Process warehouse data by date
+      console.log('Processing warehouse data:', {
+        enterIngredientsCount: enterIngredients.length,
+        periodFilter: {
+          startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
+          endDate: endDate.format('YYYY-MM-DD HH:mm:ss'),
+        },
+      });
+
+      enterIngredients.forEach((enterIngredient) => {
+        if (!enterIngredient.created_at || !enterIngredient.total_amount) return; // Skip invalid entries
+
+        const entryDate = dayjs(enterIngredient.created_at);
+
+        // Check if entry is within date range
+        if (entryDate.isBefore(startDate) || entryDate.isAfter(endDate)) {
+          console.log('Warehouse entry outside date range:', {
+            entryId: enterIngredient.id,
+            entryDate: entryDate.format('YYYY-MM-DD HH:mm:ss'),
+            startDate: startDate.format('YYYY-MM-DD HH:mm:ss'),
+            endDate: endDate.format('YYYY-MM-DD HH:mm:ss'),
+          });
+          return;
+        }
+
+        const date = entryDate.format('YYYY-MM-DD');
+        if (!revenueByDate[date]) {
+          revenueByDate[date] = {
+            revenue: 0,
+            orders: 0,
+            customers: new Set(),
+            warehouse_expense: 0,
+            warehouse_entries: 0,
+          };
+        }
+
+        revenueByDate[date].warehouse_expense += Number(enterIngredient.total_amount) || 0;
+        revenueByDate[date].warehouse_entries += 1;
+      });
+
       const processedRevenueData: RevenueData[] = Object.entries(revenueByDate)
         .map(([date, data]) => ({
           date: dayjs(date).format('DD/MM'),
           revenue: data.revenue,
           orders: data.orders,
           customers: data.customers.size,
+          warehouse_expense: data.warehouse_expense,
+          warehouse_entries: data.warehouse_entries,
         }))
         .sort((a, b) => dayjs(a.date, 'DD/MM').valueOf() - dayjs(b.date, 'DD/MM').valueOf());
 
@@ -329,14 +421,25 @@ export function DashboardPage() {
   const avgOrderValue =
     totalOrders > 0 && totalRevenue > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
+  // Calculate warehouse statistics
+  const totalWarehouseExpense = revenueData.reduce((sum, item) => sum + (item.warehouse_expense || 0), 0);
+  const totalWarehouseEntries = revenueData.reduce((sum, item) => sum + (item.warehouse_entries || 0), 0);
+
   // Debug logging
   console.log('Dashboard Stats:', {
     totalRevenue,
     totalOrders,
     totalCustomers,
     avgOrderValue,
+    totalWarehouseExpense,
+    totalWarehouseEntries,
     revenueDataLength: revenueData.length,
     period: currentPeriod.label,
+    warehouseDataSample: revenueData.slice(0, 3).map(item => ({
+      date: item.date,
+      warehouse_expense: item.warehouse_expense,
+      warehouse_entries: item.warehouse_entries,
+    })),
   });
 
   // Chart configurations
@@ -348,11 +451,14 @@ export function DashboardPage() {
     smooth: true,
     point: {
       size: 5,
-      shape: 'diamond',
+      shape: 'diamond' as const,
     },
-    label: {
-      style: {
-        fill: '#aaa',
+    tooltip: {
+      formatter: (datum: RevenueData) => {
+        return {
+          name: 'Doanh thu',
+          value: `${new Intl.NumberFormat('vi-VN').format(datum.revenue)}đ`
+        };
       },
     },
   };
@@ -391,14 +497,14 @@ export function DashboardPage() {
     },
     interactions: [
       {
-        type: 'element-active',
+        type: 'element-active' as const,
       },
       {
-        type: 'pie-statistic-active',
+        type: 'pie-statistic-active' as const,
       },
     ],
     legend: {
-      position: 'bottom',
+      position: 'bottom' as const,
       itemName: {
         style: {
           fontSize: 12,
@@ -421,12 +527,32 @@ export function DashboardPage() {
         alias: 'Ngày',
       },
     },
-    label: {
-      position: 'middle',
-      style: {
-        fill: '#fff',
-        fontSize: 12,
-        fontWeight: 'bold',
+    tooltip: {
+      formatter: (datum: RevenueData) => {
+        return {
+          name: 'Số hóa đơn',
+          value: `${datum.orders} hóa đơn`
+        };
+      },
+    },
+  };
+
+  const warehouseChartConfig = {
+    data: revenueData,
+    xField: 'date',
+    yField: 'warehouse_expense',
+    color: '#f5222d',
+    smooth: true,
+    point: {
+      size: 5,
+      shape: 'circle' as const,
+    },
+    tooltip: {
+      formatter: (datum: RevenueData) => {
+        return {
+          name: 'Chi phí nhập kho',
+          value: `${new Intl.NumberFormat('vi-VN').format(datum.warehouse_expense)}đ`
+        };
       },
     },
   };
@@ -499,7 +625,7 @@ export function DashboardPage() {
     },
   ];
 
-  const isLoading = billsLoading || ordersLoading || loading;
+  const isLoading = billsLoading || ordersLoading || enterIngredientsLoading || loading;
 
   return (
     <CanAccess
@@ -547,7 +673,8 @@ export function DashboardPage() {
               <Col
                 xs={24}
                 sm={12}
-                md={6}
+                lg={8}
+                xl={6}
               >
                 <Card className='shadow-sm h-full'>
                   <Statistic
@@ -564,7 +691,8 @@ export function DashboardPage() {
               <Col
                 xs={24}
                 sm={12}
-                md={6}
+                lg={8}
+                xl={6}
               >
                 <Card className='shadow-sm h-full'>
                   <Statistic
@@ -579,7 +707,8 @@ export function DashboardPage() {
               <Col
                 xs={24}
                 sm={12}
-                md={6}
+                lg={8}
+                xl={6}
               >
                 <Card className='shadow-sm h-full'>
                   <Statistic
@@ -594,7 +723,8 @@ export function DashboardPage() {
               <Col
                 xs={24}
                 sm={12}
-                md={6}
+                lg={8}
+                xl={6}
               >
                 <Card className='shadow-sm h-full'>
                   <Statistic
@@ -608,6 +738,27 @@ export function DashboardPage() {
                   <Text type='secondary'>{currentPeriod.label}</Text>
                 </Card>
               </Col>
+              <Col
+                xs={24}
+                sm={12}
+                lg={8}
+                xl={6}
+              >
+                <Card className='shadow-sm h-full'>
+                  <Statistic
+                    title='Tiền nhập nguyên liệu'
+                    value={totalWarehouseExpense}
+                    prefix={<FireOutlined />}
+                    suffix='đ'
+                    valueStyle={{ color: '#f5222d' }}
+                    formatter={(value) => new Intl.NumberFormat('vi-VN').format(value as number)}
+                  />
+                  <div className='flex justify-between items-center mt-2'>
+                    <Text type='secondary'>{currentPeriod.label}</Text>
+                    <Text type='secondary'>{totalWarehouseEntries} lần nhập</Text>
+                  </div>
+                </Card>
+              </Col>
             </Row>
 
             {/* Charts Row */}
@@ -617,7 +768,7 @@ export function DashboardPage() {
             >
               <Col
                 xs={24}
-                lg={16}
+                lg={12}
               >
                 <Card
                   title='Biểu đồ doanh thu theo thời gian'
@@ -626,7 +777,7 @@ export function DashboardPage() {
                   {revenueData.length > 0 ? (
                     <Line
                       {...revenueChartConfig}
-                      height={350}
+                      height={300}
                     />
                   ) : (
                     <Alert
@@ -638,7 +789,35 @@ export function DashboardPage() {
               </Col>
               <Col
                 xs={24}
-                lg={8}
+                lg={12}
+              >
+                <Card
+                  title='Chi phí nhập nguyên liệu theo thời gian'
+                  className='shadow-sm'
+                >
+                  {revenueData.length > 0 ? (
+                    <Line
+                      {...warehouseChartConfig}
+                      height={300}
+                    />
+                  ) : (
+                    <Alert
+                      message='Chưa có dữ liệu chi phí nhập nguyên liệu trong khoảng thời gian này'
+                      type='info'
+                    />
+                  )}
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Second Charts Row */}
+            <Row
+              gutter={[16, 16]}
+              className='mb-6'
+            >
+              <Col
+                xs={24}
+                lg={12}
               >
                 <Card
                   title='Hóa đơn thanh toán thành công'
@@ -647,11 +826,58 @@ export function DashboardPage() {
                   {revenueData.length > 0 ? (
                     <Column
                       {...billChartConfig}
-                      height={350}
+                      height={300}
                     />
                   ) : (
                     <Alert
                       message='Chưa có dữ liệu hóa đơn'
+                      type='info'
+                    />
+                  )}
+                </Card>
+              </Col>
+              <Col
+                xs={24}
+                lg={12}
+              >
+                <Card
+                  title='Lợi nhuận ước tính'
+                  className='shadow-sm'
+                >
+                  {revenueData.length > 0 ? (
+                    <div className='p-4'>
+                      <div className='text-center mb-4'>
+                        <div className='text-3xl font-bold text-green-600'>
+                          {new Intl.NumberFormat('vi-VN').format(Math.max(0, totalRevenue - totalWarehouseExpense))}đ
+                        </div>
+                        <div className='text-gray-500'>Lợi nhuận ước tính ({currentPeriod.label})</div>
+                      </div>
+                      <div className='space-y-2'>
+                        <div className='flex justify-between items-center'>
+                          <span className='text-green-600'>Doanh thu:</span>
+                          <span className='font-semibold text-green-600'>
+                            +{new Intl.NumberFormat('vi-VN').format(totalRevenue)}đ
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <span className='text-red-600'>Chi phí nguyên liệu:</span>
+                          <span className='font-semibold text-red-600'>
+                            -{new Intl.NumberFormat('vi-VN').format(totalWarehouseExpense)}đ
+                          </span>
+                        </div>
+                        <div className='border-t pt-2'>
+                          <div className='flex justify-between items-center'>
+                            <span className='text-lg font-semibold'>Lợi nhuận ước tính:</span>
+                            <span className={`text-lg font-bold ${totalRevenue - totalWarehouseExpense >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {new Intl.NumberFormat('vi-VN').format(totalRevenue - totalWarehouseExpense)}đ
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Alert
+                      message='Chưa có dữ liệu để tính lợi nhuận'
                       type='info'
                     />
                   )}

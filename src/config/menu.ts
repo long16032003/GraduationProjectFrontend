@@ -117,7 +117,7 @@ export const mainMenuItems: MenuItem[] = [
     url: "#",
     icon: PackageSearch,
     permission: "ingredient:browse",
-    isActive: true,
+    isActive: false,
     items: [
       {
         title: "Quản lý nguyên liệu",
@@ -141,35 +141,35 @@ export const mainMenuItems: MenuItem[] = [
       },
     ],
   },
-  {
-    title: "Thống kê",
-    url: "#",
-    icon: LayoutDashboard,
-    permission: "statistic:browse", // Cần quyền xem bill để xem thống kê
-    isActive: false,
-    items: [
-      {
-        title: "Thống kê tổng quan",
-        url: "/admin/statistic",
-        permission: "statistic:browse",
-      },
-      {
-        title: "Thống kê doanh thu",
-        url: "/admin/statistic/statistic-bill",
-        permission: "statistic:browse",
-      },
-      {
-        title: "Thống kê món ăn được gọi nhiều nhất",
-        url: "#",
-        permission: "statistic:browse",
-      },
-      {
-        title: "Thống kê nguyên liệu",
-        url: "#",
-        permission: "statistic:browse",
-      },
-    ],
-  },
+  // {
+  //   title: "Thống kê",
+  //   url: "#",
+  //   icon: LayoutDashboard,
+  //   permission: "statistic:browse", // Cần quyền xem bill để xem thống kê
+  //   isActive: false,
+  //   items: [
+  //     {
+  //       title: "Thống kê tổng quan",
+  //       url: "/admin/statistic",
+  //       permission: "statistic:browse",
+  //     },
+  //     {
+  //       title: "Thống kê doanh thu",
+  //       url: "/admin/statistic/statistic-bill",
+  //       permission: "statistic:browse",
+  //     },
+  //     {
+  //       title: "Thống kê món ăn được gọi nhiều nhất",
+  //       url: "#",
+  //       permission: "statistic:browse",
+  //     },
+  //     {
+  //       title: "Thống kê nguyên liệu",
+  //       url: "#",
+  //       permission: "statistic:browse",
+  //     },
+  //   ],
+  // },
   {
     title: "Phân quyền",
     url: "/admin/roles",

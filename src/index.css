@@ -6,6 +6,7 @@
 @tailwind utilities;
 @layer base {
     :root {
+        --default-font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
         --background: 0 0% 100%;
         --foreground: 0 0% 3.9%;
         --card: 0 0% 100%;
@@ -78,16 +79,18 @@
         border-color: hsl(var(--border));
         scrollbar-width: thin;
         scrollbar-color: hsl(var(--border)) transparent;
+        font-family: var(--default-font-family);
     }
     html {
         scroll-behavior: smooth;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-family: var(--default-font-family);
         touch-action: manipulation;
     }
     body {
         overscroll-behavior: none;
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
+        font-family: var(--default-font-family);
         font-synthesis-weight: none;
         text-rendering: optimizeLegibility;
     }
@@ -146,4 +149,175 @@
 
 .animate-loader-wave {
   animation: loader-wave 1.2s infinite ease-in-out;
+}
+
+/* Apply custom font family to all Ant Design components */
+.ant-typography,
+.ant-btn,
+.ant-input,
+.ant-select,
+.ant-table,
+.ant-menu,
+.ant-form,
+.ant-card,
+.ant-modal,
+.ant-drawer,
+.ant-message,
+.ant-notification,
+.ant-tooltip,
+.ant-popover,
+.ant-dropdown,
+.ant-date-picker,
+.ant-time-picker,
+.ant-steps,
+.ant-result,
+.ant-empty,
+.ant-spin,
+.ant-tabs,
+.ant-collapse,
+.ant-accordion,
+.ant-breadcrumb,
+.ant-pagination {
+  font-family: var(--default-font-family) !important;
+}
+
+/* Ensure all text elements use the custom font */
+h1, h2, h3, h4, h5, h6,
+p, span, div, a, button,
+input, textarea, select,
+label, legend, caption {
+  font-family: var(--default-font-family);
+}
+
+/* Admin layout with larger font sizes */
+.admin-layout {
+  font-size: 15px; /* Base font size lớn hơn (default thường là 14px) */
+}
+
+.admin-layout .ant-typography {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-btn {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-input {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-select {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-table {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-menu {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-form-item-label > label {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-card-head-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+.admin-layout .ant-page-header-heading-title {
+  font-size: 20px !important;
+}
+
+.admin-layout .ant-breadcrumb {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-tabs-tab {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-modal {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-drawer {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-message {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-notification {
+  font-size: 15px !important;
+}
+
+/* Admin sidebar with larger font */
+.admin-layout .sidebar {
+  font-size: 15px !important;
+}
+
+.admin-layout .sidebar .sidebar-menu-item {
+  font-size: 15px !important;
+}
+
+.admin-layout .sidebar .sidebar-menu-button {
+  font-size: 15px !important;
+}
+
+/* Admin header with larger font */
+.admin-layout .app-header {
+  font-size: 15px !important;
+}
+
+/* Admin table improvements */
+.admin-layout .ant-table-thead > tr > th {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+.admin-layout .ant-table-tbody > tr > td {
+  font-size: 15px !important;
+}
+
+/* Admin form improvements */
+.admin-layout .ant-form-item-required::before {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-form-item-explain {
+  font-size: 14px !important;
+}
+
+/* Admin titles and headings */
+.admin-layout h1 {
+  font-size: 24px !important;
+}
+
+.admin-layout h2 {
+  font-size: 20px !important;
+}
+
+.admin-layout h3 {
+  font-size: 18px !important;
+}
+
+.admin-layout h4 {
+  font-size: 16px !important;
+}
+
+.admin-layout h5, .admin-layout h6 {
+  font-size: 15px !important;
+}
+
+/* Admin pagination */
+.admin-layout .ant-pagination {
+  font-size: 15px !important;
+}
+
+.admin-layout .ant-pagination-item {
+  font-size: 15px !important;
 }

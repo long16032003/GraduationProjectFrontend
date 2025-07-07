@@ -62,7 +62,7 @@ const getInitials = (name?: string): string => {
 
 export function UserNav({user, ...rest}: UserNavProps) {
   const { mutate, isLoading } = useLogout();
-
+  const guard = use$(auth$.guard);
   const handleLogout = () => {
     mutate()
   }
@@ -119,12 +119,16 @@ export function UserNav({user, ...rest}: UserNavProps) {
               Thông tin cá nhân
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
+          {
+            guard === 'staff' && (
+              <DropdownMenuItem asChild>
             <Link to="/admin" className="flex items-center">
               <DashboardOutlined className="mr-2 h-4 w-4" />
               Trang quản trị
             </Link>
           </DropdownMenuItem>
+            )
+          }
           <DropdownMenuItem asChild>
             <Link to="/history-reservation" className="flex items-center">
               <HistoryOutlined className="mr-2 h-4 w-4" />

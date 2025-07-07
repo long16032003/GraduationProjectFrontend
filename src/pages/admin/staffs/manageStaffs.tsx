@@ -609,7 +609,7 @@ const ManageStaffs: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             name="role"
             label="Vai trò"
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
@@ -623,7 +623,7 @@ const ManageStaffs: React.FC = () => {
                 </Option>
               ))}
             </Select>
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item
             name="password"

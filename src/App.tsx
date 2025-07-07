@@ -2,6 +2,7 @@
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'
 import './App.css'
+import '@/styles/siteSettings.css'
 import '@/utils/i18n'; // Import i18n configuration
 import { RouterProvider } from 'react-router';
 import { router } from '@/router.tsx';
@@ -20,7 +21,7 @@ function App() {
         locale={viVN}
       >
         <AntdApp>
-            <RouterProvider router={router} />
+          <RouterProvider router={router} />
         </AntdApp>
       </ConfigProvider>
     </StyleProvider>

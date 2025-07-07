@@ -1,0 +1,169 @@
+/* Site Settings CSS Variables */
+:root {
+  --primary-color: #e53935;
+  --secondary-color: #4caf50;
+  --accent-color: #ff9800;
+  --heading-font: 'Montserrat', sans-serif;
+  --body-font: 'Roboto', sans-serif;
+  --base-font-size: 16px;
+}
+
+/* Apply site settings to body */
+body {
+  font-family: var(--body-font);
+  font-size: var(--base-font-size);
+}
+
+/* Apply heading fonts */
+h1, h2, h3, h4, h5, h6,
+.ant-typography-title {
+  font-family: var(--heading-font) !important;
+}
+
+/* Primary color applications */
+.btn-primary,
+.ant-btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover,
+.ant-btn-primary:hover {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  filter: brightness(1.1);
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+/* Secondary color applications */
+.btn-secondary,
+.ant-btn-secondary {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+}
+
+.text-secondary {
+  color: var(--secondary-color) !important;
+}
+
+.bg-secondary {
+  background-color: var(--secondary-color) !important;
+}
+
+/* Accent color applications */
+.btn-accent,
+.ant-btn-accent {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+.text-accent {
+  color: var(--accent-color) !important;
+}
+
+.bg-accent {
+  background-color: var(--accent-color) !important;
+}
+
+/* Custom classes for using site settings colors */
+.site-primary-color {
+  color: var(--primary-color) !important;
+}
+
+.site-primary-bg {
+  background-color: var(--primary-color) !important;
+}
+
+.site-secondary-color {
+  color: var(--secondary-color) !important;
+}
+
+.site-secondary-bg {
+  background-color: var(--secondary-color) !important;
+}
+
+.site-accent-color {
+  color: var(--accent-color) !important;
+}
+
+.site-accent-bg {
+  background-color: var(--accent-color) !important;
+}
+
+/* Gradient backgrounds using site colors */
+.site-gradient-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color)) !important;
+}
+
+.site-gradient-secondary {
+  background: linear-gradient(135deg, var(--secondary-color), var(--accent-color)) !important;
+}
+
+/* Button styles using site colors */
+.site-btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.site-btn-primary:hover {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: white !important;
+  filter: brightness(1.1);
+}
+
+.site-btn-secondary {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+.site-btn-secondary:hover {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  color: white !important;
+  filter: brightness(1.1);
+}
+
+.site-btn-accent {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+.site-btn-accent:hover {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: white !important;
+  filter: brightness(1.1);
+}
+
+/* Typography styles */
+.site-heading-font {
+  font-family: var(--heading-font) !important;
+}
+
+.site-body-font {
+  font-family: var(--body-font) !important;
+}
+
+/* Responsive font sizes */
+@media (max-width: 768px) {
+  body {
+    font-size: calc(var(--base-font-size) * 0.9);
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: calc(var(--base-font-size) * 0.8);
+  }
+} 

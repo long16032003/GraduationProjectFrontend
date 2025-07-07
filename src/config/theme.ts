@@ -12,7 +12,7 @@ const theme: ThemeConfig = {
   // https://ant.design/docs/react/customize-theme#seedtoken
   token: {
     // Font family
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily: 'var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji")',
     
     // Colors
     colorPrimary: '#ea580c', // orange-600
@@ -66,6 +66,11 @@ const theme: ThemeConfig = {
     margin: 16,
     marginLG: 16,
     
+    // Font sizes for admin (increased)
+    fontSize: 15,      // Base font size tăng từ 14px lên 15px
+    fontSizeLG: 17,    // Large font size tăng từ 16px lên 17px
+    fontSizeSM: 13,    // Small font size tăng từ 12px lên 13px
+    fontSizeXL: 19,    // Extra large font size tăng từ 18px lên 19px
 
   },
   components: {
@@ -74,6 +79,7 @@ const theme: ThemeConfig = {
       controlHeight: 36,
       paddingContentHorizontal: 16,
       paddingInline: 16,
+      fontSize: 15, // Tăng font size cho button
     },
     Card: {
       borderRadiusLG: 8,
@@ -84,14 +90,17 @@ const theme: ThemeConfig = {
       itemHeight: 40,
       itemHoverBg: '#fff7ed', // orange-50
       itemSelectedBg: '#ffedd5', // orange-100
+      fontSize: 15, // Tăng font size cho menu
     },
     Input: {
       borderRadius: 6,
       controlHeight: 36,
+      fontSize: 15, // Tăng font size cho input
     },
     Select: {
       borderRadius: 6,
       controlHeight: 36,
+      fontSize: 15, // Tăng font size cho select
     },
     Modal: {
       borderRadius: 8,
@@ -102,6 +111,7 @@ const theme: ThemeConfig = {
       headerBg: '#f9fafb', // gray-50
       headerColor: '#374151', // gray-700
       rowHoverBg: '#fff7ed', // orange-50
+      fontSize: 15, // Tăng font size cho table
     },
     Layout: {
       headerBg: '#ffffff',

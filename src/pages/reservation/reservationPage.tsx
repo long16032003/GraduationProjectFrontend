@@ -14,7 +14,8 @@ import {
   Row,
   Col,
   Table,
-  Space
+  Space,
+  Spin
 } from 'antd';
 import { 
   UserOutlined, 
@@ -36,6 +37,9 @@ import type { Reservation, TableModel } from '@/types';
 import { useCreate, useList } from '@refinedev/core';
 import { MainLayout } from '@/components/layouts/HeaderMainLayout';
 import { areas } from '@/utils/constant';
+import { use$ } from '@legendapp/state/react';
+import auth$ from '@/stores/auth';
+import { useNavigate } from 'react-router';
 
 const { Title, Text } = Typography;
 const { Step } = Steps;
@@ -57,13 +61,19 @@ interface SearchValues {
 }
 
 const ReservationPage: React.FC = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTable, setSelectedTable] = useState<TableModel | null>(null);
   const [availableTables, setAvailableTables] = useState<TableModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
-  
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Get authentication state
+  const user = use$(auth$.user);
+  const guard = use$(auth$.guard);
+
   // Function to get default time rounded to nearest half hour
   const getDefaultTime = () => {
     const now = dayjs();
@@ -275,6 +285,41 @@ const ReservationPage: React.FC = () => {
     },
   ];
 
+  // Check authentication status after all hooks
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!user) {
+        message.warning('Vui lòng đăng nhập để sử dụng tính năng đặt bàn');
+        navigate(guard === 'staff' ? '/login' : '/login-customer');
+        return;
+      }
+      setAuthLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [user, guard, navigate]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <MainLayout>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <Spin size="large" />
+            <div className="mt-4">
+              <Text>Đang kiểm tra thông tin đăng nhập...</Text>
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
     <MainLayout>
       <div className='py-10 px-4 min-h-screen'>
@@ -289,7 +334,10 @@ const ReservationPage: React.FC = () => {
                   Đặt bàn
                 </Title>
                 <Text className='text-gray-500'>
-                  Hãy để chúng tôi phục vụ bạn một bữa ăn tuyệt vời
+                  {guard === 'staff' 
+                    ? 'Hỗ trợ khách hàng đặt bàn và quản lý đặt chỗ' 
+                    : 'Hãy để chúng tôi phục vụ bạn một bữa ăn tuyệt vời'
+                  }
                 </Text>
               </div>
             }
@@ -575,7 +623,11 @@ const ReservationPage: React.FC = () => {
               <Result
                 status='success'
                 title='Đặt bàn thành công!'
-                subTitle='Chúng tôi sẽ liên hệ với bạn để xác nhận đặt bàn trong thời gian sớm nhất'
+                subTitle={
+                  guard === 'staff' 
+                    ? 'Đặt bàn đã được tạo thành công.'
+                    : 'Chúng tôi sẽ liên hệ với bạn để xác nhận đặt bàn trong thời gian sớm nhất'
+                }
                 extra={[
                   <Button
                     type='primary'

@@ -643,9 +643,10 @@ const ManageBills: React.FC = () => {
               value={filters.paymentMethod}
               onChange={(value) => setFilters({ ...filters, paymentMethod: value })}
             >
-              <Option value="all">Tất cả phương thức</Option>
               <Option value="cash">Tiền mặt</Option>
               <Option value="bank_transfer">Chuyển khoản</Option>
+              <Option value="momo">MoMo</Option>
+              <Option value="vnpay">VNPay</Option>
             </Select>
           </div>
 

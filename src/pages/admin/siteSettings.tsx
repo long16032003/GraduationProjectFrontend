@@ -41,14 +41,10 @@ import type { UploadFile, UploadProps, RcFile } from 'antd/es/upload/interface';
 import type { Color } from 'antd/es/color-picker';
 
 // Interface for uploaded media
-interface Media {
-  id: number;
-  path: string;
-  title?: string;
-  alt?: string;
-}
+
 import { PageLoader } from '@/components/ui/loader';
 import { NoPermission } from '@/components/NoPermission';
+import type { Media } from '@/types';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -420,7 +416,7 @@ const SiteSettings: React.FC = () => {
           onSuccess: (response) => {
             console.log('Favicon upload success:', response);
             if (response?.data) {
-              setFaviconFile(response.data);
+              setFaviconFile(response.data as Media);
               form.setFieldsValue({ favicon: [response.data] });
               message.success('Tải favicon thành công');
             }
@@ -474,7 +470,7 @@ const SiteSettings: React.FC = () => {
             console.log('Banner upload success:', response);
             if (response?.data) {
               const newBannerFiles = [...bannerFiles, response.data];
-              setBannerFiles(newBannerFiles);
+              setBannerFiles(newBannerFiles as Media[]);
               form.setFieldsValue({ bannerImages: newBannerFiles });
               message.success('Tải ảnh banner thành công');
             }

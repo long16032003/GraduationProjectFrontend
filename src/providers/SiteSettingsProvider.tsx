@@ -1,5 +1,5 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useSiteSettings, SiteSettingsType } from '@/hooks/useSiteSettings';
+import React, { createContext, useContext, type ReactNode } from 'react';
+import { useSiteSettings, type SiteSettingsType } from '@/hooks/useSiteSettings';
 
 interface SiteSettingsContextType {
   settings: SiteSettingsType;

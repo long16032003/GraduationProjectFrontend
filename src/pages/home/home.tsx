@@ -125,10 +125,9 @@ const HomePage: React.FC = () => {
                   <ClockCircleOutlined className="text-3xl text-white" />
                 </div>
                 <Title level={4} className="site-accent-color mb-3">Giờ mở cửa</Title>
-                <Text className="text-gray-600 text-lg font-medium">
-                  {getSetting('opening_hours', '10:00 - 22:30')}
+                <Text className="">
+                  {getSetting('opening_hours')}
                 </Text>
-                <Text className="block text-sm text-gray-500 mt-2">Tất cả các ngày trong tuần</Text>
               </Card>
             </Col>
           </Row>

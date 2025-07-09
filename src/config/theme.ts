@@ -125,7 +125,7 @@ const theme: ThemeConfig = {
       paddingXS: 8, // padding trong tooltip
       fontSize: 12, // kích thước chữ
       lineHeight: 1.5,
-    }
+    },
   },
 }
 

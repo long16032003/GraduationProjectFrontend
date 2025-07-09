@@ -292,6 +292,26 @@ const ManageReservations: React.FC = () => {
       onFilter: (value: boolean | Key, record: Reservation) => record.status === value,
     },
     {
+      title: 'Ghi chú',
+      dataIndex: 'notes',
+      key: 'notes',
+      width: 200,
+      render: (notes: string) => {
+        if (!notes) return <Text type="secondary">-</Text>;
+        
+        const truncatedNotes = notes.length > 50 ? `${notes.substring(0, 50)}...` : notes;
+        
+        return (
+          <Tooltip title={notes} placement="top">
+            <div className="text-sm">
+              <CommentOutlined className="mr-1 text-gray-400" />
+              {truncatedNotes}
+            </div>
+          </Tooltip>
+        );
+      },
+    },
+    {
       title: 'Hành động',
       key: 'action',
       width: 200,

@@ -129,12 +129,14 @@ export function UserNav({user, ...rest}: UserNavProps) {
           </DropdownMenuItem>
             )
           }
-          <DropdownMenuItem asChild>
-            <Link to="/history-reservation" className="flex items-center">
-              <HistoryOutlined className="mr-2 h-4 w-4" />
-              Lịch sử đặt bàn
-            </Link>
-          </DropdownMenuItem>
+          {
+            guard === 'customer' && (<DropdownMenuItem asChild>
+              <Link to="/history-reservation" className="flex items-center">
+                <HistoryOutlined className="mr-2 h-4 w-4" />
+                Lịch sử đặt bàn
+              </Link>
+            </DropdownMenuItem>)
+          }
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} disabled={isLoading} className="flex items-center">

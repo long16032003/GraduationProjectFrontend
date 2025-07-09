@@ -379,13 +379,13 @@ const ManageCustomer: React.FC = () => {
             Danh sách khách hàng
           </Title>
           
-          <Button
+          {/* <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAddCustomer}
           >
             Thêm khách hàng mới
-          </Button>
+          </Button> */}
         </div>
         
         <Row gutter={16} className="mb-4">

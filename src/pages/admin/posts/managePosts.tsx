@@ -218,28 +218,13 @@ const ManagePosts: React.FC = () => {
     return `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240"><defs><linearGradient id="grad${id}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23${gradient.slice(7, 13)};stop-opacity:1" /><stop offset="100%" style="stop-color:%23${gradient.slice(-7, -1)};stop-opacity:1" /></linearGradient></defs><rect width="400" height="240" fill="url(%23grad${id})"/><text x="200" y="120" font-family="Arial" font-size="20" fill="white" text-anchor="middle" dy=".3em">Blog Post ${id}</text></svg>`;
   };
 
-  // Helper function to estimate reading time
-  const estimateReadingTime = (content: string): number => {
-    const wordsPerMinute = 200;
-    const wordCount = stripHtml(content).split(/\s+/).length;
-    return Math.ceil(wordCount / wordsPerMinute);
-  };
-
-
-
   // Table columns
   const columns: ColumnsType<Post> = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 60,
-      sorter: (a, b) => Number(a.id) - Number(b.id),
-    },
     {
       title: 'Tiêu đề',
       dataIndex: 'title',
       key: 'title',
+      width: 200,
       sorter: (a, b) => a.title.localeCompare(b.title),
       render: (title: string) => (
         <div className="flex items-center space-x-2">
@@ -253,6 +238,7 @@ const ManagePosts: React.FC = () => {
       dataIndex: 'summary',
       key: 'summary',
       ellipsis: true,
+      width: 200,
       render: (summary: string) => (
         <Text type="secondary">{truncateText(summary, 80)}</Text>
       ),
@@ -261,6 +247,7 @@ const ManagePosts: React.FC = () => {
       title: 'Nội dung',
       dataIndex: 'content',
       key: 'content',
+      width: 200,
       ellipsis: true,
       render: (content: string) => (
         <Text type="secondary">{truncateText(stripHtml(content), 60)}</Text>
@@ -378,8 +365,8 @@ const ManagePosts: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <Title level={2} className="!mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                📝 Quản lý bài viết
+              <Title level={2} style={{ color: '#ea580c' }}>
+                Quản lý bài viết
               </Title>
               <Text type="secondary" className="text-lg">
                 Tạo, chỉnh sửa và quản lý các bài viết trên website một cách chuyên nghiệp
@@ -387,70 +374,20 @@ const ManagePosts: React.FC = () => {
             </div>
             <Button
               type="primary"
-              size="large"
+              size="small"
               icon={<PlusOutlined />}
               onClick={handleAdd}
-              className="shadow-lg hover:shadow-xl transition-shadow duration-300 h-12 px-8 rounded-xl"
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-              }}
+              className="shadow-lg transition-shadow duration-300 h-12 px-8 rounded-xl"
             >
-              ✨ Thêm bài viết mới
+              Thêm bài viết mới
             </Button>
           </div>
         </div>
 
-        {/* Statistics */}
-        <Row gutter={[24, 24]} className="mb-8">
-          <Col xs={24} sm={8}>
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
-              <Statistic
-                title={<span className="text-gray-600 font-medium">📊 Tổng số bài viết</span>}
-                value={totalPosts}
-                valueStyle={{ 
-                  color: '#1677ff', 
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                }}
-                prefix={<FileTextOutlined className="text-2xl" />}
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
-              <Statistic
-                title={<span className="text-gray-600 font-medium">🗓️ Bài viết tuần này</span>}
-                value={recentPosts}
-                valueStyle={{ 
-                  color: '#52c41a', 
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                }}
-                prefix={<CalendarOutlined className="text-2xl" />}
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <Statistic
-                title={<span className="text-gray-600 font-medium">👁️ Đang hoạt động</span>}
-                value={totalPosts}
-                valueStyle={{ 
-                  color: '#722ed1', 
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                }}
-                prefix={<EyeOutlined className="text-2xl" />}
-              />
-            </div>
-          </Col>
-        </Row>
-
         {/* Controls Bar */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
           <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} md={6}>
+            <Col xs={24} md={10}>
               <div className="relative">
                 <Input.Search
                   placeholder="🔍 Tìm kiếm bài viết..."
@@ -463,7 +400,7 @@ const ManagePosts: React.FC = () => {
                 />
               </div>
             </Col>
-            <Col xs={24} md={5}>
+            {/* <Col xs={24} md={5}>
               <Select
                 placeholder="📂 Trạng thái"
                 value={selectedStatus}
@@ -476,8 +413,8 @@ const ManagePosts: React.FC = () => {
                 <Option value="active">✅ Hoạt động</Option>
                 <Option value="inactive">❌ Ẩn</Option>
               </Select>
-            </Col>
-            <Col xs={24} md={5}>
+            </Col> */}
+            <Col xs={24} md={4}>
               <Select
                 placeholder="📊 Sắp xếp"
                 defaultValue="newest"
@@ -489,7 +426,7 @@ const ManagePosts: React.FC = () => {
                 <Option value="title">🔤 Tên A-Z</Option>
               </Select>
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} md={10}>
               <div className="flex justify-end">
                 <Button.Group size="large">
                   <Button
@@ -498,7 +435,7 @@ const ManagePosts: React.FC = () => {
                     onClick={() => setViewMode('table')}
                     className="rounded-l-xl"
                   >
-                    📋 Bảng
+                    Bảng
                   </Button>
                   <Button
                     type={viewMode === 'card' ? 'primary' : 'default'}
@@ -506,7 +443,7 @@ const ManagePosts: React.FC = () => {
                     onClick={() => setViewMode('card')}
                     className="rounded-r-xl"
                   >
-                    🃏 Thẻ
+                    Thẻ
                   </Button>
                 </Button.Group>
               </div>
@@ -571,11 +508,11 @@ const ManagePosts: React.FC = () => {
                             target.src = getPlaceholderImage(Number(post.id));
                           }}
                         />
-                        <div className="absolute top-3 right-3">
+                        {/* <div className="absolute top-3 right-3">
                           <Tag color="green" className="font-medium shadow-sm">
                             ✅ Hoạt động
                           </Tag>
-                        </div>
+                        </div> */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
 
@@ -589,16 +526,12 @@ const ManagePosts: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <UserOutlined />
-                            <span>Admin</span>
+                            <span>{post.creator?.name}</span>
                           </div>
                         </div>
                         
                         {/* Reading Time & ID */}
                         <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
-                          <div className="flex items-center space-x-1">
-                            <span>📖</span>
-                            <span>{estimateReadingTime(post.content)} phút đọc</span>
-                          </div>
                           <div className="flex items-center space-x-1">
                             <FileTextOutlined />
                             <span>#{post.id}</span>
@@ -622,11 +555,11 @@ const ManagePosts: React.FC = () => {
                         
                         {/* Status Bar */}
                         <div className="flex items-center justify-between text-xs mb-4">
-                          <div className="flex items-center space-x-2">
+                          {/* <div className="flex items-center space-x-2">
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               ✅ Đã xuất bản
                             </span>
-                          </div>
+                          </div> */}
                           <div className="text-gray-400">
                             {Math.floor(Math.random() * 100) + 20} lượt xem
                           </div>
@@ -674,7 +607,7 @@ const ManagePosts: React.FC = () => {
                               });
                             }}
                           >
-                            👁️ Xem
+                            Xem
                           </Button>
                           
                           <Button
@@ -684,7 +617,7 @@ const ManagePosts: React.FC = () => {
                             className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 flex-1"
                             onClick={() => handleEdit(post)}
                           >
-                            ✏️ Sửa
+                            Sửa
                           </Button>
                           
                           <Button
@@ -695,7 +628,7 @@ const ManagePosts: React.FC = () => {
                             className="hover:bg-red-50 flex-1"
                             onClick={() => showDeleteConfirm(post)}
                           >
-                            🗑️ Xóa
+                            Xóa
                           </Button>
                         </div>
                       </div>

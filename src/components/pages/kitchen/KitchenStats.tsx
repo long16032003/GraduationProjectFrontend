@@ -23,10 +23,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+              background: '#bbdefb',
               borderRadius: '8px',
               border: '1px solid #2196f3',
-              boxShadow: '0 2px 8px rgba(33, 150, 243, 0.15)',
             }}
           >
             <Statistic
@@ -43,10 +42,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)',
+              background: '#ffecb3',
               borderRadius: '8px',
               border: '1px solid #ff9800',
-              boxShadow: '0 2px 8px rgba(255, 152, 0, 0.15)',
             }}
           >
             <Statistic
@@ -63,10 +61,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)',
+              background: '#e1bee7',
               borderRadius: '8px',
               border: '1px solid #9c27b0',
-              boxShadow: '0 2px 8px rgba(156, 39, 176, 0.15)',
             }}
           >
             <Statistic
@@ -83,10 +80,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)',
+              background: '#ffcdd2',
               borderRadius: '8px',
               border: '1px solid #f44336',
-              boxShadow: '0 2px 8px rgba(244, 67, 54, 0.15)',
             }}
           >
             <Statistic
@@ -103,10 +99,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #f1f8e9 0%, #c8e6c9 100%)',
+              background: '#c8e6c9',
               borderRadius: '8px',
               border: '1px solid #4caf50',
-              boxShadow: '0 2px 8px rgba(76, 175, 80, 0.15)',
             }}
           >
             <Statistic
@@ -123,10 +118,9 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             size='small'
             styles={{ body: { padding: '8px' } }}
             style={{
-              background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+              background: '#f5f5f5',
               borderRadius: '8px',
               border: '1px solid #9e9e9e',
-              boxShadow: '0 2px 8px rgba(158, 158, 158, 0.15)',
             }}
           >
             <Statistic

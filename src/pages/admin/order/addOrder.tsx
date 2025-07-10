@@ -156,7 +156,7 @@ const AddOrder: React.FC = () => {
       });
 
       message.success(`Đã thêm đơn gọi món mới vào hóa đơn #${billId}!`);
-      navigate('/admin/order');
+      window.location.href = '/admin/order';
     } catch (error) {
       console.error('Lỗi thêm đơn gọi món:', error);
       message.error('Đã xảy ra lỗi khi thêm đơn gọi món!');
@@ -243,7 +243,7 @@ const AddOrder: React.FC = () => {
                 onClick={() => handleAddToCart(dish)}
                 style={{ height: '100%' }}
                 size={isMobile ? "small" : "default"}
-                bodyStyle={isMobile ? { padding: '8px' } : {}}
+                styles={{ body: isMobile ? { padding: '8px' } : {} }}
               >
                 <Card.Meta
                   title={<div style={isMobile ? { fontSize: '14px', marginBottom: '4px' } : {}}>{dish.name}</div>}

@@ -289,8 +289,8 @@ const CreatePost: React.FC = () => {
                   </ul>
                 </Card>
 
-                {/* Upload ảnh */}
-                <Card title="📸 Upload ảnh" size="small">
+                {/* Upload ảnh - Phát triển sau */}
+                {/* <Card title="📸 Upload ảnh" size="small">
                   <Dragger {...handleImageUpload} className="!border-dashed !border-orange-300 hover:!border-orange-500">
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined className="text-orange-500" />
@@ -300,7 +300,7 @@ const CreatePost: React.FC = () => {
                       Hỗ trợ: JPG, PNG, GIF. Tối đa 5MB
                     </p>
                   </Dragger>
-                </Card>
+                </Card> */}
 
                 {/* Thống kê */}
                 <Card title="📊 Thống kê" size="small">

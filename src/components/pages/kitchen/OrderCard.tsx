@@ -47,15 +47,15 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   // Logic để lọc món ăn: nếu có món bị thiếu thì chỉ hiển thị món bị thiếu
   const getFilteredDishes = () => {
-    const missingDishes = order.order_dishes.filter(dish => dish.is_available === false);
-    
+    const missingDishes = order.order_dishes.filter(dish => dish.is_available == 0 && !dish.cancelled_at );
     // Nếu có món bị thiếu, chỉ hiển thị món bị thiếu
     if (missingDishes.length > 0) {
       return missingDishes;
     }
     
-    // Nếu không có món bị thiếu, hiển thị tất cả món
-    return order.order_dishes;
+    // Đơn bị hủy thì hiển thị tất cả các món trong đơn, còn nếu không bị hủy thì chỉ hiện những món không bị hủy
+    return order.status != 'cancelled' ? 
+          order.order_dishes.filter(dish => !dish.cancelled_at ) : order.order_dishes;
   };
 
   const filteredDishes = getFilteredDishes();
@@ -200,7 +200,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                       style={{
                         fontSize: '14px',
                         color:
-                          dish.is_available === false || dish.status === 'cancelled'
+                          dish.is_available === 0 || dish.cancelled_at
                             ? '#ff4d4f'
                             : 'inherit',
                       }}
@@ -208,7 +208,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                       {dish.dish?.name}
                     </Text>
                     <Text style={{ fontSize: '14px' }}>x{dish.quantity}</Text>
-                    {dish.is_available === false && (
+                    {dish.is_available === 0 && (
                       <Tag
                         color='red'
                         className='ml-1'
@@ -216,7 +216,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                         Thiếu
                       </Tag>
                     )}
-                    {dish.status === 'cancelled' && (
+                    {dish.cancelled_at && (
                       <Tag
                         color='default'
                         className='ml-1'
@@ -244,7 +244,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
                 </div>
               </div>
               <div className='flex items-center'>
-                {order.chef_name && (
+                {/* {order.chef_name && (
                   <Tooltip title={`Đầu bếp: ${order.chef_name}`}>
                     <Avatar
                       size='small'
@@ -252,14 +252,9 @@ const OrderCard: React.FC<OrderCardProps> = ({
                       className='mr-2'
                     />
                   </Tooltip>
-                )}
-                {/* <Text
-                  type='secondary'
-                  style={{ fontSize: '13px' }}
-                >
-                  {dish.dish?.preparation_time || 15} phút
-                </Text> */}
-                {dish.status !== 'cancelled' && (order.status !== 'cancelled' && order.status !== 'finished process' && order.status !== 'done') && (
+                )} */}
+         
+                {!dish.cancelled_at && (order.status !== 'cancelled' && order.status !== 'finished process' && order.status !== 'done') && (
                   <Button
                     danger
                     size='small'
@@ -313,21 +308,26 @@ const OrderCard: React.FC<OrderCardProps> = ({
         </div>
       )}
 
-      <Divider style={{ margin: '4px 0' }} />
+      {
+        order.status !== 'done' && order.status !== 'cancelled' &&
+        (<>
+          <Divider style={{ margin: '4px 0' }} />
 
-      <div className='flex justify-between items-center'>
-        <div>
-          <Space size={4}>
-            <Statistic
-              title={<span style={{ fontSize: '13px' }}>Thời gian chờ</span>}
-              value={dayjs().diff(dayjs(order.created_at), 'minute')}
-              suffix='phút'
-              valueStyle={{ fontSize: '14px' }}
-            />
-          </Space>
-        </div>
-        <div>{renderOrderActions()}</div>
-      </div>
+          <div className='flex justify-between items-center'>
+            <div>
+              <Space size={4}>
+                <Statistic
+                  title={<span style={{ fontSize: '13px' }}>Thời gian chờ</span>}
+                  value={dayjs().diff(dayjs(order.created_at), 'minute')}
+                  suffix='phút'
+                  valueStyle={{ fontSize: '14px' }}
+                />
+              </Space>
+            </div>
+            <div>{renderOrderActions()}</div>
+          </div>
+        </>)
+      }
     </Card>
   );
 };

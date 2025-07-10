@@ -1,5 +1,5 @@
 import React from 'react';
-import { useOne, useList } from '@refinedev/core';
+import { useOne, useList, CanAccess } from '@refinedev/core';
 import { Typography, Breadcrumb, Spin, Card, Row, Col, Avatar, Button, Tag, Space } from 'antd';
 import {
   CalendarOutlined,
@@ -65,9 +65,6 @@ const PostDetail: React.FC = () => {
 
   const user = use$(auth$.user) as Staff;
 
-  // Kiểm tra quyền edit của user với post
-  const canEdit = user?.id === post?.creator_id || user?.role === 'admin';
-
   // Tính toán thời gian đọc (ước tính)
   const estimateReadingTime = (content: string): number => {
     const wordsPerMinute = 200;
@@ -118,9 +115,9 @@ const PostDetail: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="border-b border-gray-200">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               {/* Back Button & Breadcrumb */}
@@ -151,13 +148,17 @@ const PostDetail: React.FC = () => {
               </div>
 
               {/* Edit Button (only for authorized users) */}
-              {canEdit && (
+              <CanAccess
+                resource='posts'
+                action='edit'
+              >
                 <Link to={`/posts/edit/${post.id}`}>
                   <Button type="primary" icon={<EditOutlined />}>
                     Chỉnh sửa
                   </Button>
                 </Link>
-              )}
+              </CanAccess>
+              
             </div>
           </div>
         </div>
@@ -216,15 +217,10 @@ const PostDetail: React.FC = () => {
                       <span>{dayjs(post.created_at).format('DD/MM/YYYY')}</span>
                     </div>
 
-                    <div className="flex items-center text-gray-500">
-                      <ClockCircleOutlined className="mr-2" />
-                      <span>{readingTime} phút đọc</span>
-                    </div>
-
-                    <div className="flex items-center text-gray-500">
+                    {/* <div className="flex items-center text-gray-500">
                       <EyeOutlined className="mr-2" />
                       <span>Bài viết thông tin</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>

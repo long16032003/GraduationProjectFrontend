@@ -151,6 +151,8 @@ const ManageOrder: React.FC = () => {
       case 'not completed':
         return 'default';
       case 'done':
+        return 'green';
+      case 'cancelled':
         return 'red';
       default:
         return 'default';
@@ -167,8 +169,10 @@ const ManageOrder: React.FC = () => {
         return 'Sẵn sàng';
       case 'not completed':
         return 'Đã phục vụ';
-      case 'done':
+      case 'cancelled':
         return 'Đã hủy';
+      case 'done':
+        return 'Đã hoàn thành';
       default:
         return status;
     }

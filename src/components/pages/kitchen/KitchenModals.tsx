@@ -102,7 +102,22 @@ const KitchenModals: React.FC<KitchenModalsProps> = ({
               <List
                 size='small'
                 bordered
-                dataSource={selectedOrder.order_dishes.filter(dish => dish.is_available === false)}
+                dataSource={(() => {
+                  /** Nếu trong danh sách đơn có món bị thiếu thì hiển thị món bị thiếu */
+                  const unavailableDishes = selectedOrder.order_dishes.filter(dish => 
+                    dish.is_available == 0 && !dish.cancelled_at
+                  );
+                  
+                  // Nếu có món bị thiếu thì hiển thị món bị thiếu
+                  if (unavailableDishes.length > 0) {
+                    return unavailableDishes;
+                  }
+                  
+                  // Nếu không có món bị thiếu thì hiển thị món bình thường (chưa bị hủy và có sẵn)
+                  return selectedOrder.order_dishes.filter(dish => 
+                    dish.is_available == null && !dish.cancelled_at
+                  );
+                })()}
                 renderItem={(dish) => (
                   <List.Item>
                     <Text>{dish.dish?.name}</Text>

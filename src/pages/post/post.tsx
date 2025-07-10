@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography, Spin, Empty, Avatar, Button, Tooltip, Divider, Tag, Dropdown, Modal, message } from 'antd';
 import { CalendarOutlined, UserOutlined, EditOutlined, HomeOutlined, ReadOutlined, FieldTimeOutlined, FireOutlined, MoreOutlined, DeleteOutlined, LockOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { useList, useDelete, useUpdate } from '@refinedev/core';
+import { useList, useDelete, useUpdate, CanAccess } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { Post, Staff } from '@/types';
 import { Link } from 'react-router';
@@ -10,6 +10,7 @@ import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { Breadcrumb } from 'antd/lib';
 import type { MenuProps } from 'antd';
+import { MultiplePermissionWrapper } from '@/components/PermissionWrapper.tsx';
 
 const { Title, Paragraph } = Typography;
 
@@ -41,6 +42,71 @@ const getFirstImageFromContent = (content: string): string | null => {
 
 // Placeholder image nếu không tìm thấy ảnh trong nội dung
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80';
+
+// Component to avoid code duplication for management buttons
+interface PostManagementButtonProps {
+  post: Post;
+  position: 'top-4 right-4' | 'top-4 left-4' | 'top-3 right-3';
+  placement?: 'bottomRight' | 'bottomLeft';
+  buttonType?: 'primary' | 'default';
+  opacity?: 'opacity-0 group-hover:opacity-100' | '';
+  getManagementMenu: (post: Post) => MenuProps;
+  // New props for multiple permissions
+  permissions?: string[]; // Array of permission strings
+  requireAllPermissions?: boolean; // true = AND, false = OR
+  useMultiplePermissions?: boolean; // Whether to use MultiplePermissionWrapper instead of CanAccess
+}
+
+const PostManagementButton: React.FC<PostManagementButtonProps> = ({
+  post,
+  position,
+  placement = 'bottomRight',
+  buttonType = 'default',
+  opacity = '',
+  getManagementMenu,
+  permissions = [],
+  requireAllPermissions = false,
+  useMultiplePermissions = false
+}) => {
+
+  const buttonClass = buttonType === 'primary' 
+    ? "!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-none shadow-lg"
+    : "!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-orange-300 shadow-md";
+
+  const ButtonContent = (
+    <div className={`absolute ${position} z-10 ${opacity} transition-opacity`}>
+      <Dropdown menu={getManagementMenu(post)} trigger={['click']} placement={placement}>
+        <Button 
+          size="small"
+          type={buttonType === 'primary' ? 'primary' : undefined}
+          className={buttonClass}
+        >
+          Quản lý <MoreOutlined />
+        </Button>
+      </Dropdown>
+    </div>
+  );
+
+  // Use MultiplePermissionWrapper if specified
+  if (useMultiplePermissions && permissions.length > 0) {
+    return (
+      <MultiplePermissionWrapper 
+        permissions={permissions}
+        requireAll={requireAllPermissions}
+        fallback={null}
+      >
+        {ButtonContent}
+      </MultiplePermissionWrapper>
+    );
+  }
+
+  // Fallback: use CanAccess for backward compatibility
+  return (
+    <CanAccess resource='posts' action='edit'>
+      {ButtonContent}
+    </CanAccess>
+  );
+};
 
 const PostPage: React.FC = () => {
   const user = use$(auth$.user);
@@ -285,18 +351,17 @@ const PostPage: React.FC = () => {
                     </div>
                   </Link>
                   
-                  {canEdit(featuredPosts[0]) && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <Dropdown menu={getManagementMenu(featuredPosts[0])} trigger={['click']} placement="bottomRight">
-                        <Button 
-                          type="primary"
-                          className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-none shadow-lg"
-                        >
-                          Quản lý <MoreOutlined />
-                        </Button>
-                      </Dropdown>
-                    </div>
-                  )}
+                  {/* Example: Sử dụng multiple permissions với OR logic */}
+                  <PostManagementButton
+                    post={featuredPosts[0]}
+                    position="top-4 right-4"
+                    placement="bottomRight"
+                    buttonType="primary"
+                    getManagementMenu={getManagementMenu}
+                    useMultiplePermissions={true}
+                    permissions={["posts:edit", "posts:delete", "posts:create"]}
+                    requireAllPermissions={false} // OR logic: có ít nhất 1 quyền là được
+                  />
                 </div>
               )}
 
@@ -313,7 +378,7 @@ const PostPage: React.FC = () => {
                               alt={post.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <div className="absolute top-0 right-0 m-3 flex gap-2">
+                            {/* <div className="absolute top-0 right-0 m-3 flex gap-2">
                               <Tag color="orange" className="bg-orange-500/90 backdrop-blur-sm">
                                 <FireOutlined className="mr-1" />
                                 Đề xuất
@@ -323,7 +388,7 @@ const PostPage: React.FC = () => {
                                   Khóa
                                 </Tag>
                               )}
-                            </div>
+                            </div> */}
                           </div>
                           <div className="p-4 flex-grow flex flex-col">
                             <Title 
@@ -353,18 +418,15 @@ const PostPage: React.FC = () => {
                         </div>
                       </Link>
 
-                      {canEdit(post) && (
-                        <div className="absolute top-4 left-4 z-10">
-                          <Dropdown menu={getManagementMenu(post)} trigger={['click']} placement="bottomLeft">
-                            <Button 
-                              size="small"
-                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-orange-300 shadow-md"
-                            >
-                              Quản lý <MoreOutlined />
-                            </Button>
-                          </Dropdown>
-                        </div>
-                      )}
+                      <PostManagementButton
+                        post={post}
+                        position="top-4 left-4"
+                        placement="bottomLeft"
+                        getManagementMenu={getManagementMenu}
+                        useMultiplePermissions={true}
+                        permissions={["posts:edit", "posts:delete", "posts:update"]}
+                        requireAllPermissions={false} // OR logic: có ít nhất 1 quyền là được
+                      />
                     </div>
                   ))}
                 </div>
@@ -435,18 +497,16 @@ const PostPage: React.FC = () => {
                         </div>
                       </Link>
 
-                      {canEdit(post) && (
-                        <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Dropdown menu={getManagementMenu(post)} trigger={['click']} placement="bottomRight">
-                            <Button 
-                              size="small"
-                              className="!bg-white/90 backdrop-blur-sm !text-orange-600 hover:!bg-white !border-orange-300 shadow-md"
-                            >
-                              Quản lý <MoreOutlined />
-                            </Button>
-                          </Dropdown>
-                        </div>
-                      )}
+                      <PostManagementButton
+                        post={post}
+                        position="top-3 right-3"
+                        placement="bottomRight"
+                        opacity="opacity-0 group-hover:opacity-100"
+                        getManagementMenu={getManagementMenu}
+                        useMultiplePermissions={true}
+                        permissions={["posts:edit", "posts:delete", "posts:update"]}
+                        requireAllPermissions={false} // OR logic: có ít nhất 1 quyền là được
+                      />
                     </div>
                   );
                 })}

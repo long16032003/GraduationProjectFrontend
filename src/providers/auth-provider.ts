@@ -46,13 +46,20 @@ export const authProvider: AuthProvider = {
   },
   register: async ({ redirectPath, ...rest }: RegisterFormValues): Promise<AuthActionResponse> => {
     await httpClient('register', { method: 'post', body: rest });
+    
+    // After a successful registration, we can fetch the user data (similar to login)
+    const user = await httpClient('@customer');
+    console.log("register: ", user);
+    // Set the user data in the auth store
+    auth$.user.set(user)
+    auth$.guard.set('customer')
 
     return {
       success: true,
       redirectTo: redirectPath,
       successNotification: {
-        message: "Registration Successful",
-        // description: "You have successfully registered.",
+        message: "Đăng ký thành công",
+        // description: "You have successfully registered and logged in.",
       },
     };
   },

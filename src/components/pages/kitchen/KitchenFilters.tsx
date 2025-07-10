@@ -1,6 +1,7 @@
 import React from 'react';
-import { Input, Space, Radio, Tag, Typography } from 'antd';
+import { Input, Space, Radio, Tag, Typography, DatePicker } from 'antd';
 import { SearchOutlined, UnorderedListOutlined, AppstoreOutlined } from '@ant-design/icons';
+import dayjs, { Dayjs } from 'dayjs';
 
 const { Text } = Typography;
 import type { KitchenViewMode } from './types';
@@ -11,6 +12,8 @@ interface KitchenFiltersProps {
   kitchenViewMode: KitchenViewMode;
   onViewModeChange: (mode: KitchenViewMode) => void;
   isMobile: boolean;
+  selectedDate: Dayjs;
+  onDateChange: (date: Dayjs | null) => void;
 }
 
 const KitchenFilters: React.FC<KitchenFiltersProps> = ({
@@ -19,6 +22,8 @@ const KitchenFilters: React.FC<KitchenFiltersProps> = ({
   kitchenViewMode,
   onViewModeChange,
   isMobile,
+  selectedDate,
+  onDateChange,
 }) => {
   return (
     <div className='mb-2 flex justify-between items-center flex-wrap'>
@@ -30,6 +35,16 @@ const KitchenFilters: React.FC<KitchenFiltersProps> = ({
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
           size='middle'
+        />
+        
+        <DatePicker
+          value={selectedDate}
+          onChange={onDateChange}
+          format="DD/MM/YYYY"
+          placeholder="Chọn ngày"
+          size="middle"
+          style={{ width: 120 }}
+          allowClear={false}
         />
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

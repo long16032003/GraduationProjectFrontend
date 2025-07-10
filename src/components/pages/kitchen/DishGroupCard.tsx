@@ -47,9 +47,6 @@ const DishGroupCard: React.FC<DishGroupCardProps> = ({
             <Tag color={isCompleted ? 'green' : 'orange'}>
               {isCompleted ? '✅ Hoàn thành' : '🔥 Cần làm'}
             </Tag>
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              ⏱️ {dishGroup.preparationTime} phút
-            </Text>
           </Space>
         </div>
       }

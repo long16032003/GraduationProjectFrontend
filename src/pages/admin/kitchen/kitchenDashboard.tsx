@@ -43,9 +43,11 @@ import {
   UnorderedListOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { useMediaQuery } from 'react-responsive';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { CanAccess, useList, useUpdate } from '@refinedev/core';
 import { NoPermission } from '@/components/NoPermission';
 import {
@@ -64,6 +66,8 @@ import {
 import ServiceConfirmModal from '@/components/pages/kitchen/ServiceConfirmModal';
 
 dayjs.extend(relativeTime);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 const { Title, Text } = Typography;
 
@@ -88,9 +92,17 @@ const KitchenDashboard: React.FC = () => {
   const [isServiceConfirmModalVisible, setIsServiceConfirmModalVisible] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelType, setCancelType] = useState<CancelType>('out_of_stock');
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
 
   // Responsive breakpoints
   const isMobile = useMediaQuery({ maxWidth: 767 });
+
+  // Handler for date change
+  const handleDateChange = (date: Dayjs | null) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
 
   // Fetch orders từ API
   const {
@@ -105,7 +117,7 @@ const KitchenDashboard: React.FC = () => {
         table: { fields: ['id', 'number'] },
         order_dishes: {
           populate: {
-            dish: { fields: ['id', 'name', 'category_id', 'preparation_time'] },
+            dish: { fields: ['id', 'name', 'category_id'] },
           },
         },
       },
@@ -129,10 +141,12 @@ const KitchenDashboard: React.FC = () => {
   const getDishGroups = useMemo(() => {
     const dishMap = new Map<number, DishGroup>();
     
-    // Chỉ lấy orders đang active (không bao gồm done và cancelled)
-    const activeOrders = orders.filter(order => 
-      ['init', 'processing', 'finished process', 'not completed'].includes(order.status)
-    );
+    // Chỉ lấy orders đang active (không bao gồm done và cancelled) và trong ngày được chọn
+    const activeOrders = orders.filter(order => {
+      const orderDate = dayjs(order.order_time || order.created_at);
+      return ['init', 'processing', 'finished process', 'not completed'].includes(order.status) &&
+             orderDate.isSame(selectedDate, 'day');
+    });
 
     activeOrders.forEach(order => {
       order.order_dishes.forEach(orderDish => {
@@ -145,7 +159,6 @@ const KitchenDashboard: React.FC = () => {
           dishMap.set(dishId, {
             dishId,
             dishName: orderDish.dish.name,
-            preparationTime: orderDish.dish.preparation_time || 15,
             totalQuantity: 0,
             completedQuantity: 0,
             remainingQuantity: 0,
@@ -181,7 +194,7 @@ const KitchenDashboard: React.FC = () => {
       // Sắp xếp theo tổng số lượng
       return b.totalQuantity - a.totalQuantity;
     });
-  }, [orders]);
+  }, [orders, selectedDate]);
 
   // Statistics cho các trạng thái
   const orderCounts: OrderCounts = useMemo(() => {
@@ -191,10 +204,18 @@ const KitchenDashboard: React.FC = () => {
       ready: 0,
       done: 0,
       cancelled: 0,
-      all: orders.length,
+      all: 0,
     };
 
-    orders.forEach((order) => {
+    // Chỉ đếm orders trong ngày được chọn
+    const todayOrders = orders.filter(order => {
+      const orderDate = dayjs(order.order_time || order.created_at);
+      return orderDate.isSame(selectedDate, 'day');
+    });
+
+    counts.all = todayOrders.length;
+
+    todayOrders.forEach((order) => {
       switch (order.status) {
         case 'init':
         case 'not completed':
@@ -216,11 +237,17 @@ const KitchenDashboard: React.FC = () => {
     });
 
     return counts;
-  }, [orders]);
+  }, [orders, selectedDate]);
 
   // Lọc đơn hàng theo tab và tìm kiếm
   const filteredOrders = useMemo(() => {
     let result = [...orders];
+
+    // Lọc theo ngày được chọn
+    result = result.filter((order) => {
+      const orderDate = dayjs(order.order_time || order.created_at);
+      return orderDate.isSame(selectedDate, 'day');
+    });
 
     // Lọc theo tab
     if (activeTab !== 'all') {
@@ -265,7 +292,7 @@ const KitchenDashboard: React.FC = () => {
     });
 
     return result;
-  }, [orders, activeTab, searchText]);
+  }, [orders, activeTab, searchText, selectedDate]);
 
   // Event handlers
   const handleStartCooking = (order: Order) => {
@@ -407,11 +434,11 @@ const KitchenDashboard: React.FC = () => {
       const order = orders.find(o => o.id === orderId);
       if (!order) return;
 
-      // Cập nhật tất cả order_dishes thành is_available: true khi hoàn thành
+      // Cập nhật tất cả order_dishes thành is_available: 1 khi hoàn thành
       const updatedOrderDishes = order.order_dishes.map(dish => {
         return {
           ...dish,
-          is_available: true
+          is_available: 1
         };
       });
 
@@ -451,15 +478,19 @@ const KitchenDashboard: React.FC = () => {
       // Tăng priority và chuyển về trạng thái not completed
       const newPriority = Math.min((order.priority || 1) + 1, 5);
       
-      // Cập nhật trạng thái is_available cho các món chưa sẵn sàng
+      // Cập nhật trạng thái is_available cho tất cả các món
       const updatedOrderDishes = order.order_dishes.map(dish => {
         if (missingDishes.includes(dish.dish_id)) {
           return {
             ...dish,
-            is_available: false
+            is_available: 0
           };
         }
-        return dish;
+        // Các món còn lại chuyển về is_available: 1
+        return {
+          ...dish,
+          is_available: 1
+        };
       });
 
       updateOrder({
@@ -479,7 +510,7 @@ const KitchenDashboard: React.FC = () => {
             ...o,
             status: 'not completed' as const,
             priority: newPriority,
-            order_dishes: updatedOrderDishes,
+            order_dishes: updatedOrderDishes as OrderDish[],
             note: note ? `${o.note || ''}\n[Phục vụ] ${note}` : o.note
           };
         }
@@ -537,7 +568,6 @@ const KitchenDashboard: React.FC = () => {
           if (dish.id === selectedDish.id) {
             return {
               ...dish,
-              status: 'cancelled' as const,
               cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
             };
           }
@@ -577,7 +607,7 @@ const KitchenDashboard: React.FC = () => {
   const confirmCancelDishGroup = async () => {
     if (selectedDishGroup) {
       try {
-        // Hủy tất cả đơn có món này
+        // Hủy tất cả đơn có món này - Lưu ý
         const orderIdsToCancel = selectedDishGroup.orderDetails
           .filter(order => !order.isCompleted)
           .map(order => order.orderId);
@@ -585,11 +615,11 @@ const KitchenDashboard: React.FC = () => {
         for (const orderId of orderIdsToCancel) {
           const order = orders.find(o => o.id === orderId);
           if (order) {
+            // Cập nhật danh sách món trong đơn
             const updatedOrderDishes = order.order_dishes.map(dish => {
               if (dish.dish_id === selectedDishGroup.dishId) {
                 return {
                   ...dish,
-                  status: 'cancelled' as const,
                   cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
                 };
               }
@@ -604,6 +634,7 @@ const KitchenDashboard: React.FC = () => {
           }
         }
 
+        // Cập nhật danh sách món trong đơn
         const updatedOrders = orders.map((order) => {
           if (orderIdsToCancel.includes(order.id)) {
             return {
@@ -612,7 +643,6 @@ const KitchenDashboard: React.FC = () => {
                 if (dish.dish_id === selectedDishGroup.dishId) {
                   return {
                     ...dish,
-                    status: 'cancelled' as const,
                     cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
                   };
                 }
@@ -682,6 +712,8 @@ const KitchenDashboard: React.FC = () => {
             kitchenViewMode={kitchenViewMode}
             onViewModeChange={setKitchenViewMode}
             isMobile={isMobile}
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
           />
 
           <KitchenTabs

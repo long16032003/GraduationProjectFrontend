@@ -54,10 +54,10 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
   useEffect(() => {
     if (order && visible) {
       const initialStatuses: DishCheckStatus[] = order.order_dishes
-        .filter(dish => dish.status !== 'cancelled')
+        .filter(dish => !dish.cancelled_at)
         .map(dish => ({
           dishId: dish.dish_id,
-          isConfirmed: dish.is_available !== false, // Available từ bếp = confirmed sẵn
+          isConfirmed: dish.is_available !== 0, // Available từ bếp = confirmed sẵn
           note: ''
         }));
       setDishStatuses(initialStatuses);
@@ -126,8 +126,8 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
 
   // Logic để lọc món ăn: nếu có món bị thiếu thì chỉ hiển thị món bị thiếu
   const getFilteredDishes = () => {
-    const allActiveDishes = order.order_dishes.filter(dish => dish.status !== 'cancelled');
-    const missingDishes = allActiveDishes.filter(dish => dish.is_available === false);
+    const allActiveDishes = order.order_dishes.filter(dish => !dish.cancelled_at);
+    const missingDishes = allActiveDishes.filter(dish => dish.is_available === 0);
     
     // Nếu có món bị thiếu, chỉ hiển thị món bị thiếu
     if (missingDishes.length > 0) {
@@ -174,7 +174,7 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
         renderItem={(dish: OrderDish) => {
           const status = dishStatuses.find(s => s.dishId === dish.dish_id);
           const isConfirmed = status?.isConfirmed ?? true;
-          const isAvailableFromKitchen = dish.is_available !== false;
+          const isAvailableFromKitchen = dish.is_available !== 0;
           
           return (
             <List.Item>

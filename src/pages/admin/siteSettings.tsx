@@ -74,10 +74,10 @@ interface SiteSettings {
   bodyFont: string;
   fontSize: string;
   
-  // Images
-  logo: UploadFile[];
-  favicon: UploadFile[];
-  bannerImages: UploadFile[];
+  // Images - logo và favicon lưu trực tiếp path, banner lưu array paths
+  logo: string;
+  favicon: string;
+  bannerImages: Media[];
 }
 
 // Interface for API setting item
@@ -165,6 +165,29 @@ const SiteSettings: React.FC = () => {
       const apiData = settingsData.data as ApiSettingsResponse;
       console.log('API data object:', apiData);
 
+      // Parse banner images from API - now they are paths array
+      let parsedBannerImages: Media[] = [];
+      try {
+        if (apiData.banner_images) {
+          const parsed = JSON.parse(apiData.banner_images);
+          if (Array.isArray(parsed)) {
+            // Convert paths to Media objects for display
+            parsedBannerImages = parsed.map((path: string, index: number) => ({
+              id: index + 1,  // Temporary ID for display
+              path: path,
+              title: `Banner ${index + 1}`,
+              type: 'image/jpeg',  // Default type
+              size: 0,  // Unknown size
+              created_at: '',
+              updated_at: ''
+            } as Media));
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing banner images:', error);
+        parsedBannerImages = [];
+      }
+
       // Map API response directly to form fields (since it's already an object)
       const formData: SiteSettings = {
         siteName: apiData.site_name || '',
@@ -182,20 +205,51 @@ const SiteSettings: React.FC = () => {
         bodyFont: apiData.body_font || 'Roboto, sans-serif',
         fontSize: apiData.font_size || 'medium',
         logo: apiData.logo ? (() => {
-          try { return JSON.parse(apiData.logo); } 
-          catch { return []; }
-        })() : [],
+          try { 
+            const parsed = JSON.parse(apiData.logo);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed[0].path : '';
+          } 
+          catch { return ''; }
+        })() : '',
         favicon: apiData.favicon ? (() => {
-          try { return JSON.parse(apiData.favicon); } 
-          catch { return []; }
-        })() : [],
-        bannerImages: apiData.banner_images ? (() => {
-          try { return JSON.parse(apiData.banner_images); } 
-          catch { return []; }
-        })() : [],
+          try { 
+            const parsed = JSON.parse(apiData.favicon);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed[0].path : '';
+          } 
+          catch { return ''; }
+        })() : '',
+        bannerImages: parsedBannerImages,
       };
 
       console.log('Form data created:', formData);
+      
+      // Set banner files state
+      setBannerFiles(parsedBannerImages);
+      
+      // Set logo and favicon files from paths
+      if (formData.logo) {
+        setLogoFile({
+          id: 1,
+          path: formData.logo,
+          title: 'Logo',
+          type: 'image',
+          size: 0,
+          created_at: '',
+          updated_at: ''
+        });
+      }
+      
+      if (formData.favicon) {
+        setFaviconFile({
+          id: 1,
+          path: formData.favicon,
+          title: 'Favicon',
+          type: 'image',
+          size: 0,
+          created_at: '',
+          updated_at: ''
+        });
+      }
       
       setSettings(formData);
       
@@ -223,11 +277,14 @@ const SiteSettings: React.FC = () => {
         headingFont: 'Montserrat, sans-serif',
         bodyFont: 'Roboto, sans-serif',
         fontSize: 'medium',
-        logo: [],
-        favicon: [],
+        logo: '',
+        favicon: '',
         bannerImages: [],
       };
       setSettings(emptySettings);
+      setBannerFiles([]);
+      setLogoFile(null);
+      setFaviconFile(null);
       form.setFieldsValue(emptySettings);
     }
   }, [settingsData, settingsLoading, form]);
@@ -254,26 +311,10 @@ const SiteSettings: React.FC = () => {
     
     console.log('Form submit values:', values);
     
-    // Helper function to extract only essential data from images
-    const getImageData = (images: any) => {
+    // Helper function to extract paths from images
+    const getImagePaths = (images: Media[]): string => {
       if (!images || !Array.isArray(images)) return '[]';
-      return JSON.stringify(images.map((img: any) => {
-        if (img.path) {
-          // If it's a Media object from upload
-          return {
-            id: img.id,
-            path: img.path,
-            title: img.title || ''
-          };
-        } else if (img.url) {
-          // If it's an UploadFile object
-          return {
-            name: img.name,
-            url: img.url
-          };
-        }
-        return null;
-      }).filter(Boolean));
+      return JSON.stringify(images.map(img => img.path).filter(Boolean));
     };
 
     // Convert form values to API format
@@ -292,9 +333,9 @@ const SiteSettings: React.FC = () => {
       heading_font: values.headingFont,
       body_font: values.bodyFont,
       font_size: values.fontSize,
-      logo: getImageData(values.logo),
-      favicon: getImageData(values.favicon),
-      banner_images: getImageData(values.bannerImages),
+      logo: logoFile ? logoFile.path : '',
+      favicon: faviconFile ? faviconFile.path : '',
+      banner_images: getImagePaths(bannerFiles),
     };
     
     console.log('Settings to update:', settingsToUpdate);
@@ -387,7 +428,7 @@ const SiteSettings: React.FC = () => {
   };
 
   // Handle favicon upload
-  const handleFaviconUpload = async (file: any) => {
+  const handleFaviconUpload = async (file: RcFile) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/x-icon';
     const isLt1M = file.size / 1024 / 1024 < 1;
 
@@ -438,7 +479,7 @@ const SiteSettings: React.FC = () => {
   };
 
   // Handle banner images upload
-  const handleBannerUpload = async (file: any) => {
+  const handleBannerUpload = async (file: RcFile) => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
     const isLt5M = file.size / 1024 / 1024 < 5;
 
@@ -469,9 +510,16 @@ const SiteSettings: React.FC = () => {
           onSuccess: (response) => {
             console.log('Banner upload success:', response);
             if (response?.data) {
-              const newBannerFiles = [...bannerFiles, response.data];
-              setBannerFiles(newBannerFiles as Media[]);
+              const newMediaFile = response.data as Media;
+              const newBannerFiles = [...bannerFiles, newMediaFile];
+              setBannerFiles(newBannerFiles);
+              
+              // Update form values
               form.setFieldsValue({ bannerImages: newBannerFiles });
+              
+              // Update settings state
+              setSettings(prev => prev ? { ...prev, bannerImages: newBannerFiles } : null);
+              
               message.success('Tải ảnh banner thành công');
             }
             setUploadingBanner(false);
@@ -504,11 +552,18 @@ const SiteSettings: React.FC = () => {
   };
   
   // Preview component for images
-  const previewImage = (file: UploadFile): string => {
-    if (!file.url && !file.preview) {
-      file.preview = URL.createObjectURL(file.originFileObj as Blob);
+  const previewImage = (file: UploadFile | Media): string => {
+    // If it's a Media object
+    if ('path' in file) {
+      return `${API_URL}/storage/${file.path}`;
     }
-    return (file.url || file.preview || '') as string;
+    
+    // If it's an UploadFile
+    const uploadFile = file as UploadFile;
+    if (!uploadFile.url && !uploadFile.preview) {
+      uploadFile.preview = URL.createObjectURL(uploadFile.originFileObj as Blob);
+    }
+    return (uploadFile.url || uploadFile.preview || '') as string;
   };
 
   // Upload button components
@@ -718,58 +773,87 @@ const SiteSettings: React.FC = () => {
           <Row gutter={16}>
             <Col xs={24} md={12}>
               <Form.Item
-                name="logo"
                 label="Logo"
                 tooltip="Kích thước khuyến nghị: 200x80px"
-                valuePropName="fileList"
-                getValueFromEvent={e => e?.fileList}
               >
                 <Upload
                   listType="picture-card"
                   maxCount={1}
-                  beforeUpload={() => false}
-                  showUploadList={true}
+                  beforeUpload={handleLogoUpload}
+                  showUploadList={false}
+                  fileList={[]}
                 >
-                  {uploadButton('Tải lên logo')}
+                  {logoFile ? (
+                    <img 
+                      src={`${API_URL}/storage/${logoFile.path}`} 
+                      alt="Logo preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    uploadButton('Tải lên logo')
+                  )}
                 </Upload>
               </Form.Item>
             </Col>
             
             <Col xs={24} md={12}>
               <Form.Item
-                name="favicon"
                 label="Favicon"
                 tooltip="Kích thước khuyến nghị: 32x32px"
-                valuePropName="fileList"
-                getValueFromEvent={e => e?.fileList}
               >
                 <Upload
                   listType="picture-card"
                   maxCount={1}
-                  beforeUpload={() => false}
-                  onChange={handleFaviconUpload}
+                  beforeUpload={handleFaviconUpload}
+                  showUploadList={false}
+                  fileList={[]}
                 >
-                  {form.getFieldValue('favicon')?.length ? null : uploadButton('Tải lên favicon')}
+                  {faviconFile ? (
+                    <img 
+                      src={`${API_URL}/storage/${faviconFile.path}`} 
+                      alt="Favicon preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    uploadButton('Tải lên favicon')
+                  )}
                 </Upload>
               </Form.Item>
             </Col>
             
             <Col xs={24}>
               <Form.Item
-                name="bannerImages"
                 label="Ảnh banner"
                 tooltip="Kích thước khuyến nghị: 1920x600px"
-                valuePropName="fileList"
-                getValueFromEvent={e => e?.fileList}
               >
                 <Upload
                   listType="picture-card"
                   maxCount={5}
                   multiple
-                  beforeUpload={() => false}
-                  onChange={handleBannerUpload}
+                  beforeUpload={handleBannerUpload}
+                  fileList={bannerFiles.map((media, index) => ({
+                    uid: String(media.id || index),
+                    name: media.title || `banner-${index + 1}`,
+                    status: 'done' as const,
+                    url: `${API_URL}/storage/${media.path}`,
+                  }))}
+                  showUploadList={{
+                    showPreviewIcon: true,
+                    showRemoveIcon: true,
+                    showDownloadIcon: false,
+                  }}
+                  onRemove={(file) => {
+                    // Handle remove banner image
+                    const index = bannerFiles.findIndex(img => String(img.id) === file.uid);
+                    if (index > -1) {
+                      const newBannerFiles = bannerFiles.filter((_, i) => i !== index);
+                      setBannerFiles(newBannerFiles);
+                      form.setFieldsValue({ bannerImages: newBannerFiles });
+                      setSettings(prev => prev ? { ...prev, bannerImages: newBannerFiles } : null);
+                    }
+                  }}
                 >
-                  {form.getFieldValue('bannerImages')?.length >= 5 ? null : uploadButton('Tải lên ảnh banner')}
+                  {bannerFiles.length >= 5 ? null : uploadButton('Tải lên ảnh banner')}
                 </Upload>
               </Form.Item>
               <Text type="secondary">Bạn có thể tải lên tối đa 5 ảnh banner. Các ảnh sẽ được hiển thị luân phiên trên trang chủ.</Text>
@@ -780,9 +864,9 @@ const SiteSettings: React.FC = () => {
           
           <div className="border p-4 rounded-lg bg-gray-50">
             <div className="flex items-center mb-4">
-              {settings?.logo?.length ? (
+              {settings?.logo ? (
                 <img 
-                  src={previewImage(settings.logo[0])} 
+                  src={`${API_URL}/storage/${settings.logo}`} 
                   alt="Logo preview" 
                   className="h-12 mr-4"
                 />
@@ -805,7 +889,7 @@ const SiteSettings: React.FC = () => {
             <div className="w-full h-40 bg-gray-200 rounded flex items-center justify-center">
               {settings?.bannerImages?.length ? (
                 <img 
-                  src={previewImage(settings.bannerImages[0])} 
+                  src={`${API_URL}/storage/${settings.bannerImages[0].path}`} 
                   alt="Banner preview" 
                   className="w-full h-40 object-cover rounded"
                 />
@@ -816,109 +900,109 @@ const SiteSettings: React.FC = () => {
           </div>
         </>
       ),
-    },
-    {
-      key: 'typography',
-      label: 'Typography',
-      children: (
-        <>
-          <Row gutter={16}>
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="headingFont"
-                label="Font chữ tiêu đề"
-                tooltip="Font chữ sử dụng cho các tiêu đề"
-              >
-                <Select>
-                  {fontOptions.map(font => (
-                    <Option key={font.value} value={font.value}>
-                      <span style={{ fontFamily: font.value }}>{font.label}</span>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
+    }
+    // {
+    //   key: 'typography',
+    //   label: 'Typography',
+    //   children: (
+    //     <>
+    //       <Row gutter={16}>
+    //         <Col xs={24} md={8}>
+    //           <Form.Item
+    //             name="headingFont"
+    //             label="Font chữ tiêu đề"
+    //             tooltip="Font chữ sử dụng cho các tiêu đề"
+    //           >
+    //             <Select>
+    //               {fontOptions.map(font => (
+    //                 <Option key={font.value} value={font.value}>
+    //                   <span style={{ fontFamily: font.value }}>{font.label}</span>
+    //                 </Option>
+    //               ))}
+    //             </Select>
+    //           </Form.Item>
+    //         </Col>
             
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="bodyFont"
-                label="Font chữ nội dung"
-                tooltip="Font chữ sử dụng cho nội dung"
-              >
-                <Select>
-                  {fontOptions.map(font => (
-                    <Option key={font.value} value={font.value}>
-                      <span style={{ fontFamily: font.value }}>{font.label}</span>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
+    //         <Col xs={24} md={8}>
+    //           <Form.Item
+    //             name="bodyFont"
+    //             label="Font chữ nội dung"
+    //             tooltip="Font chữ sử dụng cho nội dung"
+    //           >
+    //             <Select>
+    //               {fontOptions.map(font => (
+    //                 <Option key={font.value} value={font.value}>
+    //                   <span style={{ fontFamily: font.value }}>{font.label}</span>
+    //                 </Option>
+    //               ))}
+    //             </Select>
+    //           </Form.Item>
+    //         </Col>
             
-            <Col xs={24} md={8}>
-              <Form.Item
-                name="fontSize"
-                label="Kích thước chữ"
-                tooltip="Kích thước chữ cơ bản cho trang web"
-              >
-                <Select>
-                  {fontSizeOptions.map(size => (
-                    <Option key={size.value} value={size.value}>
-                      {size.label}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+    //         <Col xs={24} md={8}>
+    //           <Form.Item
+    //             name="fontSize"
+    //             label="Kích thước chữ"
+    //             tooltip="Kích thước chữ cơ bản cho trang web"
+    //           >
+    //             <Select>
+    //               {fontSizeOptions.map(size => (
+    //                 <Option key={size.value} value={size.value}>
+    //                   {size.label}
+    //                 </Option>
+    //               ))}
+    //             </Select>
+    //           </Form.Item>
+    //         </Col>
+    //       </Row>
           
-          <Divider>Xem trước Typography</Divider>
+    //       <Divider>Xem trước Typography</Divider>
           
-          <div className="border p-6 rounded-lg bg-gray-50">
-            <div 
-              className="text-3xl font-bold mb-3"
-              style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
-            >
-              Tiêu đề lớn (H1)
-            </div>
+    //       <div className="border p-6 rounded-lg bg-gray-50">
+    //         <div 
+    //           className="text-3xl font-bold mb-3"
+    //           style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
+    //         >
+    //           Tiêu đề lớn (H1)
+    //         </div>
             
-            <div 
-              className="text-2xl font-bold mb-3"
-              style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
-            >
-              Tiêu đề vừa (H2)
-            </div>
+    //         <div 
+    //           className="text-2xl font-bold mb-3"
+    //           style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
+    //         >
+    //           Tiêu đề vừa (H2)
+    //         </div>
             
-            <div 
-              className="text-xl font-bold mb-4"
-              style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
-            >
-              Tiêu đề nhỏ (H3)
-            </div>
+    //         <div 
+    //           className="text-xl font-bold mb-4"
+    //           style={{ fontFamily: settings?.headingFont || 'Montserrat, sans-serif' }}
+    //         >
+    //           Tiêu đề nhỏ (H3)
+    //         </div>
             
-            <div 
-              className="mb-3"
-              style={{ 
-                fontFamily: settings?.bodyFont || 'Roboto, sans-serif',
-                fontSize: settings?.fontSize === 'small' ? '14px' : 
-                         settings?.fontSize === 'large' ? '18px' : '16px'
-              }}
-            >
-              Đây là đoạn văn mẫu để xem trước font chữ và kích thước chữ. 
-              Việc lựa chọn font chữ phù hợp sẽ giúp trang web của bạn trở nên chuyên nghiệp 
-              và dễ đọc hơn. Bạn nên chọn font chữ phù hợp với phong cách và thương hiệu của nhà hàng.
-            </div>
+    //         <div 
+    //           className="mb-3"
+    //           style={{ 
+    //             fontFamily: settings?.bodyFont || 'Roboto, sans-serif',
+    //             fontSize: settings?.fontSize === 'small' ? '14px' : 
+    //                      settings?.fontSize === 'large' ? '18px' : '16px'
+    //           }}
+    //         >
+    //           Đây là đoạn văn mẫu để xem trước font chữ và kích thước chữ. 
+    //           Việc lựa chọn font chữ phù hợp sẽ giúp trang web của bạn trở nên chuyên nghiệp 
+    //           và dễ đọc hơn. Bạn nên chọn font chữ phù hợp với phong cách và thương hiệu của nhà hàng.
+    //         </div>
             
-            <div 
-              className="text-sm"
-              style={{ fontFamily: settings?.bodyFont || 'Roboto, sans-serif' }}
-            >
-              Đây là chữ nhỏ thường dùng cho chân trang hoặc ghi chú.
-            </div>
-          </div>
-        </>
-      ),
-    },
+    //         <div 
+    //           className="text-sm"
+    //           style={{ fontFamily: settings?.bodyFont || 'Roboto, sans-serif' }}
+    //         >
+    //           Đây là chữ nhỏ thường dùng cho chân trang hoặc ghi chú.
+    //         </div>
+    //       </div>
+    //     </>
+    //   ),
+    // },
   ];
   
   if (settingsLoading) {
@@ -971,7 +1055,7 @@ const SiteSettings: React.FC = () => {
         />
         
         <div className="flex justify-between items-center mb-4">
-          <Title level={4} className="m-0">
+          <Title level={3} className="m-0">
             <GlobalOutlined className="mr-2" />
             Thiết lập trang web
           </Title>

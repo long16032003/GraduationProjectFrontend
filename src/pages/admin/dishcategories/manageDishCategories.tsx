@@ -4,6 +4,9 @@ import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { DishCategory } from '@/types';
+import { Typography } from 'antd';
+
+const { Title } = Typography;
 
 const ManageDishCategories: React.FC = () => {
   const [form] = Form.useForm();
@@ -150,7 +153,15 @@ const ManageDishCategories: React.FC = () => {
 
   return (
     <Card
-      title='Quản lý danh mục món ăn'
+      title={
+        <Title
+            level={3}
+            style={{ margin: 0 }}
+            className='text-orange-600'
+          >
+            Quản lý danh mục món ăn
+          </Title>
+      }
       className='m-4'
     >
       <div className='mb-4 flex justify-between items-center'>

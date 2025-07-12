@@ -1,3 +1,5 @@
+import type { Dish } from "@/types";
+
 export interface Order {
   id: number;
   table_id: number;
@@ -16,8 +18,6 @@ export interface Order {
   cancelled_by?: number;
   cancelled_at?: string;
   order_dishes: OrderDish[];
-  chef_id?: number;
-  chef_name?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -31,21 +31,15 @@ export interface OrderDish {
   cancelled_reason?: string;
   cancelled_by?: number;
   cancelled_at?: string;
-  is_available?: boolean;
-  dish?: {
-    id: number;
-    name: string;
-    category_id: number;
-    preparation_time?: number;
-  };
+  is_available?: number | null;
+  dish?: Dish;
   note?: string;
-  status?: 'active' | 'cancelled';
+  order?: Order;
 }
 
 export interface DishGroup {
   dishId: number;
   dishName: string;
-  preparationTime: number;
   totalQuantity: number;
   completedQuantity: number;
   remainingQuantity: number;

@@ -308,7 +308,7 @@ const Checkout: React.FC = () => {
 
         if (result.success) {
           message.success('Thanh toán thành công!');
-          navigate('/admin/bills');
+          window.location.href = '/admin/bills';
         } else {
           message.error(result.message || 'Có lỗi xảy ra khi thanh toán');
         }
@@ -336,6 +336,10 @@ const Checkout: React.FC = () => {
 
   if (!bill) {
     return <div>Không tìm thấy hóa đơn</div>;
+  }
+
+  if(bill.status == "paid"){
+    return <div>Hóa đơn này đã thanh toán</div>;
   }
 
   return (

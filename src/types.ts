@@ -207,15 +207,22 @@ export interface Bill {
 
 export interface Order {
   id: number;
+  table_id: number;
+  table?: {
+    id: number;
+    name: string;
+    number: number;
+  };
   bill_id: number;
   creator_id: number;
   order_time: string;
   note?: string;
-  status: 'init' | 'processing' | 'finished process' | 'not completed' | 'done';
-  // Relations
-  bill?: Bill;
-  creator?: Staff;
-  order_dishes?: OrderDish[];
+  status: 'init' | 'processing' | 'finished process' | 'not completed' | 'done' | 'cancelled';
+  priority?: number;
+  cancelled_reason?: string;
+  cancelled_by?: number;
+  cancelled_at?: string;
+  order_dishes: OrderDish[];
   created_at?: string;
   updated_at?: string;
 }
@@ -228,7 +235,7 @@ export interface OrderDish {
   cancelled_reason?: string;
   cancelled_by?: number;
   cancelled_at?: string;
-  is_available?: number;
+  is_available?: number | null;
   note?: string;
   status?: 'active' | 'cancelled';
   // Relations

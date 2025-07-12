@@ -637,9 +637,9 @@ export function DashboardPage() {
         <div className='flex justify-between items-center mb-6'>
           <Title
             level={2}
-            className='!mb-0'
+            className='!mb-0 text-orange-600'
           >
-            <FireOutlined className='mr-2' />
+            <FireOutlined className='mr-2 ' />
             Thống kê tổng quan nhà hàng
           </Title>
           <Select

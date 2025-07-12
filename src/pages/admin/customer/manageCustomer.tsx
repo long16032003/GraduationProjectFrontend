@@ -374,7 +374,7 @@ const ManageCustomer: React.FC = () => {
       <Card className="shadow-sm mb-4">
         
         <div className="flex justify-between items-center mb-4">
-          <Title level={4} className="m-0">
+          <Title level={4} className="m-0 text-orange-600">
             <UserOutlined className="mr-2" />
             Danh sách khách hàng
           </Title>

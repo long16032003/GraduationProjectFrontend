@@ -72,7 +72,18 @@ const ReservationPage: React.FC = () => {
 
   // Get authentication state
   const user = use$(auth$.user);
+  console.log(user)
   const guard = use$(auth$.guard);
+
+  // Set form values when user is customer
+  useEffect(() => {
+    if (user && guard === 'customer') {
+      form.setFieldsValue({
+        name: user.name,
+        phone: user.phone
+      });
+    }
+  }, [user, guard, form]);
 
   // Function to get default time rounded to nearest half hour
   const getDefaultTime = () => {

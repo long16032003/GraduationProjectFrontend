@@ -13,6 +13,7 @@ import {
   Tag,
   Upload,
   Switch,
+  Typography,
 } from 'antd';
 import {
   PlusOutlined,
@@ -27,6 +28,8 @@ import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
 import type { DishCategory, Dish, Media } from '@/types';
+
+const { Title, Text } = Typography;
 
 const ManageDish: React.FC = () => {
   const [form] = Form.useForm();
@@ -66,6 +69,16 @@ const ManageDish: React.FC = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const columns: ColumnsType<Dish> = [
+    {
+      title: 'STT',
+      key: 'stt',
+      width: '8%',
+      render: (_: unknown, __: Dish, index: number) => (
+        <span className='font-medium text-gray-800'>
+          {index + 1}
+        </span>
+      ),
+    },
     {
       title: 'Tên món',
       dataIndex: 'name',
@@ -392,7 +405,13 @@ const ManageDish: React.FC = () => {
     <Card
       title={
         <div className='flex items-center space-x-2'>
-          <span className='text-lg font-medium'>Quản lý thực đơn</span>
+          <Title
+            level={3}
+            style={{ margin: 0 }}
+            className='text-orange-600'
+          >
+            Quản lý thực đơn
+          </Title>
           <Tag
             color='orange'
             className='uppercase'
@@ -431,7 +450,6 @@ const ManageDish: React.FC = () => {
         rowKey='id'
         pagination={{
           total: filteredDishes?.length,
-          pageSize: 10,
           showSizeChanger: true,
           showQuickJumper: true,
           showTotal: (total) => `Tổng số ${total} món`,

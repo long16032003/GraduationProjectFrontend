@@ -2,6 +2,7 @@ import React, { Fragment } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar.tsx';
 import { Separator } from '@/components/ui/separator.tsx';
 import { SearchForm } from '@/components/app/search-form.tsx';
+import HeaderInfo from '@/components/app/header-info.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel,
@@ -308,10 +309,10 @@ export function DefaultHeaderContent() {
       <div className="flex items-center gap-2 lg:w-1/3 justify-start" data-element="header-start">
         <SidebarTrigger />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <AppBreadcrumb />
+        {/* <AppBreadcrumb /> */}
       </div>
       <div className="flex items-center flex-1" data-element="header-center">
-        <SearchForm className="w-full" />
+        <HeaderInfo className="w-full" />
       </div>
       <div className="flex items-center gap-3 lg:w-1/3 justify-end" data-element="header-end">
         <NotificationNav />

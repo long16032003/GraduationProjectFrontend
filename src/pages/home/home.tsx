@@ -19,12 +19,16 @@ const HomePage: React.FC = () => {
   const { settings, getSetting, getJsonSetting, isLoading: settingsLoading } = useSiteSettingsContext();
   
   // Get banner images from settings or use default
-  const bannerImages = getJsonSetting('banner_images', [
+  const bannerImages = getJsonSetting('banner_images');
+
+  console.log(bannerImages)
+
+  const bannerImagesDefault = [
     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
     'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200',
     'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200',
-  ]);
-
+  ];
+  
   const {data: dishes, isLoading: isLoadingDishes} = useList<Dish>({
     resource: 'dishes',
     filters: [
@@ -40,11 +44,11 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen ">
       {/* Hero Section với Carousel */} 
       <Carousel autoplay effect="fade" className="h-[600px] hero-carousel">
-        {bannerImages.map((image: string, index: number) => (
+        {(bannerImages && bannerImages.length > 0 ? bannerImages : bannerImagesDefault).map((image: string, index: number) => (
           <div key={index}>
             <div 
               className="h-[600px] bg-cover bg-center relative"
-              style={{ backgroundImage: `url(${image})` }}
+              style={{ backgroundImage: `url(${import.meta.env.VITE_API_URL}/storage/${image})` }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-orange-900/30"></div>
               <div className="absolute inset-0 flex items-center justify-center">
@@ -53,7 +57,7 @@ const HomePage: React.FC = () => {
                     <Title level={1} className="text-white mb-6 !text-6xl font-bold leading-tight">
                       {getSetting('site_name', 'Nhà Hàng Bamboo Sông Chanh')}
                     </Title>
-                    <Text className="text-2xl block mb-4 text-white/95 font-light">
+                    <Text className="text-2xl block mb-4 text-white/95 font-bold">
                       {getSetting('site_tagline', 'Tinh hoa ẩm thực Quảng Yên')}
                     </Text>
                     <Text className="text-lg block mb-8 text-white/80 max-w-2xl mx-auto leading-relaxed">
@@ -70,7 +74,7 @@ const HomePage: React.FC = () => {
                       </Button>
                       <Button 
                         size="large"
-                        className="border-white text-white hover:bg-white hover:text-gray-800 px-8 py-6 h-auto text-lg font-semibold rounded-full"
+                        className="border-white  hover:bg-white hover:text-gray-800 px-8 py-6 h-auto text-lg font-semibold rounded-full"
                         onClick={() => window.location.href = '/menu'}
                       >
                         Xem thực đơn
@@ -205,7 +209,7 @@ const HomePage: React.FC = () => {
                         </div>
                       }
                       className="h-[420px] hover:shadow-xl transition-all duration-300 flex flex-col"
-                      bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                      styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' } }}
                     >
                       <div>
                         <Title level={4} className="!text-orange-700 !mb-2 line-clamp-2" style={{ minHeight: '64px' }}>
@@ -440,7 +444,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Special Offers */}
-      <div className="py-20 bg-gradient-to-br from-orange-600 to-orange-700">
+      {/* <div className="py-20 bg-gradient-to-br from-orange-600 to-orange-700">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Title level={2} className="text-white mb-4">
@@ -528,7 +532,7 @@ const HomePage: React.FC = () => {
             </Button>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div 
         className="bg-cover bg-center py-24 relative"

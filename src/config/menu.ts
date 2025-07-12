@@ -172,7 +172,7 @@ export const mainMenuItems: MenuItem[] = [
   // },
   {
     title: "Phân quyền",
-    url: "/admin/roles",
+    url: "/admin/role/new",
     icon: ShieldCheck,
     permission: "role:create",
     isActive: true,

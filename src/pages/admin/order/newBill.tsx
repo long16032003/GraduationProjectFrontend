@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { Card, Table, Button, InputNumber, Space, Typography, message, Row, Col, Input, Tag, Divider, Form, List, Badge, Tabs, Drawer, Select, Image } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { ArrowLeftOutlined, PlusOutlined, MinusOutlined, ShoppingCartOutlined, CheckOutlined, UserOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
@@ -26,9 +26,18 @@ interface CustomerInfo {
   number_of_guests: number;
 }
 
+interface LocationState {
+  reservation?: {
+    customer_name: string;
+    customer_phone: string;
+    number_of_guests: number;
+  };
+}
+
 const NewBill: React.FC = () => {
   const { tableId } = useParams<{ tableId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [customerForm] = Form.useForm();
   const [orderForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
@@ -68,6 +77,18 @@ const NewBill: React.FC = () => {
   const dishes = listDishes?.data;
   const categories = listDishCategories?.data;
   const table = listTables?.data?.find(table => table.id === parseInt(tableId || '0'));
+  const reservationData = (location.state as LocationState)?.reservation;
+
+  // Pre-fill form with reservation data if available
+  useEffect(() => {
+    if (reservationData) {
+      customerForm.setFieldsValue({
+        customer_name: reservationData.customer_name,
+        customer_phone: reservationData.customer_phone,
+        number_of_guests: reservationData.number_of_guests
+      });
+    }
+  }, [reservationData, customerForm]);
   
   // Filter dishes
   const filteredDishes = useMemo(() => {
@@ -600,7 +621,10 @@ const NewBill: React.FC = () => {
               <Text strong>Thời gian:</Text> {dayjs().format('HH:mm DD/MM/YYYY')}
             </Col>
             <Col span={8}>
-              <Text strong>Trạng thái:</Text> <Tag color="green">Sẵn sàng phục vụ</Tag>
+              <Text strong>Trạng thái:</Text> {reservationData ? 
+                <Tag color="blue">Có đặt bàn</Tag> : 
+                <Tag color="green">Sẵn sàng phục vụ</Tag>
+              }
             </Col>
           </Row>
         </Card>
@@ -613,7 +637,11 @@ const NewBill: React.FC = () => {
             form={customerForm}
             layout="vertical"
             onFinish={handleCustomerSubmit}
-            initialValues={{ number_of_guests: 2 }}
+            initialValues={{ 
+              number_of_guests: reservationData?.number_of_guests || 2,
+              customer_name: reservationData?.customer_name || '',
+              customer_phone: reservationData?.customer_phone || ''
+            }}
           >
             <Form.Item
               name="customer_name"
@@ -621,7 +649,10 @@ const NewBill: React.FC = () => {
             >
               <Input 
                 prefix={<UserOutlined />}
-                placeholder="Nhập tên khách hàng"
+                placeholder={reservationData ? 
+                  `Đã điền sẵn: ${reservationData.customer_name}` : 
+                  "Nhập tên khách hàng"
+                }
                 size="large"
               />
             </Form.Item>
@@ -632,12 +663,15 @@ const NewBill: React.FC = () => {
               rules={[{ required: true, message: 'Vui lòng nhập số điện thoại khách hàng' }]}
             >
               <Input 
-                placeholder="Nhập số điện thoại"
+                placeholder={reservationData ? 
+                  `Đã điền sẵn: ${reservationData.customer_phone}` : 
+                  "Nhập số điện thoại"
+                }
                 size="large"
               />
             </Form.Item>
 
-            {/* <Form.Item
+            <Form.Item
               name="number_of_guests"
               label="Số lượng khách"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng khách' }]}
@@ -647,9 +681,12 @@ const NewBill: React.FC = () => {
                 max={table.capacity}
                 style={{ width: '100%' }}
                 size="large"
-                placeholder="Số lượng khách"
+                placeholder={reservationData ? 
+                  `Đã điền sẵn: ${reservationData.number_of_guests} khách` : 
+                  "Số lượng khách"
+                }
               />
-            </Form.Item> */}
+            </Form.Item>
 
             <Form.Item>
               <Button
@@ -677,9 +714,9 @@ const NewBill: React.FC = () => {
                   <div>
                     <Text strong>SĐT:</Text> {customerInfo?.customer_phone || 'Không có'}
                   </div>
-                  {/* <div>
+                  <div>
                     <Text strong>Số khách:</Text> {customerInfo?.number_of_guests}
-                  </div> */}
+                  </div>
                 </Space>
               </Col>
               <Col span={6} className="text-right">

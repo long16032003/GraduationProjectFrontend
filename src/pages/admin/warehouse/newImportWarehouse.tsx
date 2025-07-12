@@ -302,20 +302,6 @@ const NewImportWarehouse: React.FC = () => {
     <CanAccess resource='enter-ingredient' action='create' fallback={<NoPermission />}>
       <div className="p-6">
       <Card className="shadow-sm">
-        <Breadcrumb 
-          className="mb-4"
-          items={[
-            {
-              title: <a href="/admin">Dashboard</a>,
-            },
-            {
-              title: <a href="/admin/warehouse/import">Lịch sử nhập kho</a>,
-            },
-            {
-              title: 'Tạo phiếu nhập',
-            },
-          ]}
-        />
         
         <Title level={3} className="mb-6 flex items-center">
           <ShoppingCartOutlined className="mr-3 text-orange-500" />

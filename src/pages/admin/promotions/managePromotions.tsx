@@ -488,7 +488,7 @@ const ManagePromotions: React.FC = () => {
               <GiftOutlined className="text-white text-lg" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-0">Quản lý ưu đãi</h2>
+              <h2 className="text-xs font-bold text-orange-600 mb-0">Quản lý ưu đãi</h2>
               <p className="text-gray-500 text-sm mb-0">Tạo và quản lý các chương trình khuyến mãi</p>
             </div>
           </div>

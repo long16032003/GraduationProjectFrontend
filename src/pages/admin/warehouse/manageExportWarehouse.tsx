@@ -519,23 +519,8 @@ const ManageExportWarehouse: React.FC = () => {
     <CanAccess resource='export-ingredient' action='create' fallback={<NoPermission />}>
       <div className="p-4">
       <Card className="shadow-sm mb-4">
-        <Breadcrumb 
-          className="mb-4"
-          items={[
-            {
-              title: <a href="/admin">Dashboard</a>,
-            },
-            {
-              title: <a href="/admin/warehouse">Quản lý kho</a>,
-            },
-            {
-              title: 'Lịch sử xuất kho',
-            },
-          ]}
-        />
-        
         <div className="flex justify-between items-center mb-4">
-          <Title level={4} className="m-0">
+          <Title level={3} className="m-0 text-orange-600">
             <FileTextOutlined className="mr-2" />
             Lịch sử xuất kho
           </Title>

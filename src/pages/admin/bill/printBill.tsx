@@ -6,12 +6,15 @@ import { useOne } from '@refinedev/core';
 import dayjs from 'dayjs';
 import { type Bill, type OrderDish } from '@/types';
 import { tax_percentage } from '@/utils/constant';
+import { useSiteSettingsContext } from '@/providers/SiteSettingsProvider';
 
 const { Title, Text } = Typography;
 
 const PrintBill: React.FC = () => {
   const { billId } = useParams<{ billId: string }>();
   const [isPrinting, setIsPrinting] = useState(false);
+
+  const { settings, getSetting, getJsonSetting, isLoading: settingsLoading } = useSiteSettingsContext();
 
   const { data: billData, isLoading, error } = useOne<Bill>({
     resource: 'bills',
@@ -105,14 +108,14 @@ const PrintBill: React.FC = () => {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-            NHÀ HÀNG ...
+            Nhà hàng Bamboo Sông Chanh
           </Title>
           <Text type="secondary">
-            Địa chỉ: ...
+            Địa chỉ: Bắc Cầu sông Chanh, phường Quảng Yên, Quảng Ninh
           </Text>
           <br />
           <Text type="secondary">
-            Điện thoại: ... | Email: ...
+            Điện thoại: 0906.890.890 | Email: longnguyengia890@gmail.com
           </Text>
         </div>
 

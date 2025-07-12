@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Button, Space, Card, Input, Modal, Tag, DatePicker, Select, Tooltip, Statistic, Row, Col, Form, InputNumber, message } from 'antd';
+import { Table, Button, Space, Card, Input, Modal, Tag, DatePicker, Select, Tooltip, Statistic, Row, Col, Form, InputNumber, message, Typography } from 'antd';
 import { SearchOutlined, EyeOutlined, PrinterOutlined, ExclamationCircleOutlined, FilterOutlined, PlusOutlined, ShoppingCartOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { CanAccess, useList, useOne, useUpdate } from '@refinedev/core';
 import dayjs from 'dayjs';
@@ -7,6 +7,8 @@ import type { Dayjs } from 'dayjs';
 import { type Bill, type BillItem, type Order, type OrderDish, type TableModel } from '@/types';
 import { useNavigate } from 'react-router';
 import { tax_percentage } from '@/utils/constant';
+
+const { Text, Title } = Typography;
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -37,9 +39,12 @@ const ManageBills: React.FC = () => {
 
   const { data: billsData, isLoading: isLoadingList } = useList({
     resource: 'bills',
-    pagination: {
-      pageSize: 10,
-    },
+    sorters:[
+        {
+          field: 'created_at',
+          order: 'desc'
+        }
+      ]
   });
 
   const { mutate: updateBill } = useUpdate();
@@ -48,21 +53,22 @@ const ManageBills: React.FC = () => {
     resource: 'tables',
   });
   
-  // Filter bills based on filter criteria
+  // Danh sách hóa đơn với các điều kiện lọc
   const bills = useMemo(() => {
+    // Lấy ra tất cả hóa đơn
     let filteredBills = [...billsData?.data || []];
     
-    // Filter by status
+    // Lọc theo trạng thái
     if (filters.status !== 'all') {
       filteredBills = filteredBills.filter(bill => bill.status === filters.status);
     }
     
-    // Filter by payment method
+    // Lọc theo phương thức thanh toán
     if (filters.paymentMethod !== 'all') {
       filteredBills = filteredBills.filter(bill => bill.payment_method === filters.paymentMethod);
     }
     
-    // Filter by date range
+    // Lọc theo ngày tạo hóa đơn
     if (filters.dateRange) {
       const [startDate, endDate] = filters.dateRange;
       filteredBills = filteredBills.filter(bill => {
@@ -71,7 +77,7 @@ const ManageBills: React.FC = () => {
       });
     }
     
-    // Filter by search text
+    // Lọc theo tên khách hàng, số điện thoại, mã hóa đơn
     if (searchText) {
       const searchLower = searchText.toLowerCase();
       filteredBills = filteredBills.filter(bill => 
@@ -80,7 +86,7 @@ const ManageBills: React.FC = () => {
         (bill.customer_phone && bill.customer_phone.includes(searchLower))
       );
     }
-    
+
     return filteredBills;
   }, [billsData, filters, searchText]);
 
@@ -329,7 +335,17 @@ const ManageBills: React.FC = () => {
       action='create'
       fallback={<div>Bạn không có quyền truy cập trang này</div>}
     >
-      <Card title='Quản lý hóa đơn' className='m-4'>
+      <Card title={
+        <div className="flex items-center gap-2">
+        <Title
+          level={3}
+          style={{ margin: 0 }}
+          className='text-orange-600'
+        >
+          Quản lý hóa đơn
+        </Title>
+      </div>
+      } className='m-4'>
       {/* Summary Statistics */}
       <Row gutter={16} className="mb-6">
         <Col span={6}>
@@ -643,6 +659,7 @@ const ManageBills: React.FC = () => {
               value={filters.paymentMethod}
               onChange={(value) => setFilters({ ...filters, paymentMethod: value })}
             >
+              <Option value="all">Tất cả phương thức</Option>
               <Option value="cash">Tiền mặt</Option>
               <Option value="bank_transfer">Chuyển khoản</Option>
               <Option value="momo">MoMo</Option>

@@ -501,7 +501,7 @@ const ManageIngredient: React.FC = () => {
       <Card className="shadow-sm">
         <Row gutter={[16, 16]} align="middle" justify="space-between">
           <Col>
-            <Title level={4} className="m-0">Quản lý nguyên liệu</Title>
+            <Title level={3} className="m-0 text-orange-600">Quản lý nguyên liệu</Title>
           </Col>
           <Col>
             <Space>

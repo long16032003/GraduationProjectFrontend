@@ -683,6 +683,7 @@ const KitchenDashboard: React.FC = () => {
               <Title
                 level={3}
                 style={{ margin: 0 }}
+                className='text-orange-600'
               >
                 🍳 Bảng điều khiển bếp
               </Title>

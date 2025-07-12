@@ -18,7 +18,8 @@ import {
   Statistic,
   Checkbox,
   Divider,
-  Badge
+  Badge,
+  Typography
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -37,6 +38,9 @@ import type { Staff } from '@/types';
 import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { httpClient } from '@/utils/http';
+import type { Key } from 'react';
+
+const { Title } = Typography;
 
 // Role interface
 interface Role {
@@ -82,39 +86,45 @@ const canShowEmail = (role: string): boolean => {
   return ROLE_PERMISSIONS.EMAIL_VISIBLE_ROLES.includes(role);
 };
 
-// Helper function để lấy danh sách role có thể tạo/chỉnh sửa dựa trên quyền hiện tại
-const getAvailableRoles = (currentUserRole?: string, editingUserRole?: string) => {
-  if (currentUserRole === 'admin') {
-    // Admin có thể tạo/chỉnh sửa tất cả role
-    return [
-      { value: 'manager', label: 'Quản trị viên', color: 'red' },
-      { value: 'staff', label: 'Nhân viên', color: 'blue' },
-      { value: 'chef', label: 'Đầu bếp', color: 'green' },
-      { value: 'cashier', label: 'Nhân viên thu ngân', color: 'yellow' },
-      { value: 'service staff', label: 'Nhân viên phục vụ', color: 'purple' }
-    ];
-  } else if (currentUserRole === 'manager') {
-    // Manager chỉ có thể tạo/chỉnh sửa role thấp hơn
-    const availableRoles = [
-      { value: 'staff', label: 'Nhân viên', color: 'blue' },
-      { value: 'chef', label: 'Đầu bếp', color: 'green' },
-      { value: 'cashier', label: 'Nhân viên thu ngân', color: 'yellow' },
-      { value: 'service staff', label: 'Nhân viên phục vụ', color: 'purple' }
-    ];
-    
-    // Nếu đang chỉnh sửa user có role manager, thêm manager vào để giữ nguyên
-    if (editingUserRole === 'manager') {
-      return [
-        { value: 'manager', label: 'Quản trị viên', color: 'red' },
-        ...availableRoles
-      ];
-    }
-    
-    return availableRoles;
-  } else {
-    // Các role khác không có quyền tạo user
-    return [];
+// Kiểm tra xem user có phải admin không
+const isAdmin = (user: StaffWithRole): boolean => {
+  return user.superadmin === true;
+};
+
+// Kiểm tra xem user có phải manager không
+const isManager = (user: StaffWithRole): boolean => {
+  return user.roles?.some(role => role.name === 'Quản trị viên') || false;
+};
+
+// Kiểm tra quyền phân quyền
+const canAssignRole = (targetUser: StaffWithRole, currentUser: StaffWithRole): boolean => {
+  // Admin có thể phân quyền cho tất cả
+  if (isAdmin(currentUser)) {
+    return true;
   }
+  
+  // Manager có thể phân quyền nhưng không cho admin hoặc manager khác
+  if (isManager(currentUser)) {
+    return !isAdmin(targetUser) && !isManager(targetUser);
+  }
+  
+  // Các role khác không có quyền phân quyền
+  return false;
+};
+
+// Kiểm tra quyền chỉnh sửa
+const canEditUser = (targetUser: StaffWithRole, currentUser: StaffWithRole): boolean => {
+  // Admin có thể chỉnh sửa tất cả (trừ admin khác nếu cần)
+  if (isAdmin(currentUser)) {
+    return !isAdmin(targetUser); // Admin không chỉnh sửa admin khác
+  }
+  
+  // Manager có thể chỉnh sửa nhưng không cho admin hoặc manager khác
+  if (isManager(currentUser)) {
+    return !isAdmin(targetUser) && !isManager(targetUser);
+  }
+  
+  return false;
 };
 
 const ManageStaffs: React.FC = () => {
@@ -130,8 +140,24 @@ const ManageStaffs: React.FC = () => {
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
 
   // Lấy thông tin user hiện tại
-  const currentUser = use$(auth$.user);
-  const currentUserRole = (currentUser as StaffWithRole)?.role;
+  const currentUser = use$(auth$.user) as StaffWithRole;
+
+  // Function để lấy role display từ user data
+  const getUserRoleDisplay = (user: StaffWithRole): string => {
+    if (isAdmin(user)) {
+      return 'Admin';
+    }
+    if (user.roles && user.roles.length > 0) {
+      return user.roles[0].name; // Lấy role đầu tiên
+    }
+    return 'Nhân viên';
+  };
+
+  const getUserRoleColor = (user: StaffWithRole): string => {
+    if (isAdmin(user)) return 'blue';
+    if (isManager(user)) return 'red';
+    return 'default';
+  };
 
   // Fetch staff list (users with role admin, staff, or chef)
   const { data: staffData, isLoading, refetch } = useList<StaffWithRole>({
@@ -232,7 +258,26 @@ const ManageStaffs: React.FC = () => {
         <div className="text-sm">{phone || 'Chưa cập nhật'}</div>
       ),
     },
-
+    {
+      title: 'Vai trò',
+      key: 'role',
+      width: 150,
+      render: (user: StaffWithRole) => (
+        <Tag color={getUserRoleColor(user)} className="text-sm">
+          {getUserRoleDisplay(user)}
+        </Tag>
+      ),
+      filters: [
+        { text: 'Admin', value: 'admin' },
+        { text: 'Quản trị viên', value: 'manager' },
+        { text: 'Nhân viên', value: 'staff' },
+      ],
+             onFilter: (value: string | number | boolean, record: StaffWithRole) => {
+         if (value === 'admin') return isAdmin(record);
+         if (value === 'manager') return isManager(record);
+         return !isAdmin(record) && !isManager(record);
+       },
+    },
     {
       title: 'Ngày tham gia',
       key: 'created_at',
@@ -254,19 +299,8 @@ const ManageStaffs: React.FC = () => {
       width: 220,
       fixed: 'right' as const,
       render: (user: StaffWithRole) => {
-        const canEdit = canEditRole(user.role, currentUserRole);
-        
-        if (!canEdit) {
-          return (
-            <Tooltip title={
-              user.role === 'admin' 
-                ? "Không thể chỉnh sửa tài khoản Admin" 
-                : "Manager không thể chỉnh sửa Manager khác"
-            }>
-              <Tag color="default" className="cursor-not-allowed">Không có quyền</Tag>
-            </Tooltip>
-          );
-        }
+        const canEdit = canEditUser(user, currentUser);
+        const canAssign = canAssignRole(user, currentUser);
         
         return (
           <Space size="small">
@@ -279,42 +313,89 @@ const ManageStaffs: React.FC = () => {
                 className="text-blue-500 hover:text-blue-600"
               />
             </Tooltip>
-            <Tooltip title="Phân quyền">
-              <Button
-                type="text"
-                icon={<SettingOutlined />}
-                size="small"
-                onClick={() => handleAssignRole(user)}
-                className="text-purple-500 hover:text-purple-600"
-              />
-            </Tooltip>
-            <Tooltip title="Sửa thông tin">
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                size="small"
-                onClick={() => handleEdit(user)}
-                className="text-green-500 hover:text-green-600"
-              />
-            </Tooltip>
-            <Tooltip title="Xóa nhân viên">
-              <Popconfirm
-                title="Xóa nhân viên"
-                description="Bạn có chắc chắn muốn xóa nhân viên này?"
-                onConfirm={() => handleDelete(user.id!)}
-                okText="Xóa"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true }}
-              >
+            
+            {canAssign ? (
+              <Tooltip title="Phân quyền">
+                <Button
+                  type="text"
+                  icon={<SettingOutlined />}
+                  size="small"
+                  onClick={() => handleAssignRole(user)}
+                  className="text-purple-500 hover:text-purple-600"
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title={
+                isManager(currentUser) 
+                  ? "Manager không thể phân quyền cho Admin hoặc Manager khác"
+                  : "Không có quyền phân quyền"
+              }>
+                <Button
+                  type="text"
+                  icon={<SettingOutlined />}
+                  size="small"
+                  disabled
+                  className="text-gray-400"
+                />
+              </Tooltip>
+            )}
+            
+            {canEdit ? (
+              <Tooltip title="Sửa thông tin">
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={() => handleEdit(user)}
+                  className="text-green-500 hover:text-green-600"
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title={
+                isAdmin(user) 
+                  ? "Không thể chỉnh sửa tài khoản Admin" 
+                  : "Không có quyền chỉnh sửa"
+              }>
+                <Button
+                  type="text"
+                  icon={<EditOutlined />}
+                  size="small"
+                  disabled
+                  className="text-gray-400"
+                />
+              </Tooltip>
+            )}
+            
+            {canEdit ? (
+              <Tooltip title="Xóa nhân viên">
+                <Popconfirm
+                  title="Xóa nhân viên"
+                  description="Bạn có chắc chắn muốn xóa nhân viên này?"
+                  onConfirm={() => handleDelete(user.id!)}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined />}
+                    size="small"
+                    danger
+                    className="text-red-500 hover:text-red-600"
+                  />
+                </Popconfirm>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Không có quyền xóa">
                 <Button
                   type="text"
                   icon={<DeleteOutlined />}
                   size="small"
-                  danger
-                  className="text-red-500 hover:text-red-600"
+                  disabled
+                  className="text-gray-400"
                 />
-              </Popconfirm>
-            </Tooltip>
+              </Tooltip>
+            )}
           </Space>
         );
       },
@@ -455,57 +536,19 @@ const ManageStaffs: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Statistics Cards */}
-      {/* <Row gutter={16}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Tổng nhân viên"
-              value={totalStaffs}
-              prefix={<TeamOutlined className="text-blue-500" />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Quản trị viên"
-              value={adminCount}
-              prefix={<UserOutlined className="text-red-500" />}
-              valueStyle={{ color: '#f5222d' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Nhân viên"
-              value={staffCount}
-              prefix={<UserOutlined className="text-blue-500" />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Đầu bếp"
-              value={chefCount}
-              prefix={<UserOutlined className="text-green-500" />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-      </Row> */}
-
       {/* Main Table */}
       <Card 
         title={
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <TeamOutlined className="text-orange-500" />
-              <span className="text-lg font-semibold">Quản lý nhân viên</span>
+              <TeamOutlined className="text-orange-500 mr-2" />
+              <Title
+                level={3}
+                style={{ margin: 0 }}
+                className='text-orange-600'
+              >
+                Quản lý nhân viên
+              </Title>
             </div>
             <Button 
               type="primary" 
@@ -609,22 +652,6 @@ const ManageStaffs: React.FC = () => {
             />
           </Form.Item>
 
-          {/* <Form.Item
-            name="role"
-            label="Vai trò"
-            rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-          >
-            <Select placeholder="Chọn vai trò">
-              {getAvailableRoles(currentUserRole).map(role => (
-                <Option key={role.value} value={role.value}>
-                  <div className="flex items-center space-x-2">
-                    <Tag color={role.color}>{role.label}</Tag>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item> */}
-
           <Form.Item
             name="password"
             label="Mật khẩu"
@@ -724,30 +751,6 @@ const ManageStaffs: React.FC = () => {
               placeholder="Nhập số điện thoại"
               prefix={<PhoneOutlined className="text-gray-400" />}
             />
-          </Form.Item>
-
-          <Form.Item
-            name="role"
-            label="Vai trò"
-            rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-          >
-            <Select 
-              placeholder="Chọn vai trò"
-              disabled={currentUserRole === 'manager' && editingUser?.role === 'manager'}
-            >
-              {getAvailableRoles(currentUserRole, editingUser?.role).map(role => (
-                <Option key={role.value} value={role.value}>
-                  <div className="flex items-center space-x-2">
-                    <Tag color={role.color}>{role.label}</Tag>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-            {currentUserRole === 'manager' && editingUser?.role === 'manager' && (
-              <div className="text-xs text-gray-500 mt-1">
-                Manager không thể thay đổi vai trò của Manager khác
-              </div>
-            )}
           </Form.Item>
 
           <Form.Item className="mb-0">

@@ -375,7 +375,7 @@ const HistoryReservation: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-              <Breadcrumb 
+        <Breadcrumb 
           className="mb-4"
           items={[
             {

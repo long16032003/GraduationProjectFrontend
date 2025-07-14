@@ -39,6 +39,7 @@ import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import { httpClient } from '@/utils/http';
 import type { Key } from 'react';
+import type { ColumnsType } from 'antd/es/table';
 
 const { Title } = Typography;
 
@@ -209,18 +210,7 @@ const ManageStaffs: React.FC = () => {
     }
   };
 
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Admin';
-      case 'manager': return 'Quản trị viên';
-      case 'chef': return 'Đầu bếp';
-      case 'cashier': return 'Nhân viên thu ngân';
-      case 'service staff': return 'Nhân viên phục vụ';
-      default: return role;
-    }
-  };
-
-  const columns = [
+  const columns: ColumnsType<StaffWithRole> = [
     {
       title: 'STT',
       key: 'index',
@@ -272,7 +262,7 @@ const ManageStaffs: React.FC = () => {
         { text: 'Quản trị viên', value: 'manager' },
         { text: 'Nhân viên', value: 'staff' },
       ],
-             onFilter: (value: string | number | boolean, record: StaffWithRole) => {
+        onFilter: (value: string | number | boolean | Key, record: StaffWithRole) => {
          if (value === 'admin') return isAdmin(record);
          if (value === 'manager') return isManager(record);
          return !isAdmin(record) && !isManager(record);
@@ -806,8 +796,8 @@ const ManageStaffs: React.FC = () => {
               </Avatar>
               <div>
                 <h3 className="text-lg font-semibold m-0">{viewingUser.name}</h3>
-                <Tag color={getRoleColor(viewingUser.role)} className="mt-1">
-                  {getRoleText(viewingUser.role)}
+                <Tag color={getUserRoleColor(viewingUser)} className="text-sm">
+                  {getUserRoleDisplay(viewingUser)}
                 </Tag>
               </div>
             </div>

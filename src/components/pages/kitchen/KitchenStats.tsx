@@ -29,7 +29,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#1565c0', fontWeight: 600 }}>Chờ chế biến</span>}
+              title={<span style={{ color: '#1565c0', fontWeight: 600 }}>Chờ chế biến</span>}
               value={orderCounts.pending}
               valueStyle={{ color: '#1890ff', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
@@ -48,7 +48,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#e65100', fontWeight: 600 }}>Đang chế biến</span>}
+              title={<span style={{  color: '#e65100', fontWeight: 600 }}>Đang chế biến</span>}
               value={orderCounts.cooking}
               valueStyle={{ color: '#faad14', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<FireOutlined style={{ color: '#faad14' }} />}
@@ -67,7 +67,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#6a1b9a', fontWeight: 600 }}>Chờ phục vụ</span>}
+              title={<span style={{  color: '#6a1b9a', fontWeight: 600 }}>Chờ phục vụ</span>}
               value={orderCounts.ready}
               valueStyle={{ color: '#722ed1', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<CheckOutlined style={{ color: '#722ed1' }} />}
@@ -86,7 +86,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#c62828', fontWeight: 600 }}>Chưa hoàn thành</span>}
+              title={<span style={{  color: '#c62828', fontWeight: 600 }}>Chưa hoàn thành</span>}
               value={orderCounts.pending}
               valueStyle={{ color: '#f5222d', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<WarningOutlined style={{ color: '#f5222d' }} />}
@@ -105,7 +105,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#2e7d32', fontWeight: 600 }}>Hoàn thành</span>}
+              title={<span style={{  color: '#2e7d32', fontWeight: 600 }}>Hoàn thành</span>}
               value={orderCounts.done}
               valueStyle={{ color: '#52c41a', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
@@ -124,7 +124,7 @@ const KitchenStats: React.FC<KitchenStatsProps> = ({ orderCounts }) => {
             }}
           >
             <Statistic
-              title={<span style={{ fontSize: '13px', color: '#424242', fontWeight: 600 }}>Đã hủy</span>}
+              title={<span style={{  color: '#424242', fontWeight: 600 }}>Đã hủy</span>}
               value={orderCounts.cancelled}
               valueStyle={{ color: '#8c8c8c', fontSize: '18px', fontWeight: 'bold' }}
               prefix={<CloseOutlined style={{ color: '#8c8c8c' }} />}

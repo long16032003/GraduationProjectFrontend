@@ -158,16 +158,16 @@ const ManagePromotions: React.FC = () => {
               icon={isPercentage ? <PercentageOutlined /> : <DollarOutlined />}
               className="w-fit"
             >
-              {isPercentage ? `${value}%` : `${value?.toLocaleString()}đ`}
+              {isPercentage ? `${value}%` : `${Number(value)?.toLocaleString()}đ`}
             </Tag>
             {record.min_order_amount && (
               <div className="text-xs text-gray-500">
-                Đơn tối thiểu: {record.min_order_amount.toLocaleString()}đ
+                Đơn tối thiểu: {Number(record.min_order_amount)?.toLocaleString()}đ
               </div>
             )}
             {record.max_discount_amount && isPercentage && (
               <div className="text-xs text-gray-500">
-                Giảm tối đa: {record.max_discount_amount.toLocaleString()}đ
+                Giảm tối đa: {Number(record.max_discount_amount)?.toLocaleString()}đ
               </div>
             )}
           </div>
@@ -282,7 +282,7 @@ const ManagePromotions: React.FC = () => {
         description: values.description,
         discount_type: values.discount_type,
         discount_percentage: values.discount_type === 'percentage' ? values.discount_value : null,
-        discount_amount: values.discount_type === 'fixed' ? values.discount_value : null,
+        discount_amount: values.discount_type === 'fixed_amount' ? values.discount_value : null,
         min_order_amount: values.min_order_amount,
         max_discount_amount: values.max_discount_amount,
         required_points: values.required_points,
@@ -298,13 +298,11 @@ const ManagePromotions: React.FC = () => {
           id: editingPromotion.id,
           values: submitData,
         });
-        message.success('Cập nhật ưu đãi thành công');
       } else {
         await createPromotion({
           resource: 'promotions',
           values: submitData,
         });
-        message.success('Thêm ưu đãi thành công');
       }
       setIsModalVisible(false);
       form.resetFields();
@@ -682,7 +680,7 @@ const ManagePromotions: React.FC = () => {
                   <Radio.Button value="percentage" className="w-1/2 text-center">
                     <PercentageOutlined /> Phần trăm
                   </Radio.Button>
-                  <Radio.Button value="fixed" className="w-1/2 text-center">
+                  <Radio.Button value="fixed_amount" className="w-1/2 text-center">
                     <DollarOutlined /> Số tiền
                   </Radio.Button>
                 </Radio.Group>

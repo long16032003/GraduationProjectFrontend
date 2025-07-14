@@ -375,29 +375,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         resource: 'reservations',
         id: editingReservation.id,
         values: formattedData
-      }, {
-        onSuccess: () => {
-          message.success('Cập nhật đặt bàn thành công');
-          handleCancel();
-          onSuccess();
-        },
-        onError: () => {
-          message.error('Có lỗi xảy ra khi cập nhật đặt bàn');
-        }
-      });
+      })
     } else {
       createReservation({
         resource: 'reservations',
         values: formattedData
-      }, {
-        onSuccess: () => {
-          message.success('Đặt bàn thành công');
-          handleCancel();
-          onSuccess();
-        },
-        onError: () => {
-          message.error('Có lỗi xảy ra khi tạo đặt bàn');
-        }
       });
     }
   };

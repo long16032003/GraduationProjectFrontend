@@ -345,18 +345,15 @@ const SiteSettings: React.FC = () => {
         resource: 'site-settings',
         id: '1', // Using a dummy id since we're updating all settings
         values: { settings: settingsToUpdate },
+        successNotification:{
+          message: "Lưu thiết lập thành công",
+          type: "success"
+        },
+        errorNotification:{
+          message: "Có lỗi xảy ra khi lưu thiết lập!",
+          type: "error"
+        }
       },
-      {
-        onSuccess: () => {
-          message.success('Lưu thiết lập thành công!');
-          setIsSaving(false);
-        },
-        onError: (error) => {
-          console.error('Error updating settings:', error);
-          message.error('Có lỗi xảy ra khi lưu thiết lập!');
-          setIsSaving(false);
-        },
-      }
     );
   };
   

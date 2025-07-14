@@ -79,9 +79,9 @@ const ManageImportWarehouse: React.FC = () => {
   // Fetch enter ingredients from API
   const { data: enterIngredientsData, isLoading, refetch } = useList<EnterIngredient>({
     resource: 'enter-ingredients',
-    pagination: {
-      pageSize: 50,
-    },
+    // pagination: {
+    //   pageSize: 50,
+    // },
     sorters: [
       {
         field: 'created_at',

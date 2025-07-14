@@ -211,21 +211,21 @@
     }
   },
   "promotions": {
-    "promotions": "khuyến mãi",
+    "promotions": "ưu đãi",
     "titles": {
-      "create": "Tạo khuyến mãi mới",
-      "edit": "Chỉnh sửa khuyến mãi",
-      "list": "Danh sách khuyến mãi",
-      "show": "Xem khuyến mãi"
+      "create": "Tạo ưu đãi mới",
+      "edit": "Chỉnh sửa ưu đãi",
+      "list": "Danh sách ưu đãi",
+      "show": "Xem ưu đãi"
     }
   },
   "promotion_codes": {
-    "promotion_codes": "mã khuyến mãi",
+    "promotion_codes": "mã ưu đãi",
     "titles": {
-      "create": "Tạo mã khuyến mãi mới",
-      "edit": "Chỉnh sửa mã khuyến mãi",
-      "list": "Danh sách mã khuyến mãi",
-      "show": "Xem mã khuyến mãi"
+      "create": "Tạo mã ưu đãi mới",
+      "edit": "Chỉnh sửa mã ưu đãi",
+      "list": "Danh sách mã ưu đãi",
+      "show": "Xem mã ưu đãi"
     }
   },
   "permissions": {
@@ -273,7 +273,7 @@
       "show": "Xem nguyên liệu"
     }
   },
-  "enter-ingredient": {
+  "enter-ingredients": {
     "enter-ingredient": "phiếu nhập kho",
     "titles": {
       "create": "Tạo phiếu nhập kho mới",
@@ -282,7 +282,7 @@
       "show": "Xem phiếu nhập kho"
     }
   },
-  "export-ingredient": {
+  "export-ingredients": {
     "export-ingredient": "phiếu xuất kho",
     "titles": {
       "create": "Tạo phiếu xuất kho mới",

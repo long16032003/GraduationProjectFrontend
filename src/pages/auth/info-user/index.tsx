@@ -141,23 +141,21 @@ const InfoUserPage: React.FC = () => {
     changePassword(
       {
         resource: `${resource}/change-password`,
-        id: user!.id,
+        id: user!.uuid,
         values: {
           current_password: values.current_password,
           new_password: values.new_password,
+          new_password_confirmation: values.confirm_password,
         },
+        successNotification:{
+          message: "Đổi mật khẩu thành công",
+          type: "success",
+        },
+        errorNotification:{
+          message: "Có lỗi xảy ra khi đổi mật khẩu!",
+          type: "error",
+        }
       },
-      {
-        onSuccess: () => {
-          message.success('Đổi mật khẩu thành công!');
-          passwordForm.resetFields();
-          setIsChangingPassword(false);
-        },
-        onError: (error) => {
-          message.error('Có lỗi xảy ra khi đổi mật khẩu!');
-          console.error('Change password error:', error);
-        },
-      }
     );
   };
 

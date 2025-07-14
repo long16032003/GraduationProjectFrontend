@@ -120,11 +120,17 @@ const ManageBills: React.FC = () => {
             resource: 'bills',
             id: record.id,
             values: { status: 'cancelled' },
+            successNotification:{
+              message: "Hủy hóa đơn thành công",
+              type: "success"
+            },
+            errorNotification:{
+              message: "Có lỗi xảy ra khi hủy hóa đơn",
+              type: "error"
+            }
           });
-          message.success('Hủy hóa đơn thành công');
           // Refresh data ở đây nếu cần
         } catch (error) {
-          message.error('Có lỗi xảy ra khi hủy hóa đơn');
           console.error('Cancel bill error:', error);
         }
       },

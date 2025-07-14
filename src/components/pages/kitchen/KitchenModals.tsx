@@ -95,7 +95,7 @@ const KitchenModals: React.FC<KitchenModalsProps> = ({
         {selectedOrder && (
           <div>
             <Text style={{ fontSize: '16px' }}>
-              Xác nhận bắt đầu chế biến đơn cho <strong>#{selectedOrder.table?.name}</strong>?
+              Xác nhận bắt đầu chế biến đơn <strong>#{selectedOrder.id} - {selectedOrder.table?.name}</strong>?
             </Text>
             <div style={{ marginTop: 16 }}>
               <Text strong>Danh sách món:</Text>
@@ -144,7 +144,7 @@ const KitchenModals: React.FC<KitchenModalsProps> = ({
         {selectedOrder && (
           <div>
             <Text style={{ fontSize: '16px' }}>
-              Xác nhận hoàn thành chế biến đơn <strong>bàn #{selectedOrder.table?.number}</strong>?
+              Xác nhận hoàn thành chế biến đơn <strong>#{selectedOrder.id} - {selectedOrder.table?.name}</strong>?
             </Text>
             <div style={{ marginTop: 16, padding: 12, backgroundColor: '#f6ffed', borderRadius: 6 }}>
               <Text type='secondary'>

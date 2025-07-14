@@ -54,7 +54,7 @@ const HomePage: React.FC = () => {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center text-white p-8 max-w-4xl mx-auto">
                   <div className="animate-fade-in-up">
-                    <Title level={1} className="text-white mb-6 !text-6xl font-bold leading-tight">
+                    <Title level={1} className="!text-white mb-6 !text-5xl font-bold leading-tight">
                       {getSetting('site_name', 'Nhà Hàng Bamboo Sông Chanh')}
                     </Title>
                     <Text className="text-2xl block mb-4 text-white/95 font-bold">
@@ -366,7 +366,7 @@ const HomePage: React.FC = () => {
              <Col xs={24} sm={12} md={8}>
                <div className="relative overflow-hidden rounded-2xl group cursor-pointer">
                  <img
-                   src="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop"
+                   src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop"
                    alt="Món chính"
                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                  />
@@ -565,7 +565,7 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <Row gutter={32}>
             <Col xs={24} sm={8}>
-              <Title level={4} className="!text-white">
+              <Title level={4} className="text-white">
                 Nhà Hàng Bamboo Sông Chanh
               </Title>
               <Text className="text-gray-400 block">

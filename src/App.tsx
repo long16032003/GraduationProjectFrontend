@@ -13,7 +13,7 @@ import viVN from 'antd/locale/vi_VN';
 
 function App() {
   return (
-    <StyleProvider layer>
+    <StyleProvider>
       <ConfigProvider 
         prefixCls={prefixCls} 
         iconPrefixCls={iconPrefixCls} 

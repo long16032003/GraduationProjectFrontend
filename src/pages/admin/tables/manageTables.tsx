@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Card, Input, Tag, Modal, Form, InputNumber, Select, message } from 'antd';
-import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FireOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import type { TableModel } from '@/types';
 import { useCreate, useDelete, useList, useUpdate } from '@refinedev/core';
 import { areas } from '@/utils/constant';
+import { Typography } from 'antd';
+
+const { Title } = Typography;
 
 interface TableFormData {
   name: string;
@@ -171,7 +174,12 @@ const TableManagement: React.FC = () => {
   return (
     <Card title={
       <div className="flex items-center gap-2">
-        <span className="text-lg font-semibold">Quản lý bàn</span>
+        <Title
+            level={2}
+            className='!mb-0 text-orange-600'
+          >
+           Quản lý bàn
+          </Title>
       </div>
     } className="m-4">
       <div className="mb-4 flex justify-between items-center">

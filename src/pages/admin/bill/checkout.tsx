@@ -25,7 +25,7 @@ const Checkout: React.FC = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discount: number;
-    type: 'percentage' | 'fixed';
+    type: 'percentage' | 'fixed_amount';
     description?: string;
     promotion_code_id?: number;
   } | null>(null);
@@ -33,6 +33,8 @@ const Checkout: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [sePayQRCode, setSePayQRCode] = useState<string>('');
   const [showSePayQR, setShowSePayQR] = useState(false);
+  const [checkInterval, setCheckInterval] = useState<NodeJS.Timeout | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   const { data: billData, isLoading: isLoadingBill } = useOne<Bill>({
     resource: 'bills',
@@ -43,6 +45,58 @@ const Checkout: React.FC = () => {
   const bill = billData?.data;
 
   // Component mounted - no need for CSRF initialization with httpClient
+
+  // Cleanup interval when component unmounts
+  useEffect(() => {
+    return () => {
+      if (checkInterval) {
+        clearInterval(checkInterval);
+      }
+    };
+  }, [checkInterval]);
+
+  // Function to check payment status
+  const checkPaymentStatus = async () => {
+    try {
+      const response = await httpClient(`${API_URL}/bills/${id}/check-paid`, {
+        method: 'GET',
+      });
+      
+      console.log('Payment check response:', response);
+      
+      if (response.success) {
+        // Payment successful, stop checking and redirect
+        stopPaymentCheck();
+        message.success('Thanh toán thành công!');
+        navigate('/admin/bills');
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+    }
+  };
+
+  // Function to start polling payment status
+  const startPaymentCheck = () => {
+    if (isChecking) return; // Prevent multiple intervals
+    
+    setIsChecking(true);
+    
+    // Check immediately first
+    checkPaymentStatus();
+    
+    // Then check every 3 seconds
+    const interval = setInterval(checkPaymentStatus, 3000);
+    setCheckInterval(interval);
+  };
+
+  // Function to stop polling payment status
+  const stopPaymentCheck = () => {
+    if (checkInterval) {
+      clearInterval(checkInterval);
+      setCheckInterval(null);
+    }
+    setIsChecking(false);
+  };
 
   // Tính toán tổng tiền từ orders
   const calculateTotals = () => {
@@ -238,7 +292,6 @@ const Checkout: React.FC = () => {
       // Xử lý thanh toán VNPay
       await createVNPayPaymentHandler();
     } else if (values.payment_method === 'momo') {
-
       const paymentData = {
         bill_id: parseInt(id as string),
         amount: total,
@@ -253,32 +306,39 @@ const Checkout: React.FC = () => {
 
       window.location.href = requestBody.payUrl;
 
-    } else if(values.payment_method === 'bank_transfer') {
+        } else if(values.payment_method === 'bank_transfer') {
       try {
         setIsProcessingPayment(true);
         
-        /** Demo thử API SePay xem có chạy được không */
+        // Create payment record for bank transfer
         const paymentData = {
-          "id": 92704,                              // ID giao dịch trên SePay
-          "gateway":"Vietcombank",                  // Brand name của ngân hàng
-          "transactionDate":"2023-03-25 14:02:37",  // Thời gian xảy ra giao dịch phía ngân hàng
-          "accountNumber":"0123499999",              // Số tài khoản ngân hàng
-          "code":null,                               // Mã code thanh toán (sepay tự nhận diện dựa vào cấu hình tại Công ty -> Cấu hình chung)
-          "content":"chuyen tien mua iphone",        // Nội dung chuyển khoản
-          "transferType":"in",                       // Loại giao dịch. in là tiền vào, out là tiền ra
-          "transferAmount":2277000,                  // Số tiền giao dịch
-          "accumulated":19077000,                    // Số dư tài khoản (lũy kế)
-          "subAccount":null,                         // Tài khoản ngân hàng phụ (tài khoản định danh),
-          "referenceCode":"MBVCB.3278907687",         // Mã tham chiếu của tin nhắn sms
-          "description":""                           // Toàn bộ nội dung tin nhắn sms
-      }
+          bill_id: parseInt(id as string),
+          payment_method: values.payment_method,
+          amount_paid: values.amount_paid,
+          notes: values.notes,
+          discount_amount: couponDiscount,
+          coupon_code: appliedCoupon?.code || null,
+          total_amount: total,
+          payment_status: 'pending'
+        };
 
-        const result = await httpClient(`${API_URL}/hooks/sepay-payment`, {
+        const result = await httpClient(`${API_URL}/bills/${id}/pay`, {
           method: 'POST',
           body: paymentData
         });
 
-        console.log(result)
+        if (result.success) {
+          message.success('Đã tạo đơn thanh toán chuyển khoản. Đang chờ xác nhận...');
+          // Show QR code
+          setShowSePayQR(true);
+          generateSePayQR();
+          // Start checking payment status
+          setTimeout(() => {
+            startPaymentCheck();
+          }, 500);
+        } else {
+          message.error(result.message || 'Có lỗi xảy ra khi tạo đơn thanh toán');
+        }
 
       } catch (error) {
         console.error('Payment failed:', error);
@@ -606,10 +666,21 @@ const Checkout: React.FC = () => {
               <Form.Item
                 noStyle
                 shouldUpdate={(prevValues, currentValues) => {
-                  // Tạo QR code khi chuyển sang bank_transfer
-                  if (currentValues.payment_method === 'bank_transfer' && 
-                      prevValues.payment_method !== 'bank_transfer') {
-                    generateSePayQR();
+                                    // Handle payment method changes
+                  if (prevValues.payment_method !== currentValues.payment_method) {
+                    // Stop checking when switching away from bank_transfer
+                    if (prevValues.payment_method === 'bank_transfer') {
+                      stopPaymentCheck();
+                    }
+                    
+                    // Start checking when switching to bank_transfer
+                    if (currentValues.payment_method === 'bank_transfer') {
+                      generateSePayQR();
+                      // Start checking after a short delay to allow QR code generation
+                      setTimeout(() => {
+                        startPaymentCheck();
+                      }, 500);
+                    }
                   }
                   return prevValues.payment_method !== currentValues.payment_method;
                 }}
@@ -743,6 +814,28 @@ const Checkout: React.FC = () => {
                               showIcon
                               className="mt-4"
                             />
+                            
+                            {isChecking && (
+                              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                                    <span className="text-blue-800 font-medium">Đang kiểm tra thanh toán...</span>
+                                  </div>
+                                  <Button
+                                    size="small"
+                                    onClick={stopPaymentCheck}
+                                    type="text"
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    Dừng kiểm tra
+                                  </Button>
+                                </div>
+                                <p className="text-sm text-blue-600 mt-1">
+                                  Kiểm tra mỗi 3 giây - tự động chuyển hướng khi thanh toán thành công
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -799,9 +892,11 @@ const Checkout: React.FC = () => {
                 block
                 size="large"
                 loading={isProcessingPayment}
-                disabled={isProcessingPayment}
+                disabled={isProcessingPayment || isChecking || bill?.orders?.filter((order: Order) => order.status === 'done').length === 0}
               >
-                {isProcessingPayment ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
+                {isProcessingPayment ? 'Đang xử lý...' : 
+                 isChecking ? 'Đang kiểm tra thanh toán...' :
+                 'Xác nhận thanh toán'}
               </Button>
             </Form>
           </Card>

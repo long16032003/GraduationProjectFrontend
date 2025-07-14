@@ -188,7 +188,22 @@ const PromotionPage: React.FC = () => {
            points_used: selectedPromotion.required_points,
            code: `PROMO${selectedPromotion.id}${Date.now()}`, // Tạo mã ngẫu nhiên
            // Backend sẽ tự động trừ điểm khách hàng theo required_points
+         },
+         successNotification:{
+          message:"Đổi ưu đãi thành công! Mã ưu đãi đã được thêm vào tài khoản của bạn.",
+          type: "success"
+        },
+        errorNotification:{
+          message: "Có lỗi xảy ra khi đổi ưu đãi. Vui lòng thử lại.",
+          type: "error"
          }
+       });
+
+       // Cập nhật điểm của khách hàng ngay lập tức trong auth store
+       const newPoints = Math.max(0, (customerWithPoints.point || 0) - selectedPromotion.required_points);
+       auth$.user.set({
+         ...customerWithPoints,
+         point: newPoints
        });
 
        // Refetch data để cập nhật số lượng promotion codes và mã của tôi
@@ -197,12 +212,10 @@ const PromotionPage: React.FC = () => {
          refetchMyCodes()
        ]);
 
-       message.success('Đổi ưu đãi thành công! Mã ưu đãi đã được thêm vào tài khoản của bạn.');
        setIsExchangeModalVisible(false);
        setSelectedPromotion(null);
     } catch (error) {
       console.error('Exchange error:', error);
-      message.error('Có lỗi xảy ra khi đổi ưu đãi. Vui lòng thử lại.');
     } finally {
       setIsRefreshing(false);
     }
@@ -243,8 +256,8 @@ const PromotionPage: React.FC = () => {
                 className="text-sm font-bold px-3 py-1 rounded-full"
               >
                 {promotion.discount_type === 'percentage' 
-                  ? `${promotion.discount_percentage}%` 
-                  : `${promotion.discount_amount?.toLocaleString()}đ`}
+                  ? `Giảm ${promotion.discount_percentage}%` 
+                  : `Giảm ${Number(promotion.discount_amount)?.toLocaleString()}đ`}
               </Tag>
             </div>
             {!isActive && (
@@ -326,7 +339,7 @@ const PromotionPage: React.FC = () => {
               <Button
                 type="primary"
                 size="large"
-                className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 rounded-lg font-semibold"
+                className="flex-1 bg-gradient-to-r border-0 rounded-lg font-semibold"
                 icon={<GiftOutlined />}
                 onClick={() => handleExchange(promotion)}
                 disabled={!canExchange || !isAvailable}
@@ -355,7 +368,7 @@ const PromotionPage: React.FC = () => {
     const isUsed = !!code.used_at;
     const promotion = code.promotion;
     
-    if (!promotion) return null;
+    if (!promotion || isUsed) return null;
 
     return (
       <Card 
@@ -441,7 +454,7 @@ const PromotionPage: React.FC = () => {
       label: (
         <span className="flex items-center gap-2">
           <TagOutlined />
-          Mã của tôi ({myCodes.length})
+          Mã của tôi ({myCodes.filter(code => !code.used_at).length})
         </span>
       ),
     },
@@ -456,14 +469,13 @@ const PromotionPage: React.FC = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-4">
               <GiftOutlined className="text-3xl text-white" />
             </div>
-            <Title level={1} className="mb-2 text-orange-500">
+            <Title level={2} className="mb-2 text-orange-500">
               Ưu đãi đặc biệt
             </Title>
             <Text className="text-lg text-gray-600">
               Sử dụng điểm tích lũy để đổi lấy các ưu đãi hấp dẫn
             </Text>
-            
-                         {customerWithPoints && (
+              {customerWithPoints && (
                <div className="mt-4 inline-flex items-center gap-2 bg-white rounded-full px-6 py-3 shadow-lg">
                  <UserOutlined className="text-blue-500" />
                  <span className="text-gray-600">Điểm của bạn:</span>

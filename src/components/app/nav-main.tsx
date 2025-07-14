@@ -44,7 +44,7 @@ export function NavMain({
             defaultOpen={item.isActive}
             className="group/collapsible"
           >
-            <SidebarMenuItem>
+            <SidebarMenuItem className="group/collapsible">
               <CollapsibleTrigger asChild>
                 <Link to={item.url}>
                 <SidebarMenuButton tooltip={item.title}>

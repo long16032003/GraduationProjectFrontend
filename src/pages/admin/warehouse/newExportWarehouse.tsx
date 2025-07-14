@@ -165,16 +165,6 @@ const NewExportWarehouse: React.FC = () => {
         resource: 'export-ingredients',
         values: exportData,
       },
-      {
-        onSuccess: () => {
-          message.success('Tạo phiếu xuất kho thành công!');
-          navigate('/admin/warehouse');
-        },
-        onError: (error) => {
-          console.error('Export error:', error);
-          message.error('Có lỗi xảy ra khi tạo phiếu xuất kho');
-        },
-      }
     );
   };
   

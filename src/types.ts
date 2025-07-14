@@ -253,7 +253,7 @@ export interface Promotion {
   discount_amount: number | null;
   min_order_amount: number | null;
   max_discount_amount: number | null;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: 'percentage' | 'fixed_amount';
   required_points: number;
   limit: number;
   image_id?: number | null;
@@ -283,7 +283,7 @@ export interface PromotionCode {
 export interface PromotionFormData {
   name: string;
   description?: string;
-  discount_type: 'percentage' | 'fixed';
+  discount_type: 'percentage' | 'fixed_amount';
   discount_percentage?: number;
   discount_amount?: number;
   min_order_amount?: number;

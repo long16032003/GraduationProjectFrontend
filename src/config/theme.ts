@@ -74,6 +74,10 @@ const theme: ThemeConfig = {
 
   },
   components: {
+    Tabs: {
+      verticalItemMargin: '0', // '16px 0 0 0'
+      verticalItemPadding: '4px 12px', // '0 0 0 24px'
+    },
     Button: {
       borderRadius: 6,
       controlHeight: 36,

@@ -307,6 +307,10 @@ const KitchenDashboard: React.FC = () => {
           resource: 'orders',
           id: selectedOrder.id,
           values: { status: 'processing' },
+          successNotification:{
+            message: 'Đã bắt đầu chế biến đơn bàn #${selectedOrder.table?.number}',
+            type: 'success',
+          }
         });
 
         const updatedOrders = orders.map((order) => {
@@ -341,6 +345,10 @@ const KitchenDashboard: React.FC = () => {
           resource: 'orders',
           id: selectedOrder.id,
           values: { status: 'finished process' },
+          successNotification:{
+            message: 'Đã hoàn thành chế biến đơn bàn #${selectedOrder.table?.number}',
+            type: 'success',
+          }
         });
 
         const updatedOrders = orders.map((order) => {

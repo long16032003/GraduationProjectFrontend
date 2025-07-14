@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Table, Button, Space, Card, Input, Modal, message, Tag, Tooltip, Row, Col,
-  Typography, Badge
+  Typography, Badge, DatePicker
 } from 'antd';
 import { 
   PlusOutlined, ExclamationCircleOutlined, SearchOutlined,
   PhoneOutlined, TableOutlined, CommentOutlined, CheckCircleOutlined,
-  CloseCircleOutlined
+  CloseCircleOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import type { Key } from 'react';
@@ -275,6 +275,38 @@ const ManageReservations: React.FC = () => {
             style={{ width: 300 }}
             prefix={<SearchOutlined />}
           />
+          <DatePicker
+            placeholder="Chọn ngày"
+            format="DD/MM/YYYY"
+            value={dateFilter}
+            onChange={(date) => setDateFilter(date)}
+            allowClear
+            suffixIcon={<CalendarOutlined />}
+            style={{ width: 200 }}
+            showToday={false}
+            presets={[
+              {
+                label: 'Hôm nay',
+                value: dayjs(),
+              },
+              {
+                label: 'Ngày mai',
+                value: dayjs().add(1, 'day'),
+              },
+              {
+                label: 'Tuần này',
+                value: dayjs().startOf('week'),
+              },
+            ]}
+          />
+          <Button
+            type="default"
+            icon={<CalendarOutlined />}
+            onClick={() => setDateFilter(dayjs())}
+            className={dateFilter && dayjs().isSame(dateFilter, 'day') ? 'bg-blue-50 border-blue-300' : ''}
+          >
+            Hôm nay
+          </Button>
           {dateFilter && (
             <Tag 
               color="blue" 
@@ -303,7 +335,7 @@ const ManageReservations: React.FC = () => {
           <Col span={6}>
             <Card size="small" className="text-center">
               <div className="text-2xl font-bold text-orange-500">
-                {listReservations?.data?.filter(r => r.status === 'pending').length || 0}
+                {filterByDate(listReservations?.data)?.filter(r => r.status === 'pending').length || 0}
               </div>
               <div className="text-sm text-gray-500">Chờ xác nhận</div>
             </Card>
@@ -311,7 +343,7 @@ const ManageReservations: React.FC = () => {
           <Col span={6}>
             <Card size="small" className="text-center">
               <div className="text-2xl font-bold text-green-500">
-                {listReservations?.data?.filter(r => r.status === 'confirmed').length || 0}
+                {filterByDate(listReservations?.data)?.filter(r => r.status === 'confirmed').length || 0}
               </div>
               <div className="text-sm text-gray-500">Đã xác nhận</div>
             </Card>
@@ -319,19 +351,17 @@ const ManageReservations: React.FC = () => {
           <Col span={6}>
             <Card size="small" className="text-center">
               <div className="text-2xl font-bold text-blue-500">
-                {listReservations?.data?.filter(r => 
-                  dayjs(r.reservation_date).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD')
-                ).length || 0}
+                {filterByDate(listReservations?.data)?.filter(r => r.status === 'cancelled').length || 0}
               </div>
-              <div className="text-sm text-gray-500">Hôm nay</div>
+              <div className="text-sm text-gray-500">Đã hủy</div>
             </Card>
           </Col>
           <Col span={6}>
             <Card size="small" className="text-center">
               <div className="text-2xl font-bold text-purple-500">
-                {listReservations?.data?.length || 0}
+                {filterByDate(listReservations?.data)?.length || 0}
               </div>
-              <div className="text-sm text-gray-500">Tổng cộng</div>
+              <div className="text-sm text-gray-500">{dateFilter ? 'Ngày đã chọn' : 'Tổng cộng'}</div>
             </Card>
           </Col>
         </Row>

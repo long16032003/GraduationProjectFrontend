@@ -1,10 +1,9 @@
 import { useCallback } from 'react';
-import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 import type { Staff, Customer } from '@/types';
 
 export const usePermissions = () => {
-  const user = use$(auth$.user) as Staff | null;
+  const user = auth$.user.peek() as Staff | null;
 
   /**
    * Kiểm tra một quyền cụ thể

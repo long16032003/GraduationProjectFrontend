@@ -68,12 +68,12 @@ const ReservationPage: React.FC = () => {
   const [availableTables, setAvailableTables] = useState<TableModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [reservationSuccess, setReservationSuccess] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
+  // const [authLoading, setAuthLoading] = useState(true);
 
   // Get authentication state
-  const user = use$(auth$.user);
+  const user = auth$.user.peek();
   console.log(user)
-  const guard = use$(auth$.guard);
+  const guard = auth$.guard.peek();
 
   // Set form values when user is customer
   useEffect(() => {
@@ -296,40 +296,40 @@ const ReservationPage: React.FC = () => {
     },
   ];
 
-  // Check authentication status after all hooks
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!user) {
-        message.warning('Vui lòng đăng nhập để sử dụng tính năng đặt bàn');
-        navigate(guard === 'staff' ? '/login' : '/login-customer');
-        return;
-      }
-      setAuthLoading(false);
-    }, 100);
+  // // Check authentication status after all hooks
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     if (!user) {
+  //       message.warning('Vui lòng đăng nhập để sử dụng tính năng đặt bàn');
+  //       navigate(guard === 'staff' ? '/login' : '/login-customer');
+  //       return;
+  //     }
+  //     setAuthLoading(false);
+  //   }, 100);
 
-    return () => clearTimeout(timer);
-  }, [user, guard, navigate]);
+  //   return () => clearTimeout(timer);
+  // }, [user, guard, navigate]);
 
   // Show loading while checking authentication
-  if (authLoading) {
-    return (
-      <MainLayout>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <Spin size="large" />
-            <div className="mt-4">
-              <Text>Đang kiểm tra thông tin đăng nhập...</Text>
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
+  // if (authLoading) {
+  //   return (
+  //     <MainLayout>
+  //       <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  //         <div className="text-center">
+  //           <Spin size="large" />
+  //           <div className="mt-4">
+  //             <Text>Đang kiểm tra thông tin đăng nhập...</Text>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </MainLayout>
+  //   );
+  // }
 
   // Redirect if not authenticated
-  if (!user) {
-    return null;
-  }
+  // if (!user) {
+  //   return null;
+  // }
 
   return (
     <MainLayout>
@@ -442,6 +442,10 @@ const ReservationPage: React.FC = () => {
                             }
                           }}
                           disabledTime={() => ({
+                           disabledHours: () =>
+                             Array.from({ length: 24 })
+                               .map((_, i) => i)
+                               .filter((hour) => hour < 7 || hour > 22),
                            disabledMinutes: () =>
                              Array.from({ length: 60 })
                                .map((_, i) => i)

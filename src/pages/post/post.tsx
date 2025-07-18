@@ -109,8 +109,7 @@ const PostManagementButton: React.FC<PostManagementButtonProps> = ({
 };
 
 const PostPage: React.FC = () => {
-  const user = use$(auth$.user);
-  const guard = use$(auth$.guard);
+  const guard = auth$.guard.peek();
   console.log("guard: ",guard);
   const { data, isLoading, refetch } = useList<Post>({
     resource: 'posts',
@@ -121,11 +120,6 @@ const PostPage: React.FC = () => {
   const { mutate: updatePost } = useUpdate<Post>();
 
   const posts = data?.data || [];
-
-  // Kiểm tra quyền edit của user với post
-  const canEdit = (post: Post) => {
-    return user?.id === post.creator_id || (user as Staff)?.role === 'admin';
-  };
 
   // Xử lý xóa bài viết
   const handleDelete = (post: Post) => {

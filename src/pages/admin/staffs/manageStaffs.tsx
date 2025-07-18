@@ -163,13 +163,13 @@ const ManageStaffs: React.FC = () => {
   // Fetch staff list (users with role admin, staff, or chef)
   const { data: staffData, isLoading, refetch } = useList<StaffWithRole>({
     resource: 'staffs',
-    filters: [
-      {
-        field: 'role',
-        operator: 'in',
-        value: ['manager', 'staff', 'chef']
-      }
-    ],
+    // filters: [
+    //   {
+    //     field: 'role',
+    //     operator: 'in',
+    //     value: ['manager', 'staff', 'chef']
+    //   }
+    // ],
     sorters: [
       {
         field: 'created_at',
@@ -226,7 +226,7 @@ const ManageStaffs: React.FC = () => {
           <Avatar 
             size={40} 
             icon={<UserOutlined />} 
-            className="bg-blue-500"
+            className="bg-orange-500"
           >
             {user.name?.charAt(0)?.toUpperCase()}
           </Avatar>
@@ -237,6 +237,15 @@ const ManageStaffs: React.FC = () => {
             )}
           </div>
         </div>
+      ),
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      width: 180,
+      render: (email: string) => (
+        <div className="text-sm">{email || 'Chưa cập nhật'}</div>
       ),
     },
     {
@@ -251,22 +260,12 @@ const ManageStaffs: React.FC = () => {
     {
       title: 'Vai trò',
       key: 'role',
-      width: 150,
+      width: 100,
       render: (user: StaffWithRole) => (
         <Tag color={getUserRoleColor(user)} className="text-sm">
           {getUserRoleDisplay(user)}
         </Tag>
       ),
-      filters: [
-        { text: 'Admin', value: 'admin' },
-        { text: 'Quản trị viên', value: 'manager' },
-        { text: 'Nhân viên', value: 'staff' },
-      ],
-        onFilter: (value: string | number | boolean | Key, record: StaffWithRole) => {
-         if (value === 'admin') return isAdmin(record);
-         if (value === 'manager') return isManager(record);
-         return !isAdmin(record) && !isManager(record);
-       },
     },
     {
       title: 'Ngày tham gia',
@@ -286,7 +285,7 @@ const ManageStaffs: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 220,
+      width: 150,
       fixed: 'right' as const,
       render: (user: StaffWithRole) => {
         const canEdit = canEditUser(user, currentUser);
@@ -438,29 +437,23 @@ const ManageStaffs: React.FC = () => {
       // Gọi API assign roles
       const response = await httpClient(`${import.meta.env.VITE_API_URL}/staffs/${assigningUser.id}/roles`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'include',
         body: JSON.stringify({
           role_ids: selectedRoles,
         }),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.data) {
         message.success('Cập nhật quyền thành công!');
+        // Close the modal
         setIsAssignRoleModalVisible(false);
         setAssigningUser(null);
         setSelectedRoles([]);
         refetch();
       } else {
-        message.error(data.message || 'Có lỗi xảy ra khi cập nhật quyền');
+        message.error(response.message || 'Có lỗi xảy ra khi cập nhật quyền');
       }
     } catch (error) {
-      // message.error('Có lỗi xảy ra khi cập nhật quyền');
+      message.error('Có lỗi xảy ra khi cập nhật quyền');
     } finally {
       setIsUpdatingRoles(false);
     }
@@ -493,10 +486,9 @@ const ManageStaffs: React.FC = () => {
         resource: 'staffs',
         values: {
           ...values,
-          password: values.password || '123456', // Default password
+          password: values.password || '12345678', // Default password
         },
       });
-      message.success('Thêm nhân viên thành công');
       setIsModalVisible(false);
       form.resetFields();
       refetch();
@@ -513,8 +505,11 @@ const ManageStaffs: React.FC = () => {
         resource: 'staffs',
         id: editingUser.id!,
         values,
+        successNotification:{
+          message:"Cập nhật thông tin nhân viên thành công",
+          type:"success"
+        }
       });
-      message.success('Cập nhật thông tin nhân viên thành công');
       setIsEditModalVisible(false);
       setEditingUser(null);
       editForm.resetFields();
@@ -645,7 +640,7 @@ const ManageStaffs: React.FC = () => {
           <Form.Item
             name="password"
             label="Mật khẩu"
-            extra="Nếu để trống, mật khẩu mặc định sẽ là '123456'"
+            extra="Nếu để trống, mật khẩu mặc định sẽ là '12345678'"
           >
             <Input.Password placeholder="Nhập mật khẩu (tùy chọn)" />
           </Form.Item>
@@ -674,7 +669,7 @@ const ManageStaffs: React.FC = () => {
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <EditOutlined className="text-green-500" />
+            <EditOutlined className="text-orange-500" />
             <span>Sửa thông tin nhân viên</span>
           </div>
         }
@@ -756,7 +751,7 @@ const ManageStaffs: React.FC = () => {
                 type="primary" 
                 htmlType="submit"
                 loading={isUpdating}
-                className="bg-green-500 hover:bg-green-600"
+                className=""
               >
                 Cập nhật
               </Button>
@@ -791,7 +786,7 @@ const ManageStaffs: React.FC = () => {
         {viewingUser && (
           <div className="space-y-4 mt-4">
             <div className="flex items-center space-x-4">
-              <Avatar size={64} icon={<UserOutlined />} className="bg-blue-500">
+              <Avatar size={64} icon={<UserOutlined />} className="bg-orange-500">
                 {viewingUser.name?.charAt(0)?.toUpperCase()}
               </Avatar>
               <div>
@@ -845,7 +840,7 @@ const ManageStaffs: React.FC = () => {
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <SettingOutlined className="text-purple-500" />
+            <SettingOutlined className="text-orange-500" />
             <span>Phân quyền cho nhân viên</span>
           </div>
         }
@@ -871,7 +866,6 @@ const ManageStaffs: React.FC = () => {
             type="primary" 
             loading={isUpdatingRoles}
             onClick={handleSaveRoles}
-            className="bg-purple-500 hover:bg-purple-600"
           >
             Lưu thay đổi
           </Button>
@@ -883,7 +877,7 @@ const ManageStaffs: React.FC = () => {
             {/* User Info */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center space-x-3">
-                <Avatar size={48} icon={<UserOutlined />} className="bg-purple-500">
+                <Avatar size={48} icon={<UserOutlined />} className="bg-orange-500">
                   {assigningUser.name?.charAt(0)?.toUpperCase()}
                 </Avatar>
                 <div>
@@ -894,18 +888,18 @@ const ManageStaffs: React.FC = () => {
             </div>
 
             {/* Current Roles */}
-            <div>
+            {/* <div>
               <h5 className="font-medium mb-3">Roles hiện tại:</h5>
               <div className="flex flex-wrap gap-2">
                 {assigningUser.roles?.length ? (
                   assigningUser.roles.map((role: Role) => (
-                    <Badge key={role.id} color="blue" text={role.name} />
+                    <Badge key={role.id} color="orange" text={role.name} />
                   ))
                 ) : (
                   <span className="text-gray-500 italic">Chưa có role nào</span>
                 )}
               </div>
-            </div>
+            </div> */}
 
             <Divider />
 

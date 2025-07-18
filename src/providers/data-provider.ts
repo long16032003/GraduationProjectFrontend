@@ -37,12 +37,13 @@ export const dataProvider: DataProvider = {
 
     return response;
   },
-  getList: async ({ resource, filters, meta }) => {
+  getList: async ({ resource, filters, sorters, meta }) => {
     const response = await httpClient(`${API_URL}/${resource}`, {
       method: 'GET',
-      params: {
-        filters,
+      query: {
+        filters: JSON.stringify(filters),
         ...(meta || {}),
+        sorters: JSON.stringify(sorters)
       },
     });
 

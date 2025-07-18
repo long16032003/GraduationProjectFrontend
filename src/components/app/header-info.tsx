@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Users, UtensilsCrossed, Calendar } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useBreadcrumb } from '@refinedev/core';
-import { use$ } from '@legendapp/state/react';
 import auth$ from '@/stores/auth';
 
 const HeaderInfo = ({ className }: { className?: string }) => {
   const [currentTime, setCurrentTime] = useState(dayjs());
   const { breadcrumbs } = useBreadcrumb();
-  const user = use$(auth$.user);
+  const user = auth$.user.peek();
 
   // Update time every second
   useEffect(() => {

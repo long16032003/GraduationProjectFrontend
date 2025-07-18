@@ -42,9 +42,9 @@ const PromotionPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get current user from auth store
-  const currentUser = use$(auth$.user);
-  const isAuthenticated = use$(auth$.isAuthenticated);
-  const guard = use$(auth$.guard);
+  const currentUser = auth$.user.peek();
+  const isAuthenticated = auth$.isAuthenticated.peek();
+  const guard = auth$.guard.peek();
   
   // Type guard to check if user is a customer
   const isCustomer = (user: Customer | Staff | null): user is Customer => {

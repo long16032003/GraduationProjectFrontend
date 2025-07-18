@@ -167,7 +167,7 @@ const MenuPage: React.FC = () => {
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-center p-6">
-              <Title level={1} className="text-white mb-2">Thực đơn nhà hàng</Title>
+              <Title level={1} className="!text-white mb-2">Thực đơn nhà hàng</Title>
               <Text className="text-white text-lg">Khám phá các món ăn đặc sắc của chúng tôi</Text>
             </div>
           </div>

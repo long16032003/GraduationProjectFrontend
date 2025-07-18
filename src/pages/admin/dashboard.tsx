@@ -451,14 +451,19 @@ export function DashboardPage() {
     smooth: true,
     point: {
       size: 5,
-      shape: 'diamond' as const,
+      shape: 'circle' as const,
     },
     tooltip: {
       formatter: (datum: RevenueData) => {
         return {
           name: 'Doanh thu',
-          value: `${new Intl.NumberFormat('vi-VN').format(datum.revenue)}đ`
+          value: `${Number(datum.revenue)}đ`
         };
+      },
+    },
+    label: {
+      style: {
+        fill: '#aaa',
       },
     },
   };
@@ -553,6 +558,11 @@ export function DashboardPage() {
           name: 'Chi phí nhập kho',
           value: `${new Intl.NumberFormat('vi-VN').format(datum.warehouse_expense)}đ`
         };
+      },
+    },
+    label: {
+      style: {
+        fill: '#aaa',
       },
     },
   };
@@ -771,7 +781,7 @@ export function DashboardPage() {
                 lg={12}
               >
                 <Card
-                  title='Biểu đồ doanh thu theo thời gian'
+                  title={`Biểu đồ doanh thu ${currentPeriod.label}`}
                   className='shadow-sm'
                 >
                   {revenueData.length > 0 ? (
@@ -792,7 +802,7 @@ export function DashboardPage() {
                 lg={12}
               >
                 <Card
-                  title='Chi phí nhập nguyên liệu theo thời gian'
+                  title={`Chi phí nhập nguyên liệu ${currentPeriod.label}`}
                   className='shadow-sm'
                 >
                   {revenueData.length > 0 ? (
@@ -820,7 +830,7 @@ export function DashboardPage() {
                 lg={12}
               >
                 <Card
-                  title='Hóa đơn thanh toán thành công'
+                  title={`Hóa đơn thanh toán thành công ${currentPeriod.label}`}
                   className='shadow-sm'
                 >
                   {revenueData.length > 0 ? (
@@ -841,7 +851,7 @@ export function DashboardPage() {
                 lg={12}
               >
                 <Card
-                  title='Lợi nhuận ước tính'
+                  title={`Lợi nhuận ước tính ${currentPeriod.label}`}
                   className='shadow-sm'
                 >
                   {revenueData.length > 0 ? (
@@ -891,7 +901,7 @@ export function DashboardPage() {
                 lg={16}
               >
                 <Card
-                  title='Top món ăn được gọi nhiều nhất'
+                  title={`Top món ăn được gọi nhiều nhất ${currentPeriod.label}`}
                   className='shadow-sm'
                 >
                   {topDishes.length > 0 ? (

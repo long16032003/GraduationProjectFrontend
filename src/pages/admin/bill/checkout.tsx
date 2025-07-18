@@ -28,6 +28,7 @@ const Checkout: React.FC = () => {
     type: 'percentage' | 'fixed_amount';
     description?: string;
     promotion_code_id?: number;
+    max_discount_amount?: number;
   } | null>(null);
   const [isCouponLoading, setIsCouponLoading] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -118,6 +119,10 @@ const Checkout: React.FC = () => {
     if (appliedCoupon) {
       if (appliedCoupon.type === 'percentage') {
         couponDiscount = Math.floor(subtotal * (appliedCoupon.discount / 100));
+        // Kiểm tra max_discount_amount cho mã giảm giá phần trăm
+        if (appliedCoupon.max_discount_amount && couponDiscount > appliedCoupon.max_discount_amount) {
+          couponDiscount = appliedCoupon.max_discount_amount;
+        }
       } else {
         couponDiscount = appliedCoupon.discount;
       }
@@ -151,11 +156,8 @@ const Checkout: React.FC = () => {
         field: 'used_at',
         operator: 'eq',
         value: null,
-      }
+      },
     ],
-    meta: {
-      populate: ['promotion']
-    }
   });
 
   const { mutate: usePromotionCode } = useUpdate();
@@ -187,6 +189,13 @@ const Checkout: React.FC = () => {
           return;
         }
         
+        // Kiểm tra min_order_amount
+        if (promotion.min_order_amount && subtotal < promotion.min_order_amount) {
+          message.error(`Đơn hàng phải có giá trị tối thiểu ${Number(promotion.min_order_amount).toLocaleString('vi-VN')} VNĐ để áp dụng mã này. Hiện tại: ${subtotal.toLocaleString('vi-VN')} VNĐ`);
+          setIsCouponLoading(false);
+          return;
+        }
+        
         // Áp dụng mã ưu đãi
         const couponData = {
           code: foundCode.code,
@@ -195,7 +204,8 @@ const Checkout: React.FC = () => {
             : (promotion.discount_amount || 0),
           type: promotion.discount_type,
           description: promotion.description || promotion.name,
-          promotion_code_id: foundCode.id
+          promotion_code_id: foundCode.id,
+          max_discount_amount: promotion.max_discount_amount || undefined
         };
         
         setAppliedCoupon(couponData);
@@ -543,7 +553,7 @@ const Checkout: React.FC = () => {
                     {couponDiscount > 0 && (
                       <div className="flex justify-between items-center">
                         <Text>Giảm giá mã ưu đãi ({appliedCoupon?.code}):</Text>
-                        <Text className="text-green-600">-{couponDiscount.toLocaleString('vi-VN')} VNĐ</Text>
+                        <Text className="text-green-600">-{Number(couponDiscount).toLocaleString('vi-VN')} VNĐ</Text>
                       </div>
                     )}
                      
@@ -609,8 +619,8 @@ const Checkout: React.FC = () => {
                     message={`Mã ưu đãi: ${appliedCoupon.code}`}
                     description={`${appliedCoupon.type === 'percentage' 
                       ? `Giảm ${appliedCoupon.discount}%` 
-                      : `Giảm ${appliedCoupon.discount.toLocaleString('vi-VN')} VNĐ`
-                    } - Tiết kiệm ${couponDiscount.toLocaleString('vi-VN')} VNĐ`}
+                      : `Giảm ${Number(appliedCoupon.discount).toLocaleString('vi-VN')} VNĐ`
+                    } - Tiết kiệm ${Number(couponDiscount).toLocaleString('vi-VN')} VNĐ`}
                     type="success"
                     showIcon
                     action={

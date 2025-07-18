@@ -92,7 +92,7 @@ export function Authenticated({
   const go = useGo();
 
   // Authentication status
-  const isAuthenticated = use$(auth$.isAuthenticated);
+  const isAuthenticated = auth$.isAuthenticated.peek();
 
   const {
     isFetching,

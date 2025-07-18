@@ -543,7 +543,7 @@ const HomePage: React.FC = () => {
         <div className="absolute inset-0 bg-black bg-opacity-60" />
         <div className="container mx-auto px-4 relative">
           <div className="text-center text-white">
-            <Title level={2} className="text-white mb-6">
+            <Title level={2} className="!text-white mb-6">
               Đặt Bàn Ngay
             </Title>
             <Text className="text-lg block mb-8 text-white/90">
@@ -565,11 +565,11 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <Row gutter={32}>
             <Col xs={24} sm={8}>
-              <Title level={4} className="text-white">
-                Nhà Hàng Bamboo Sông Chanh
+              <Title level={4} className="!text-white">
+              {getSetting('site_name', 'Nhà Hàng Bamboo Sông Chanh')}
               </Title>
               <Text className="text-gray-400 block">
-                Tinh hoa ẩm thực Quảng Yên
+                {getSetting('site_tagline', 'Tinh hoa ẩm thực Quảng Yên')}
               </Text>
             </Col>
             <Col xs={24} sm={8}>
@@ -577,9 +577,9 @@ const HomePage: React.FC = () => {
                 Liên Hệ
               </Title>
               <Space direction="vertical" className="text-gray-400">
-                <Text className="text-gray-400">- Điện thoại: 033 328 3999</Text>
-                <Text className="text-gray-400">- Email: nhahangbamboo@gmail.com</Text>
-                <Text className="text-gray-400">- Địa chỉ: Bắc Cầu sông Chanh phường Quảng Yên, T.X Quảng Yên, Tỉnh Quảng Ninh, Vietnam</Text>
+                <Text className="text-gray-400">- Điện thoại: {getSetting('contact_phone', '033 328 3999')}</Text>
+                <Text className="text-gray-400">- Email: {getSetting('contact_email')}</Text>
+                <Text className="text-gray-400">- Địa chỉ: {getSetting('address')}</Text>
               </Space>
             </Col>
             <Col xs={24} sm={8}>
@@ -587,8 +587,7 @@ const HomePage: React.FC = () => {
                 Giờ Mở Cửa
               </Title>
               <Space direction="vertical" className="text-gray-400">
-                <Text className="text-gray-400">Thứ 2 - Thứ 6: 10:00 - 22:30</Text>
-                <Text className="text-gray-400">Thứ 7 - Chủ nhật: 09:00 - 23:00</Text>
+                {getSetting('opening_hours')}
               </Space>
             </Col>
           </Row>

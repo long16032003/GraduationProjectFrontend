@@ -51,6 +51,7 @@ export interface DishGroup {
     orderTime: string;
     status: Order['status'];
     isCompleted: boolean;
+    isCancelled: boolean;
   }[];
 }
 

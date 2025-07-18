@@ -58,7 +58,7 @@ const formatDate = (dateString?: string) => {
 };
 
 const InfoUserPage: React.FC = () => {
-  const user = use$(auth$.user);
+  const user = auth$.user.peek();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [profileForm] = Form.useForm();

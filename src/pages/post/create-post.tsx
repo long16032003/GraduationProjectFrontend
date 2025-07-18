@@ -31,7 +31,7 @@ const CreatePost: React.FC = () => {
   
   const { mutate: createPost, isLoading } = useCreate<Post>();
   const go = useGo();
-  const user = use$(auth$.user);
+  const user = auth$.user.peek();
 
   // Cấu hình ReactQuill
   const modules = {

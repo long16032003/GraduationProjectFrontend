@@ -63,7 +63,7 @@ const getInitials = (name?: string): string => {
 
 export function UserNav({user, ...rest}: UserNavProps) {
   const { mutate, isLoading } = useLogout();
-  const guard = use$(auth$.guard);
+  const guard = auth$.guard.peek();
   const handleLogout = () => {
     mutate()
   }
@@ -302,7 +302,7 @@ const AppBreadcrumb = () => {
 
 
 export function DefaultHeaderContent() {
-  const user = use$(auth$.user)
+  const user = auth$.user.peek()
 
   return (
     <Fragment>

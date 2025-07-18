@@ -202,14 +202,10 @@ const ManageReservations: React.FC = () => {
         updateReservation({
           resource: 'reservations',
           id: record.id,
-          values: { status: 'confirmed' }
-        }, {
-          onSuccess: () => {
-            message.success('Xác nhận đặt bàn thành công');
-            refetchReservations();
-          },
-          onError: () => {
-            message.error('Có lỗi xảy ra khi xác nhận đặt bàn');
+          values: { status: 'confirmed' },
+          successNotification:{
+            message: "Xác nhân đặt bàn thành công",
+            type: "success",
           }
         });
       },

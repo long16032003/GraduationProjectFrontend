@@ -127,7 +127,7 @@ const ServiceConfirmModal: React.FC<ServiceConfirmModalProps> = ({
   // Logic để lọc món ăn: nếu có món bị thiếu thì chỉ hiển thị món bị thiếu
   const getFilteredDishes = () => {
     const allActiveDishes = order.order_dishes.filter(dish => !dish.cancelled_at);
-    const missingDishes = allActiveDishes.filter(dish => dish.is_available === 0);
+    const missingDishes = allActiveDishes.filter(dish => dish.is_available == 0);
     
     // Nếu có món bị thiếu, chỉ hiển thị món bị thiếu
     if (missingDishes.length > 0) {

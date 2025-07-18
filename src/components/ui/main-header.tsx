@@ -42,7 +42,7 @@ const menuItems = [
 ];
 
 export const MainHeader = () => {
-  const user = use$(auth$.user);
+  const user = auth$.user.get();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { getSetting, getJsonSetting } = useSiteSettingsContext();

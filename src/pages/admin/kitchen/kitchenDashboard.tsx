@@ -123,11 +123,20 @@ const KitchenDashboard: React.FC = () => {
       },
     },
     queryOptions: {
-      refetchInterval: 30000, // Auto refresh every 30 seconds
+      // Auto refresh handled manually via useEffect
     },
   });
 
   const { mutate: updateOrder } = useUpdate();
+
+  // Auto refresh control
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchOrders();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [refetchOrders]);
 
   // Process orders và group dishes khi có dữ liệu mới
   useEffect(() => {
@@ -153,7 +162,8 @@ const KitchenDashboard: React.FC = () => {
         if (!orderDish.dish) return;
         
         const dishId = orderDish.dish.id;
-        const isCompleted = order.status === 'finished process';
+        // Món chỉ được coi là hoàn thành nếu is_available == 1 và không có cancelled_at
+        const isCompleted = orderDish.is_available == 1 && !orderDish.cancelled_at;
 
         if (!dishMap.has(dishId)) {
           dishMap.set(dishId, {
@@ -167,12 +177,16 @@ const KitchenDashboard: React.FC = () => {
         }
 
         const dishGroup = dishMap.get(dishId)!;
-        dishGroup.totalQuantity += orderDish.quantity;
         
-        if (isCompleted) {
-          dishGroup.completedQuantity += orderDish.quantity;
-        } else {
-          dishGroup.remainingQuantity += orderDish.quantity;
+        // Chỉ tính những món chưa bị hủy vào tổng số
+        if (!orderDish.cancelled_at) {
+          dishGroup.totalQuantity += orderDish.quantity;
+          
+          if (isCompleted) {
+            dishGroup.completedQuantity += orderDish.quantity;
+          } else {
+            dishGroup.remainingQuantity += orderDish.quantity;
+          }
         }
 
         dishGroup.orderDetails.push({
@@ -182,7 +196,8 @@ const KitchenDashboard: React.FC = () => {
           note: orderDish.note,
           orderTime: order.order_time,
           status: order.status,
-          isCompleted
+          isCompleted,
+          isCancelled: !!orderDish.cancelled_at
         });
       });
     });
@@ -308,7 +323,7 @@ const KitchenDashboard: React.FC = () => {
           id: selectedOrder.id,
           values: { status: 'processing' },
           successNotification:{
-            message: 'Đã bắt đầu chế biến đơn bàn #${selectedOrder.table?.number}',
+            message: 'Đã bắt đầu chế biến',
             type: 'success',
           }
         });
@@ -325,7 +340,6 @@ const KitchenDashboard: React.FC = () => {
 
         setOrders(updatedOrders);
         setIsStartModalVisible(false);
-        message.success(`Đã bắt đầu chế biến đơn bàn #${selectedOrder.table?.number}`);
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra');
@@ -346,7 +360,7 @@ const KitchenDashboard: React.FC = () => {
           id: selectedOrder.id,
           values: { status: 'finished process' },
           successNotification:{
-            message: 'Đã hoàn thành chế biến đơn bàn #${selectedOrder.table?.number}',
+            message: 'Đã hoàn thành chế biến đơn',
             type: 'success',
           }
         });
@@ -363,7 +377,6 @@ const KitchenDashboard: React.FC = () => {
 
         setOrders(updatedOrders);
         setIsFinishModalVisible(false);
-        message.success(`Đã hoàn thành chế biến đơn bàn #${selectedOrder.table?.number}`);
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra');
@@ -379,25 +392,46 @@ const KitchenDashboard: React.FC = () => {
   const confirmFinishDish = async () => {
     if (selectedDishGroup) {
       try {
-        // Cập nhật tất cả đơn có món này
+        // Cập nhật tất cả đơn có món này - cập nhật is_available = 1 cho món cụ thể
         const orderIdsToUpdate = selectedDishGroup.orderDetails
-          .filter(order => !order.isCompleted)
+          .filter(order => !order.isCompleted && !order.isCancelled)
           .map(order => order.orderId);
 
         // Cập nhật từng đơn
         for (const orderId of orderIdsToUpdate) {
-          updateOrder({
-            resource: 'orders',
-            id: orderId,
-            values: { status: 'finished process' },
-          });
+          const order = orders.find(o => o.id === orderId);
+          if (order) {
+            const updatedOrderDishes = order.order_dishes.map(dish => {
+              if (dish.dish_id === selectedDishGroup.dishId) {
+                return {
+                  ...dish,
+                  is_available: 1
+                };
+              }
+              return dish;
+            });
+
+            updateOrder({
+              resource: 'orders',
+              id: orderId,
+              values: { order_dishes: updatedOrderDishes },
+            });
+          }
         }
 
         const updatedOrders = orders.map((order) => {
           if (orderIdsToUpdate.includes(order.id)) {
             return {
               ...order,
-              status: 'finished process' as const,
+              order_dishes: order.order_dishes.map(dish => {
+                if (dish.dish_id === selectedDishGroup.dishId) {
+                  return {
+                    ...dish,
+                    is_available: 1
+                  };
+                }
+                return dish;
+              })
             };
           }
           return order;
@@ -405,9 +439,6 @@ const KitchenDashboard: React.FC = () => {
 
         setOrders(updatedOrders);
         setIsFinishDishModalVisible(false);
-        message.success(
-          `Đã hoàn thành ${selectedDishGroup.dishName} cho ${orderIdsToUpdate.length} đơn`
-        );
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra');
@@ -457,6 +488,10 @@ const KitchenDashboard: React.FC = () => {
           status: 'done',
           order_dishes: updatedOrderDishes
         },
+        successNotification:{
+          message: 'Đã xác nhận hoàn thành phục vụ',
+          type: 'success',
+        }
       });
 
       const updatedOrders = orders.map((order) => {
@@ -471,7 +506,6 @@ const KitchenDashboard: React.FC = () => {
       });
 
       setOrders(updatedOrders);
-      message.success('Đã xác nhận hoàn thành phục vụ!');
       refetchOrders();
     } catch (error) {
       message.error('Có lỗi xảy ra khi hoàn thành đơn hàng');
@@ -510,6 +544,10 @@ const KitchenDashboard: React.FC = () => {
           note: note ? `${order.note || ''}\n[Phục vụ] ${note}` : order.note,
           order_dishes: updatedOrderDishes
         },
+        successNotification:{
+          message: 'Đã chuyển về bếp với độ ưu tiên cao hơn',
+          type: 'success',
+        }
       });
 
       const updatedOrders = orders.map((o) => {
@@ -526,7 +564,6 @@ const KitchenDashboard: React.FC = () => {
       });
 
       setOrders(updatedOrders);
-      message.warning(`Đơn bàn #${order.table?.number} đã được chuyển về bếp với độ ưu tiên cao hơn (${missingDishes.length} món cần làm lại)`);
       refetchOrders();
     } catch (error) {
       message.error('Có lỗi xảy ra khi cập nhật đơn hàng');
@@ -543,6 +580,10 @@ const KitchenDashboard: React.FC = () => {
             status: 'cancelled',
             cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}` 
           },
+          successNotification:{
+            message: 'Đã hủy đơn',
+            type: 'success',
+          }
         });
 
         const updatedOrders = orders.map((order) => {
@@ -560,7 +601,6 @@ const KitchenDashboard: React.FC = () => {
         setIsCancelOrderModalVisible(false);
         setCancelReason('');
         setCancelType('out_of_stock');
-        message.success(`Đã hủy đơn bàn #${selectedOrder.table?.number}`);
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra khi hủy đơn');
@@ -576,7 +616,8 @@ const KitchenDashboard: React.FC = () => {
           if (dish.id === selectedDish.id) {
             return {
               ...dish,
-              cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
+              cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`,
+              cancelled_at: new Date().toISOString()
             };
           }
           return dish;
@@ -588,6 +629,10 @@ const KitchenDashboard: React.FC = () => {
           values: { 
             order_dishes: updatedOrderDishes
           },
+          successNotification:{
+            message: 'Đã hủy món',
+            type: 'success',
+          }
         });
 
         const updatedOrders = orders.map((order) => {
@@ -604,7 +649,6 @@ const KitchenDashboard: React.FC = () => {
         setIsCancelDishModalVisible(false);
         setCancelReason('');
         setCancelType('out_of_stock');
-        message.success(`Đã hủy món ${selectedDish.dish?.name} trong đơn bàn #${selectedOrder.table?.number}`);
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra khi hủy món');
@@ -617,7 +661,7 @@ const KitchenDashboard: React.FC = () => {
       try {
         // Hủy tất cả đơn có món này - Lưu ý
         const orderIdsToCancel = selectedDishGroup.orderDetails
-          .filter(order => !order.isCompleted)
+          .filter(order => !order.isCompleted && !order.isCancelled)
           .map(order => order.orderId);
 
         for (const orderId of orderIdsToCancel) {
@@ -628,7 +672,8 @@ const KitchenDashboard: React.FC = () => {
               if (dish.dish_id === selectedDishGroup.dishId) {
                 return {
                   ...dish,
-                  cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
+                  cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`,
+                  cancelled_at: new Date().toISOString()
                 };
               }
               return dish;
@@ -638,6 +683,10 @@ const KitchenDashboard: React.FC = () => {
               resource: 'orders',
               id: orderId,
               values: { order_dishes: updatedOrderDishes },
+              successNotification:{
+                message: 'Đã hủy món',
+                type: 'success',
+              }
             });
           }
         }
@@ -651,7 +700,8 @@ const KitchenDashboard: React.FC = () => {
                 if (dish.dish_id === selectedDishGroup.dishId) {
                   return {
                     ...dish,
-                    cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`
+                    cancelled_reason: `${getCancelTypeText(cancelType)}: ${cancelReason}`,
+                    cancelled_at: new Date().toISOString()
                   };
                 }
                 return dish;
@@ -665,9 +715,6 @@ const KitchenDashboard: React.FC = () => {
         setIsCancelDishGroupModalVisible(false);
         setCancelReason('');
         setCancelType('out_of_stock');
-        message.success(
-          `Đã hủy ${selectedDishGroup.dishName} trong ${orderIdsToCancel.length} đơn`
-        );
         refetchOrders();
       } catch (error) {
         message.error('Có lỗi xảy ra khi hủy món');
@@ -687,22 +734,13 @@ const KitchenDashboard: React.FC = () => {
           styles={{ body: { padding: isMobile ? '12px' : '16px' } }}
         >
           <div className='mb-2'>
-            <div className='flex justify-between items-center mb-1'>
-              <Title
-                level={3}
-                style={{ margin: 0 }}
-                className='text-orange-600'
-              >
-                🍳 Bảng điều khiển bếp
-              </Title>
-              <Button
-                icon={<SyncOutlined />}
-                onClick={() => refetchOrders()}
-                type='text'
-              >
-                Làm mới
-              </Button>
-            </div>
+            <Title
+              level={3}
+              style={{ margin: 0, marginBottom: '4px' }}
+              className='text-orange-600'
+            >
+              🍳 Bảng điều khiển bếp
+            </Title>
             <Text
               type='secondary'
               style={{ fontSize: '14px' }}
@@ -723,6 +761,8 @@ const KitchenDashboard: React.FC = () => {
             isMobile={isMobile}
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
+            isRefreshing={ordersLoading}
+            onManualRefresh={() => refetchOrders()}
           />
 
           <KitchenTabs
